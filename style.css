@@ -1,0 +1,69 @@
+/* Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Layout */
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+/* Left content */
+.content {
+  flex: 3;
+  padding: 30px;
+  background-color: #f5f7fa; /* soft light background */
+  overflow-y: auto;
+}
+
+.content h1 {
+  color: #1d3557; /* deep blue heading matching brand */
+  margin-bottom: 20px;
+}
+
+/* Right sidebar menu */
+.sidebar {
+  flex: 1;
+  background-color: #1d3557; /* brand dark blue */
+  color: #f1faee; /* light text */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar .logo img {
+  width: 120px;
+  margin-bottom: 20px;
+}
+
+/* Menu items */
+.sidebar ul {
+  list-style: none;
+  width: 100%;
+}
+
+.sidebar li {
+  padding: 15px 10px;
+  cursor: pointer;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+  text-align: center;
+  font-weight: 600;
+}
+
+.sidebar li:hover {
+  background-color: #457b9d; /* lighter blue on hover */
+  color: #fff;
+}
+
+/* Active menu highlight */
+.sidebar li.active {
+  background-color: #a8dadc; /* accent highlight */
+  color: #1d3557;
+}
