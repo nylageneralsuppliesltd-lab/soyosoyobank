@@ -3,7 +3,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
 }
 
 /* Layout */
@@ -12,24 +12,27 @@
   height: 100vh;
 }
 
-/* Left content */
+/* Content area */
 .content {
   flex: 3;
   padding: 30px;
-  background-color: #f5f7fa; /* soft light background */
+  background-color: #F9FAFB; /* light neutral */
+  color: #1E1E1E; /* primary text */
   overflow-y: auto;
 }
 
 .content h1 {
-  color: #1d3557; /* deep blue heading matching brand */
+  font-size: 32px;
+  font-weight: 700;
   margin-bottom: 20px;
+  color: #135E96; /* deep accent */
 }
 
-/* Right sidebar menu */
+/* Sidebar */
 .sidebar {
   flex: 1;
-  background-color: #1d3557; /* brand dark blue */
-  color: #f1faee; /* light text */
+  background-color: #0F2538; /* dark navy for premium contrast */
+  color: #FFFFFF;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -37,33 +40,34 @@
 }
 
 .sidebar .logo img {
-  width: 120px;
-  margin-bottom: 20px;
+  width: 130px;
+  margin-bottom: 25px;
 }
 
-/* Menu items */
+/* Menu list */
 .sidebar ul {
   list-style: none;
   width: 100%;
 }
 
 .sidebar li {
-  padding: 15px 10px;
+  padding: 14px 12px;
   cursor: pointer;
   border-radius: 6px;
   margin-bottom: 10px;
-  transition: all 0.3s ease;
   text-align: center;
+  font-size: 16px;
   font-weight: 600;
+  transition: all 0.3s ease;
+  color: #E4E8ED; /* softer text */
 }
 
 .sidebar li:hover {
-  background-color: #457b9d; /* lighter blue on hover */
-  color: #fff;
+  background-color: #064A85; /* deep accent hover */
+  color: #FFF;
 }
 
-/* Active menu highlight */
 .sidebar li.active {
-  background-color: #a8dadc; /* accent highlight */
-  color: #1d3557;
+  background-color: #007BC7; /* bright accent */
+  color: #FFF;
 }
