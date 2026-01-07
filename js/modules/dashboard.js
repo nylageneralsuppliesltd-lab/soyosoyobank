@@ -1,4 +1,4 @@
-// js/modules/dashboard.js - Modern SACCO Dashboard
+// js/modules/dashboard.js - Modern SACCO Dashboard (Fixed & Working)
 
 import { loadMembers } from '../storage.js';
 import { formatCurrency } from '../utils/helpers.js';
@@ -10,22 +10,23 @@ export function renderDashboard() {
     // Calculate key metrics
     const totalMembers = members.length;
     const activeMembers = members.filter(m => m.active).length;
-    const totalBalance = members.reduce((sum, m) => sum + m.balance, 0);
+    const suspendedMembers = totalMembers - activeMembers;
+    const totalBalance = members.reduce((sum, m) => sum + (m.balance || 0), 0);
 
     // Placeholder for future dynamic ledger types from Settings
-    const contributions = members.reduce((sum, m) => sum + m.contributions || 0, 0);
-    const otherIncome = members.reduce((sum, m) => sum + m.otherIncome || 0, 0);
-    const expenses = 73000; // Will come from expenses ledger in future
+    const contributions = members.reduce((sum, m) => sum + (m.contributions || 0), 0);
+    const otherIncome = members.reduce((sum, m) => sum + (m.otherIncome || 0), 0);
+    const expenses = 73000; // Will be dynamic from expenses ledger later
 
     // Placeholder bank/eWallet distribution (configurable in Settings later)
     const balanceDistribution = {
-        'Bank A': totalBalance * 0.38,
-        'Bank B': totalBalance * 0.24,
-        'Bank C': totalBalance * 0.14,
-        'eWallet': totalBalance * 0.24
+        'Bank A': Math.round(totalBalance * 0.38),
+        'Bank B': Math.round(totalBalance * 0.24),
+        'Bank C': Math.round(totalBalance * 0.14),
+        'eWallet': Math.round(totalBalance * 0.24)
     };
 
-    // Monthly data placeholder - will be dynamic from ledger
+    // Monthly data placeholder - will be dynamic from ledger in future
     const monthlyData = {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
         contributions: [12000, 15000, 18000, 14000, 16000, 20000, 22000, 19000, 17000, 21000, 23000, 25000],
@@ -68,13 +69,13 @@ export function renderDashboard() {
                     <h3>Total Expenses</h3>
                     <h2>${formatCurrency(expenses)}</h2>
                     <p class="metric-link">Click to expand breakdown ↓</p>
-                    <details style="margin-top:10px;">
+                    <details style="margin-top:15px;">
                         <summary style="cursor:pointer;color:#dc3545;font-weight:600;">View Breakdown</summary>
-                        <ul style="margin:10px 0;padding-left:20px;">
+                        <ul style="margin:12px 0;padding-left:22px;font-size:0.95em;">
                             <li>Office Rent → KSh 15,000</li>
                             <li>Staff Salaries → KSh 45,000</li>
                             <li>Utilities → KSh 5,000</li>
-                            <li>Other → KSh 8,000</li>
+                            <li>Loan Interest → KSh 8,000</li>
                         </ul>
                     </details>
                 </div>
@@ -93,7 +94,7 @@ export function renderDashboard() {
                         <p>Active</p>
                     </div>
                     <div class="stat">
-                        <h2 style="color:#fd7e14;">${totalMembers - activeMembers}</h2>
+                        <h2 style="color:#fd7e14;">${suspendedMembers}</h2>
                         <p>Suspended</p>
                     </div>
                 </div>
@@ -102,13 +103,13 @@ export function renderDashboard() {
             <!-- Monthly Trend Chart -->
             <div class="section-card">
                 <h3>Monthly Financial Trends (2025)</h3>
-                <p class="chart-note">Hover for exact values • Contributions (bars) • Income & Expenses (lines)</p>
-                <div id="financial-chart"></div>
+                <p class="chart-note">Hover over bars/lines for exact values • Contributions (bars) • Income & Expenses (lines)</p>
+                <canvas id="financial-chart" height="400"></canvas>
             </div>
         </div>
     `;
 
-    // Render Chart (using Chart.js - include CDN in index.html)
+    // Render Chart.js chart AFTER HTML is inserted
     const ctx = document.getElementById('financial-chart');
     if (ctx) {
         new Chart(ctx, {
@@ -122,7 +123,8 @@ export function renderDashboard() {
                         type: 'bar',
                         backgroundColor: 'rgba(40, 167, 69, 0.8)',
                         borderColor: '#28a745',
-                        borderWidth: 2
+                        borderWidth: 2,
+                        barThickness: 30
                     },
                     {
                         label: 'Other Income',
@@ -131,7 +133,9 @@ export function renderDashboard() {
                         borderColor: '#007bff',
                         backgroundColor: 'rgba(0, 123, 255, 0.1)',
                         tension: 0.4,
-                        fill: true
+                        fill: true,
+                        pointRadius: 5,
+                        pointHoverRadius: 8
                     },
                     {
                         label: 'Expenses',
@@ -140,14 +144,19 @@ export function renderDashboard() {
                         borderColor: '#dc3545',
                         backgroundColor: 'rgba(220, 53, 69, 0.1)',
                         tension: 0.4,
-                        fill: true
+                        fill: true,
+                        pointRadius: 5,
+                        pointHoverRadius: 8
                     }
                 ]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     tooltip: {
+                        mode: 'index',
+                        intersect: false,
                         callbacks: {
                             label: (context) => {
                                 return `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`;
@@ -155,18 +164,37 @@ export function renderDashboard() {
                         }
                     },
                     legend: {
-                        position: 'top'
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
                     }
                 },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                },
                 scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
                     y: {
                         beginAtZero: true,
                         ticks: {
                             callback: (value) => formatCurrency(value)
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
                         }
                     }
                 }
             }
         });
+    } else {
+        console.error('Chart canvas #financial-chart not found in DOM');
     }
 }
