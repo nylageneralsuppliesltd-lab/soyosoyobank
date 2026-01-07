@@ -294,3 +294,19 @@ input:focus, select:focus {
         max-width: 100%;
     }
 }
+.members-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.members-table th, .members-table td {
+    border: 1px solid var(--border);
+    padding: 10px;
+    text-align: left;
+}
+
+.members-table th {
+    background: var(--primary-green);
+    color: #fff;
+}
