@@ -96,7 +96,7 @@ document.querySelectorAll('.submenu li').forEach(item => {
     });
 });
 
-// Top-level menu items (Dashboard, Reports, Settings)
+// In the top-level menu click handler (already in your code)
 document.querySelectorAll('.menu-item:not(.has-submenu) > .menu-link').forEach(link => {
     link.addEventListener('click', () => {
         document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
