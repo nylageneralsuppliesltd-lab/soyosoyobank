@@ -516,3 +516,13 @@ input:focus, select:focus {
     font-style: italic;
     margin: 10px 0 0;
 }
+#financial-chart {
+    width: 100% !important;
+    height: 400px !important;
+}
+
+.section-card .chart-note {
+    font-size: 0.9em;
+    color: #666;
+    margin: 10px 0 20px;
+}
