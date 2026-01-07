@@ -5,26 +5,18 @@ import { formatCurrency } from '../utils/helpers.js';
 export function renderCreateMemberForm() {
     return `
         <style>
-            .required-label::after {
-                content: " *";
-                color: red;
-                font-weight: bold;
-            }
-            .optional-section {
-                opacity: 0.8;
-                font-style: italic;
-            }
+            .required-label::after { content: " *"; color: red; font-weight: bold; }
+            .optional-section { opacity: 0.8; font-style: italic; }
         </style>
 
         <h1>SACCO Membership Registration</h1>
         <p class="subtitle">Fields marked with <span style="color:red;font-weight:bold;">*</span> are required.</p>
 
         <form class="form-card" id="create-member-form">
-
-            <!-- Section A: Personal Details -->
-            <h3 style="margin-top:0;">Section A: Personal Details</h3>
-            <div class="form-group"><label class="required-label">Full Name</label><input type="text" id="full-name" required placeholder="Enter full name as per ID"></div>
-            <div class="form-group"><label class="required-label">National ID / Passport No.</label><input type="text" id="id-number" required placeholder="e.g. 12345678"></div>
+            <!-- Personal Details -->
+            <h3>Section A: Personal Details</h3>
+            <div class="form-group"><label class="required-label">Full Name</label><input type="text" id="full-name" required></div>
+            <div class="form-group"><label class="required-label">National ID / Passport No.</label><input type="text" id="id-number" required></div>
             <div class="form-group"><label class="required-label">Date of Birth</label><input type="date" id="dob" required></div>
             <div class="form-group">
                 <label class="required-label">Gender</label><br>
@@ -32,16 +24,15 @@ export function renderCreateMemberForm() {
                 <label><input type="radio" name="gender" value="Female"> Female</label>&nbsp;&nbsp;
                 <label><input type="radio" name="gender" value="Other"> Other</label>
             </div>
-            <div class="form-group"><label>Passport Photo (Optional)</label><input type="file" id="photo" accept="image/*"></div>
 
-            <!-- Section B: Contact Information -->
+            <!-- Contact -->
             <h3>Section B: Contact Information</h3>
-            <div class="form-group"><label class="required-label">Mobile Number<br><small>(Kenyan format: 07xx or +254)</small></label><input type="tel" id="phone" required placeholder="0712345678"></div>
-            <div class="form-group"><label>Email Address (Optional)</label><input type="email" id="email" placeholder="member@example.com"></div>
+            <div class="form-group"><label class="required-label">Mobile Number</label><input type="tel" id="phone" required placeholder="0712345678"></div>
+            <div class="form-group"><label>Email (Optional)</label><input type="email" id="email"></div>
             <div class="form-group"><label>Physical Address (Optional)</label><input type="text" id="physical-address"></div>
             <div class="form-group"><label>Town/City (Optional)</label><input type="text" id="town"></div>
 
-            <!-- Section C: Employment / Business Details (Optional) -->
+            <!-- Employment (Optional) -->
             <h3>Section C: Employment / Business Details (Optional)</h3>
             <div class="form-group">
                 <label>Employment Status</label><br>
@@ -50,29 +41,41 @@ export function renderCreateMemberForm() {
                 <label><input type="radio" name="employment-status" value="Unemployed"> Unemployed</label>
             </div>
             <div class="form-group"><label>Employer / Business Name</label><input type="text" id="employer-name"></div>
-            <div class="form-group"><label>Staff / Business Registration No.</label><input type="text" id="reg-no"></div>
-            <div class="form-group"><label>Employer / Business Address</label><input type="text" id="employer-address"></div>
+            <div class="form-group"><label>Registration No.</label><input type="text" id="reg-no"></div>
+            <div class="form-group"><label>Employer Address</label><input type="text" id="employer-address"></div>
 
-            <!-- Section E & F: Next of Kin / Nominees (Optional Section) -->
-            <h3>Section E & F: Next of Kin / Nominees (Beneficiaries) <span class="optional-section">(Optional)</span></h3>
-            <p><small>If you add any nominee, all their fields become required and percentages must total 100%.</small></p>
-
-            <div id="nok-container">
-                <!-- First nominee starts empty and optional -->
-                <div class="nok-entry" style="display:none;"></div> <!-- Hidden placeholder -->
+            <!-- Role -->
+            <h3>Member Role</h3>
+            <div class="form-group">
+                <label class="required-label">Role</label>
+                <select id="role">
+                    <option>Member</option>
+                    <option>Admin</option>
+                    <option>Chairman</option>
+                    <option>Vice Chairman</option>
+                    <option>Secretary</option>
+                    <option>Treasurer</option>
+                    <option>Other</option>
+                </select>
+                <div id="custom-role-group" style="display:none;margin-top:10px;">
+                    <label class="required-label">Custom Role Name</label><input type="text" id="custom-role">
+                </div>
             </div>
 
-            <button type="button" id="add-nok" class="submit-btn" style="background:#007bff;width:auto;padding:10px 20px;margin:20px 0;">
-                + Add Nominee (Optional - Max 3)
+            <!-- Nominees (Optional but mandatory if added) -->
+            <h3>Next of Kin / Nominees <span class="optional-section">(Optional)</span></h3>
+            <p><small>If added, all fields are required and shares must total 100%.</small></p>
+            <div id="nok-container"></div>
+            <button type="button" id="add-nok" class="submit-btn" style="background:#007bff;padding:10px 20px;margin:20px 0;">
+                + Add Nominee (Max 3)
             </button>
 
-            <!-- Section G: Introducer -->
-            <h3>Section G: Introducer (Existing Member)</h3>
+            <!-- Introducer -->
+            <h3>Introducer</h3>
             <div class="form-group"><label class="required-label">Introducer Name</label><input type="text" id="introducer-name" required></div>
             <div class="form-group"><label class="required-label">Introducer Member No.</label><input type="text" id="introducer-member-no" required></div>
 
-            <!-- Submit -->
-            <button type="submit" class="submit-btn" style="margin-top:30px;">Submit Membership Application</button>
+            <button type="submit" class="submit-btn" style="margin-top:30px;">Submit Application</button>
         </form>
     `;
 }
