@@ -1,103 +1,24 @@
-/* GLOBAL FONT */
-* {
-    font-family: 'Inter', sans-serif;
+/* GLOBAL */
+body {
     margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    background: #f3f6fa;
+    color: #1a1a1a;
 }
 
-/* COLORS */
-:root {
-    --navy: #081C34; 
-    --gold: #D4AF37;
-    --light-bg: #F5F7FA;
-    --white: #ffffff;
-}
-
-/* LAYOUT */
 .layout {
     display: flex;
     height: 100vh;
-    background: var(--light-bg);
 }
 
-/* CONTENT AREA (LEFT) */
-.content {
-    flex: 1;
-    padding: 40px 60px;
-    overflow-y: auto;
-}
-
-h1 {
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--navy);
-    margin-bottom: 10px;
-}
-
-.subtitle {
-    color: #555;
-    margin-bottom: 30px;
-}
-
-/* FORM CARD */
-.form-card {
-    background: var(--white);
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    max-width: 550px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-label {
-    font-weight: 600;
-    color: #333;
-    display: block;
-    margin-bottom: 6px;
-}
-
-input, select {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #dcdcdc;
-    border-radius: 8px;
-    font-size: 15px;
-    transition: 0.2s;
-}
-
-input:focus, select:focus {
-    border-color: var(--gold);
-    outline: none;
-}
-
-/* BUTTON */
-.submit-btn {
-    width: 100%;
-    padding: 14px;
-    background: var(--gold);
-    border: none;
-    border-radius: 8px;
-    color: var(--navy);
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.submit-btn:hover {
-    background: #c19b2d;
-}
-
-/* RIGHT SIDEBAR */
+/* SIDEBAR */
 .sidebar {
-    width: 260px;
-    background: var(--navy);
-    color: var(--white);
-    padding: 30px 20px;
+    width: 270px;
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(18px);
+    border-right: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 0 40px rgba(0,0,0,0.05);
+    padding: 25px;
     display: flex;
     flex-direction: column;
 }
@@ -108,36 +29,110 @@ input:focus, select:focus {
 }
 
 .logo-box img {
-    width: 80px;
-    margin-bottom: 10px;
+    width: 85px;
 }
 
 .logo-box h2 {
-    color: var(--gold);
-    font-size: 22px;
-    font-weight: 700;
+    font-size: 20px;
+    margin-top: 10px;
+    font-weight: 600;
+    color: #004aad; /* SoyoSoyo blue */
 }
 
-/* MENU */
 .menu {
     list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .menu li {
-    padding: 12px 15px;
-    margin-bottom: 5px;
-    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     cursor: pointer;
+    border-radius: 12px;
+    transition: 0.2s;
+    font-size: 15px;
+    color: #333;
+}
+
+.menu li i {
+    font-size: 20px;
+}
+
+.menu li.active,
+.menu li:hover {
+    background: #004aad;
+    color: #fff;
+}
+
+/* MAIN CONTENT */
+.content {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+}
+
+h1 {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 15px;
+    opacity: 0.7;
+    margin-bottom: 30px;
+}
+
+/* FORM CARD */
+.form-card {
+    background: #fff;
+    padding: 30px;
+    border-radius: 14px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+    max-width: 550px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+label {
+    display: block;
     font-weight: 500;
+    margin-bottom: 6px;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #d8dfe8;
+    font-size: 15px;
+    outline: none;
     transition: 0.2s;
 }
 
-.menu li:hover {
-    background: rgba(255,255,255,0.1);
+input:focus, select:focus {
+    border-color: #004aad;
 }
 
-.menu .active {
-    background: var(--gold);
-    color: var(--navy);
-    font-weight: 700;
+.submit-btn {
+    margin-top: 20px;
+    width: 100%;
+    padding: 14px;
+    background: #004aad;
+    color: #fff;
+    border: none;
+    font-size: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.submit-btn:hover {
+    background: #00337a;
 }
