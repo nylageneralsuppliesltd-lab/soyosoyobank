@@ -27,31 +27,37 @@ function loadSection(section) {
 
     // Deposits submodules
     } else if (section === 'deposits-contributions') {
-        if (typeof window.depositContributions === 'function') {
-            window.depositContributions();
+        if (typeof window.recordContribution === 'function') {
+            window.recordContribution();
         } else {
-            mainContent.innerHTML = '<h1>Contributions</h1><p>Deposit module loading...</p>';
+            mainContent.innerHTML = '<h1>Record Contribution</h1><p>Deposits module loading...</p>';
         }
     } else if (section === 'deposits-fines') {
-        if (typeof window.depositFines === 'function') {
-            window.depositFines();
+        if (typeof window.recordFine === 'function') {
+            window.recordFine();
         } else {
-            mainContent.innerHTML = '<h1>Fines</h1><p>Deposit module loading...</p>';
+            mainContent.innerHTML = '<h1>Record Fine</h1><p>Deposits module loading...</p>';
         }
     } else if (section === 'deposits-income') {
-        if (typeof window.depositIncome === 'function') {
-            window.depositIncome();
+        if (typeof window.recordIncome === 'function') {
+            window.recordIncome();
         } else {
-            mainContent.innerHTML = '<h1>Income Deposits</h1><p>Deposit module loading...</p>';
+            mainContent.innerHTML = '<h1>Record Other Income</h1><p>Deposits module loading...</p>';
         }
     } else if (section === 'deposits-loan-repayments') {
-        if (typeof window.depositLoanRepayments === 'function') {
-            window.depositLoanRepayments();
+        if (typeof window.recordLoanRepayment === 'function') {
+            window.recordLoanRepayment();
         } else {
-            mainContent.innerHTML = '<h1>Loan Repayments</h1><p>Deposit module loading...</p>';
+            mainContent.innerHTML = '<h1>Record Loan Repayment</h1><p>Deposits module loading...</p>';
+        }
+    } else if (section === 'deposits-list') {
+        if (typeof window.depositsListSection === 'function') {
+            window.depositsListSection();
+        } else {
+            mainContent.innerHTML = '<h1>All Deposits</h1><p>Deposits list loading...</p>';
         }
 
-    // Default for other sections
+    // Default for other sections (Dashboard, Reports, Settings, etc.)
     } else {
         const title = section
             .split('-')
@@ -64,7 +70,6 @@ function loadSection(section) {
         `;
     }
 }
-
 // Navigation: Submenu items (Members, Deposits submenus, etc.)
 document.querySelectorAll('.submenu li').forEach(item => {
     item.addEventListener('click', (e) => {
