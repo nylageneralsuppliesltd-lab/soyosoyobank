@@ -638,10 +638,19 @@ export function importMembers(event) {
 }
 
 // ======================
-// MODULE INITIALIZATION
+// MODULE INITIALIZATION – Expose functions to window for onclick handlers
 // ======================
 
 export function initMembersModule() {
-    // Optional: any setup code
-    console.log('Members module initialized');
+    // Expose key functions to global scope so onclick handlers can find them
+    window.renderMembersList = renderMembersList;
+    window.renderCreateMemberForm = renderCreateMemberForm;
+    window.renderEditMemberForm = renderEditMemberForm;
+    window.renderMemberLedger = renderMemberLedger;
+    window.suspendMember = suspendMember;
+    window.reactivateMember = reactivateMember;
+    window.exportMembersToCSV = exportMembersToCSV;
+    window.importMembers = importMembers;
+
+    console.log('Members module initialized and functions exposed to window');
 }
