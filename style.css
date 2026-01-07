@@ -1,4 +1,4 @@
-/* style.css - Fixed for extreme left sidebar, better mobile, clean structure */
+/* style.css - Fixed mobile visibility, variable fonts for mobile/desktop */
 
 :root {
     --primary-green: #28a745;
@@ -8,6 +8,10 @@
     --card-bg: #ffffff;
     --text: #333333;
     --border: #dee2e6;
+    --font-base: 15px; /* Desktop base */
+    --font-small: 13px; /* Mobile base */
+    --header-large: 26px;
+    --header-small: 22px;
 }
 
 body {
@@ -16,6 +20,8 @@ body {
     background: var(--light-bg);
     color: var(--text);
     overflow-x: hidden;
+    font-size: var(--font-base);
+    line-height: 1.6;
 }
 
 .layout {
@@ -23,7 +29,7 @@ body {
     min-height: 100vh;
 }
 
-/* MOBILE HEADER */
+/* MOBILE HEADER - ENSURED VISIBILITY */
 .mobile-header {
     display: none;
     align-items: center;
@@ -34,7 +40,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 1000;
+    z-index: 2000; /* Higher z-index for visibility */
 }
 
 .toggle-btn {
@@ -51,7 +57,7 @@ body {
     margin-left: 10px;
 }
 
-/* SIDEBAR - EXTREME LEFT */
+/* SIDEBAR */
 .sidebar {
     width: 280px;
     background: var(--card-bg);
@@ -63,7 +69,7 @@ body {
     left: 0;
     top: 0;
     bottom: 0;
-    z-index: 999;
+    z-index: 1999;
     transition: transform 0.3s ease;
     overflow-y: auto;
 }
@@ -98,7 +104,7 @@ body {
     color: var(--dark);
 }
 
-/* MENU STYLES */
+/* MENU */
 .menu {
     list-style: none;
     padding: 0 15px;
@@ -112,10 +118,11 @@ body {
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    font-size: 15px;
+    font-size: var(--font-base);
     color: var(--text);
     border-radius: 10px;
     transition: all 0.2s;
+    word-wrap: break-word; /* Fit long text */
 }
 
 .menu i {
@@ -163,8 +170,9 @@ body {
 .submenu li {
     padding: 10px 15px 10px 55px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--font-base);
     transition: background 0.2s;
+    word-wrap: break-word;
 }
 
 .submenu li:hover {
@@ -180,8 +188,20 @@ body {
     transition: margin-left 0.3s ease;
 }
 
-/* FORM & OTHER STYLES (same as before, improved focus) */
-.form-card { /* ... same as previous ... */ 
+h1 {
+    font-size: var(--header-large);
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: var(--font-base);
+    opacity: 0.7;
+    margin-bottom: 30px;
+}
+
+/* FORM CARD */
+.form-card {
     background: var(--card-bg);
     padding: 30px;
     border-radius: 14px;
@@ -189,17 +209,56 @@ body {
     max-width: 600px;
 }
 
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--dark);
+}
+
+input, select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: var(--font-base);
+    transition: border 0.2s;
+}
+
+input:focus, select:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(40,167,69,0.2);
+}
+
 .submit-btn {
+    width: 100%;
+    padding: 14px;
     background: var(--primary-orange);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: var(--font-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
 }
 
 .submit-btn:hover {
     background: #e96d00;
 }
 
-/* MOBILE RESPONSIVE */
+/* MOBILE STYLES - SMALLER FONTS, BETTER FIT */
 @media (max-width: 992px) {
+    body {
+        font-size: var(--font-small);
+    }
+
     .sidebar {
+        width: 250px; /* Slimmer for mobile */
         transform: translateX(-100%);
     }
 
@@ -209,9 +268,8 @@ body {
 
     .content {
         margin-left: 0;
-        padding-top: 80px;
-        padding-left: 20px;
-        padding-right: 20px;
+        padding: 20px;
+        padding-top: 80px; /* Space for header */
     }
 
     .mobile-header {
@@ -223,10 +281,16 @@ body {
     }
 
     .menu-link, .submenu li {
-        font-size: 14px;
+        font-size: var(--font-small);
+        line-height: 1.4; /* Better spacing */
     }
 
     h1 {
-        font-size: 24px;
+        font-size: var(--header-small);
+    }
+
+    .form-card {
+        padding: 20px;
+        max-width: 100%;
     }
 }
