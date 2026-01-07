@@ -302,34 +302,69 @@ function importMembers(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
         const content = e.target.result;
-        const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+        const lines = content.split(/\r?\n/).map(line => line.trim()).filter(line => line);
 
         if (lines.length < 2) {
-            showAlert('CSV file is empty or invalid.');
+            showAlert('CSV file is empty or has no data rows.');
             return;
         }
 
-        const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+        // Parse headers (handle quoted)
+        let headerLine = lines[0];
+        const headers = [];
+        let current = '';
+        let inQuotes = false;
+        for (let char of headerLine + ',') {  // Add comma to flush last
+            if (char === '"') inQuotes = !inQuotes;
+            else if (char === ',' && !inQuotes) {
+                headers.push(current.trim().toLowerCase());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+
+        console.log('Parsed headers:', headers);  // Debug in console
 
         let imported = 0;
         for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+            let line = lines[i] + ',';  // Flush last field
+            const values = [];
+            current = '';
+            inQuotes = false;
+            for (let char of line) {
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === ',' && !inQuotes) {
+                    values.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+
+            if (values.length < headers.length) continue;  // Invalid row
+
             const row = {};
-            headers.forEach((h, idx) => row[h] = values[idx] || '');
+            headers.forEach((h, idx) => {
+                row[h] = values[idx] || '';
+            });
 
-            if (!row.name || !row.phone) continue;
+            // Map possible header variations
+            const name = row['name'] || '';
+            const phone = row['phone'] || '';
+            if (!name || !phone) continue;
 
-            const exists = members.some(m => m.phone === row.phone);
-            if (exists) continue; // Avoid duplicates
+            // Check duplicate by phone
+            if (members.some(m => m.phone === phone)) continue;
 
             members.push({
                 id: Date.now() + imported,
-                name: row.name,
-                phone: row.phone,
-                email: row.email || '',
-                role: row.role || 'Member',
-                nokName: row['next of kin name'] || row.nokname || '',
-                nokPhone: row['next of kin phone'] || row.nokphone || '',
+                name,
+                phone,
+                email: row['email'] || '',
+                role: row['role'] || 'Member',
+                nokName: row['next of kin name'] || '',
+                nokPhone: row['next of kin phone'] || '',
                 balance: 0,
                 ledger: [],
                 active: true
@@ -337,14 +372,17 @@ function importMembers(event) {
             imported++;
         }
 
-        saveMembers(members);
-        showAlert(`${imported} members imported successfully!`);
-        membersListSection();
+        if (imported === 0) {
+            showAlert('No new members imported (possible duplicates or invalid data). Check console for details.');
+        } else {
+            saveMembers(members);
+            showAlert(`${imported} members imported successfully!`);
+            membersListSection();
+        }
     };
 
     reader.readAsText(file);
 }
-
 // ======================
 // INITIALIZER - Expose to window
 // ======================
