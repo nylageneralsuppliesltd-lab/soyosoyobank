@@ -3,107 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoyoSoyoApp • Dashboard</title>
+    <title>SoyoSoyo SACCO • Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="icon" href="./assets/logo.png" type="image/png">
+    
+    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/phosphor-icons"></script>
+    
+    <link rel="icon" href="./assets/logo.png" type="image/png">
 </head>
 <body>
 
 <div class="layout">
     <!-- MOBILE HEADER -->
     <header class="mobile-header">
-        <button id="toggle-sidebar" class="toggle-btn">
-            <i class="ph-list"></i>
+        <button id="toggle-sidebar" class="toggle-btn" aria-label="Open menu">
+            <i class="ph-list ph-bold"></i>
         </button>
-        <h2>SoyoSoyoApp</h2>
+        <h2>SoyoSoyo SACCO</h2>
+        <div class="mobile-logo">
+            <img src="./assets/logo.png" alt="Logo">
+        </div>
     </header>
 
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="logo-box">
-            <img src="./assets/logo.png" alt="SoyoSoyoApp Logo">
-            <h2>SoyoSoyoApp</h2>
-            <button id="close-sidebar" class="close-btn">
-                <i class="ph-x"></i>
+            <img src="./assets/logo.png" alt="SoyoSoyo SACCO Logo">
+            <h2>SoyoSoyo SACCO</h2>
+            <button id="close-sidebar" class="close-btn" aria-label="Close menu">
+                <i class="ph-x ph-bold"></i>
             </button>
         </div>
 
         <ul class="menu">
-            
-           <li class="menu-item" data-section="dashboard">
-    <div class="menu-link">
-        <i class="ph-house"></i> 
-        <span>Dashboard</span>
-    </div>
-</li>
-
-            <li class="menu-item has-submenu" data-section="members">
+            <!-- Dashboard -->
+            <li class="menu-item active" data-section="dashboard">
                 <div class="menu-link">
-                    <i class="ph-users-three"></i> 
+                    <i class="ph-house ph-bold"></i> 
+                    <span>Dashboard</span>
+                </div>
+            </li>
+
+            <!-- Members -->
+            <li class="menu-item has-submenu">
+                <div class="menu-link">
+                    <i class="ph-users-three ph-bold"></i> 
                     <span>Members</span>
                     <i class="ph-caret-down submenu-toggle"></i>
                 </div>
                 <ul class="submenu">
                     <li data-section="members-list">View Members</li>
-                    <li data-section="create-member">Create Member</li>
+                    <li data-section="create-member">Register New Member</li>
                 </ul>
             </li>
 
-            <li class="menu-item has-submenu" data-section="loans">
+            <!-- Deposits -->
+            <li class="menu-item has-submenu">
                 <div class="menu-link">
-                    <i class="ph-bank"></i> 
+                    <i class="ph-piggy-bank ph-bold"></i> 
+                    <span>Deposits</span>
+                    <i class="ph-caret-down submenu-toggle"></i>
+                </div>
+                <ul class="submenu">
+                    <li data-section="deposits-contributions">Record Contribution</li>
+                    <li data-section="deposits-fines">Record Fine / Penalty</li>
+                    <li data-section="deposits-income">Record Other Income</li>
+                    <li data-section="deposits-loan-repayments">Record Loan Repayment</li>
+                    <li data-section="deposits-list">View All Deposits</li>
+                </ul>
+            </li>
+
+            <!-- Loans (Future) -->
+            <li class="menu-item has-submenu">
+                <div class="menu-link">
+                    <i class="ph-hand-coins ph-bold"></i> 
                     <span>Loans</span>
                     <i class="ph-caret-down submenu-toggle"></i>
                 </div>
                 <ul class="submenu">
-                    <li data-section="loan-applications">Applications</li>
+                    <li data-section="loan-applications">Loan Applications</li>
                     <li data-section="active-loans">Active Loans</li>
+                    <li data-section="loan-repayments">Repayment History</li>
                 </ul>
             </li>
 
-       <li class="menu-item has-submenu" data-section="deposits">
-    <div class="menu-link">
-        <i class="ph-coins"></i> 
-        <span>Deposits</span>
-        <i class="ph-caret-down submenu-toggle"></i>
-    </div>
-    <ul class="submenu">
-        <li data-section="deposits-contributions">Record Contribution</li>
-        <li data-section="deposits-fines">Record Fine</li>
-        <li data-section="deposits-income">Record Other Income</li>
-        <li data-section="deposits-loan-repayments">Record Loan Repayment</li>
-        <li data-section="deposits-list">View All Deposits</li>
-    </ul>
-</li>
-
+            <!-- Reports (Future) -->
             <li class="menu-item" data-section="reports">
                 <div class="menu-link">
-                    <i class="ph-chart-bar"></i> 
+                    <i class="ph-chart-line-up ph-bold"></i> 
                     <span>Reports</span>
                 </div>
             </li>
 
+            <!-- Settings -->
             <li class="menu-item" data-section="settings">
                 <div class="menu-link">
-                    <i class="ph-gear"></i> 
+                    <i class="ph-gear-six ph-bold"></i> 
                     <span>Settings</span>
                 </div>
             </li>
         </ul>
+
+        <div class="sidebar-footer">
+            <small>Version 1.0 • Offline Ready</small>
+            <small>&copy; 2026 SoyoSoyo SACCO</small>
+        </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
-    <main id="main-content" class="content">
-        <h1>Welcome to SoyoSoyoApp Dashboard</h1>
-        <p>Select a menu item to begin managing your SACCO.</p>
+    <!-- MAIN CONTENT AREA -->
+    <main class="content">
+        <!-- Dynamic Page Title -->
+        <div class="page-header">
+            <h1 id="page-title">Dashboard</h1>
+            <p id="page-subtitle" class="subtitle">Financial & Membership Overview</p>
+        </div>
+
+        <!-- Main Content injected here by modules -->
+        <div id="main-content">
+            <!-- Dashboard or other module content loads here -->
+        </div>
     </main>
 </div>
 
+<!-- Main App Script (ES6 Modules) -->
 <script type="module" src="js/main.js"></script>
+
 </body>
 </html>
