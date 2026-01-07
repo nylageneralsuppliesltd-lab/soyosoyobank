@@ -1,4 +1,4 @@
-// js/modules/deposits.js - Full Deposits Module
+// js/modules/deposits.js - Full & Working Deposits Module
 
 import { loadMembers, saveMembers } from '../storage.js';
 import { showAlert, formatCurrency } from '../utils/helpers.js';
@@ -7,16 +7,22 @@ import { saccoConfig } from '../config.js';
 let members = loadMembers();
 let deposits = JSON.parse(localStorage.getItem('deposits')) || [];
 
-// Save deposits
+// Save deposits to localStorage
 function saveDeposits() {
     localStorage.setItem('deposits', JSON.stringify(deposits));
 }
 
-// Render deposit form
+// Render the deposit form for any type
 function renderDepositForm(type) {
-    const typeName = type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ');
+    const typeName = {
+        'contributions': 'Contribution',
+        'fines': 'Fine',
+        'income': 'Other Income',
+        'loan-repayments': 'Loan Repayment'
+    }[type] || 'Deposit';
+
     return `
-        <h1>Record ${typeName} Deposit</h1>
+        <h1>Record ${typeName}</h1>
         <p class="subtitle">All fields marked with * are required.</p>
 
         <form class="form-card" id="deposit-form">
@@ -29,15 +35,15 @@ function renderDepositForm(type) {
                 <label class="required-label">Member</label>
                 <select id="deposit-member" required>
                     <option value="">Select Member</option>
-                    ${members.map(m => `<option value="${m.id}">${m.name} (${m.phone}) - ID: ${m.idNumber || 'N/A'}</option>`).join('')}
+                    ${members.map(m => `
+                        <option value="${m.id}">${m.name} (${m.phone}) - ID: ${m.idNumber || 'N/A'}</option>
+                    `).join('')}
                 </select>
             </div>
 
             <div class="form-group">
                 <label class="required-label">Payment For</label>
-                <select id="payment-for" required>
-                    <option value="${type}">${typeName}</option>
-                </select>
+                <input type="text" value="${typeName}" readonly style="background:#f8f9fa;">
             </div>
 
             <div class="form-group">
@@ -62,7 +68,7 @@ function renderDepositForm(type) {
             </div>
 
             <div class="form-group">
-                <label class="required-label">Amount (KES)</label>
+                <label class="required-label">Amount (${saccoConfig.currency})</label>
                 <input type="number" id="deposit-amount" min="1" step="1" required placeholder="e.g. 5000">
             </div>
 
@@ -73,53 +79,62 @@ function renderDepositForm(type) {
                 </label>
             </div>
 
-            <button type="submit" class="submit-btn">Record Deposit</button>
+            <button type="submit" class="submit-btn">Record ${typeName}</button>
         </form>
     `;
 }
 
-// Render deposits list
+// Render full deposits history
 function renderDepositsList() {
-    return `
-        <h1>All Deposits</h1>
-        <p class="subtitle">Total Deposits: ${deposits.length} | Total Amount: ${formatCurrency(deposits.reduce((sum, d) => sum + d.amount, 0))}</p>
+    const totalAmount = deposits.reduce((sum, d) => sum + d.amount, 0);
 
-        ${deposits.length === 0 ? '<p>No deposits recorded yet.</p>' : `
-        <table class="members-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Recorded On</th>
-                    <th>Member</th>
-                    <th>Payment For</th>
-                    <th>Account</th>
-                    <th>Method</th>
-                    <th>Amount</th>
-                    <th>Notification</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${deposits.map(d => {
-                    const member = members.find(m => m.id === d.memberId);
-                    return `
-                        <tr>
-                            <td>${d.depositDate}</td>
-                            <td><small>${d.recordedAt}</small></td>
-                            <td>${member ? member.name : 'Unknown'}</td>
-                            <td>${d.paymentFor}</td>
-                            <td>${d.account}</td>
-                            <td>${d.method}</td>
-                            <td><strong>${formatCurrency(d.amount)}</strong></td>
-                            <td>${d.notificationSent ? 'Yes' : 'No'}</td>
-                        </tr>
-                    `;
-                }).join('')}
-            </tbody>
-        </table>`}
+    return `
+        <h1>All Deposits History</h1>
+        <p class="subtitle">
+            Total Deposits: ${deposits.length} | 
+            Total Amount: <strong>${formatCurrency(totalAmount)}</strong>
+        </p>
+
+        ${deposits.length === 0 ? 
+            '<p>No deposits have been recorded yet.</p>' : 
+            `
+            <table class="members-table">
+                <thead>
+                    <tr>
+                        <th>Deposit Date</th>
+                        <th>Recorded On</th>
+                        <th>Member</th>
+                        <th>Payment For</th>
+                        <th>Account</th>
+                        <th>Method</th>
+                        <th>Amount</th>
+                        <th>Notification</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${deposits.map(d => {
+                        const member = members.find(m => m.id === d.memberId);
+                        return `
+                            <tr>
+                                <td>${d.depositDate}</td>
+                                <td><small>${d.recordedAt}</small></td>
+                                <td>${member ? member.name : 'Unknown Member'}</td>
+                                <td>${d.paymentFor}</td>
+                                <td>${d.account}</td>
+                                <td>${d.method}</td>
+                                <td><strong>${formatCurrency(d.amount)}</strong></td>
+                                <td>${d.notificationSent ? 'Sent' : 'No'}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+            `
+        }
     `;
 }
 
-// Record deposit
+// Main function to load deposit form
 function recordDeposit(type) {
     document.getElementById('main-content').innerHTML = renderDepositForm(type);
 
@@ -128,35 +143,43 @@ function recordDeposit(type) {
 
         const memberId = parseInt(document.getElementById('deposit-member').value);
         const amount = parseFloat(document.getElementById('deposit-amount').value);
+        const depositDate = document.getElementById('deposit-date').value;
 
-        if (!memberId || isNaN(amount) || amount <= 0) {
-            showAlert('Please select a member and enter a valid amount.');
+        if (!memberId || isNaN(amount) || amount <= 0 || !depositDate) {
+            showAlert('Please fill all required fields with valid data.');
             return;
         }
 
         const member = members.find(m => m.id === memberId);
         if (!member) {
-            showAlert('Member not found.');
+            showAlert('Selected member not found.');
             return;
         }
+
+        const typeName = {
+            'contributions': 'Contribution',
+            'fines': 'Fine',
+            'income': 'Other Income',
+            'loan-repayments': 'Loan Repayment'
+        }[type];
 
         // Update member balance and ledger
         member.balance += amount;
         member.ledger.push({
-            date: document.getElementById('deposit-date').value,
-            type: type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' '),
+            date: depositDate,
+            type: typeName,
             amount,
-            description: `${type} via ${document.getElementById('deposit-method').value}`,
+            description: `${typeName} via ${document.getElementById('deposit-method').value}`,
             balanceAfter: member.balance
         });
 
-        // Record deposit
+        // Record full deposit entry
         deposits.push({
             id: Date.now(),
-            depositDate: document.getElementById('deposit-date').value,
+            depositDate,
             recordedAt: new Date().toLocaleString('en-GB'),
             memberId,
-            paymentFor: type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' '),
+            paymentFor: typeName,
             account: document.getElementById('deposit-account').value,
             method: document.getElementById('deposit-method').value,
             amount,
@@ -165,8 +188,12 @@ function recordDeposit(type) {
 
         saveMembers(members);
         saveDeposits();
-        showAlert('Deposit recorded successfully!');
-        // Stay on form or go to list?
+
+        showAlert(`${typeName} of ${formatCurrency(amount)} recorded successfully!`);
+        
+        // Reset form or stay
+        document.getElementById('deposit-form').reset();
+        document.getElementById('deposit-date').value = new Date().toISOString().split('T')[0];
     });
 }
 
@@ -175,7 +202,7 @@ function depositsListSection() {
     document.getElementById('main-content').innerHTML = renderDepositsList();
 }
 
-// Expose functions
+// Expose functions to window for main.js
 export function initDepositsModule() {
     window.recordContribution = () => recordDeposit('contributions');
     window.recordFine = () => recordDeposit('fines');
