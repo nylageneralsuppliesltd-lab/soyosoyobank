@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoyoSoyo SACCO • Dashboard</title>
+    <title>SoyoSoyoApp • Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/phosphor-icons"></script>
@@ -11,73 +11,87 @@
 <body>
 
 <div class="layout">
-    <!-- HEADER FOR MOBILE (HAMBURGER MENU) -->
+    <!-- MOBILE HEADER -->
     <header class="mobile-header">
         <button id="toggle-sidebar" class="toggle-btn">
             <i class="ph-list"></i>
         </button>
-        <h2>SoyoSoyo SACCO</h2>
+        <h2>SoyoSoyoApp</h2>
     </header>
 
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR (EXTREME LEFT) -->
     <aside class="sidebar" id="sidebar">
         <div class="logo-box">
-            <img src="./assets/logo.png" alt="SoyoSoyo Logo">
-            <h2>SoyoSoyo SACCO</h2>
+            <img src="./assets/logo.png" alt="SoyoSoyoApp Logo">
+            <h2>SoyoSoyoApp</h2>
             <button id="close-sidebar" class="close-btn">
                 <i class="ph-x"></i>
             </button>
         </div>
 
         <ul class="menu">
-            <li data-section="dashboard" class="active has-submenu">
-                <i class="ph-house"></i> 
-                <span>Dashboard</span>
-                <i class="ph-caret-down submenu-toggle"></i>
-            </li>
-            <!-- Example submenu (hidden by default) -->
-            <ul class="submenu">
-                <li data-section="overview">Overview</li>
-                <li data-section="analytics">Analytics</li>
-            </ul>
-
-            <li data-section="members" class="has-submenu">
-                <i class="ph-users-three"></i> 
-                <span>Members</span>
-                <i class="ph-caret-down submenu-toggle"></i>
-            </li>
-            <ul class="submenu">
-                <li data-section="members-list">View Members</li>
-                <li data-section="create-member">Create Member</li>
-            </ul>
-
-            <li data-section="loans">
-                <i class="ph-bank"></i> 
-                <span>Loans</span>
-                <i class="ph-caret-down submenu-toggle"></i>
-            </li>
-            <ul class="submenu">
-                <li data-section="loan-applications">Applications</li>
-                <li data-section="active-loans">Active Loans</li>
-            </ul>
-
-            <li data-section="deposits">
-                <i class="ph-coins"></i> <span>Deposits</span>
+            <li class="menu-item has-submenu active" data-section="dashboard">
+                <div class="menu-link">
+                    <i class="ph-house"></i> 
+                    <span>Dashboard</span>
+                    <i class="ph-caret-down submenu-toggle"></i>
+                </div>
+                <ul class="submenu">
+                    <li data-section="overview">Overview</li>
+                    <li data-section="analytics">Analytics</li>
+                </ul>
             </li>
 
-            <li data-section="reports">
-                <i class="ph-chart-bar"></i> <span>Reports</span>
+            <li class="menu-item has-submenu" data-section="members">
+                <div class="menu-link">
+                    <i class="ph-users-three"></i> 
+                    <span>Members</span>
+                    <i class="ph-caret-down submenu-toggle"></i>
+                </div>
+                <ul class="submenu">
+                    <li data-section="members-list">View Members</li>
+                    <li data-section="create-member">Create Member</li>
+                </ul>
             </li>
 
-            <li data-section="settings">
-                <i class="ph-gear"></i> <span>Settings</span>
+            <li class="menu-item has-submenu" data-section="loans">
+                <div class="menu-link">
+                    <i class="ph-bank"></i> 
+                    <span>Loans</span>
+                    <i class="ph-caret-down submenu-toggle"></i>
+                </div>
+                <ul class="submenu">
+                    <li data-section="loan-applications">Applications</li>
+                    <li data-section="active-loans">Active Loans</li>
+                </ul>
+            </li>
+
+            <li class="menu-item" data-section="deposits">
+                <div class="menu-link">
+                    <i class="ph-coins"></i> 
+                    <span>Deposits</span>
+                </div>
+            </li>
+
+            <li class="menu-item" data-section="reports">
+                <div class="menu-link">
+                    <i class="ph-chart-bar"></i> 
+                    <span>Reports</span>
+                </div>
+            </li>
+
+            <li class="menu-item" data-section="settings">
+                <div class="menu-link">
+                    <i class="ph-gear"></i> 
+                    <span>Settings</span>
+                </div>
             </li>
         </ul>
     </aside>
 
     <!-- MAIN CONTENT -->
     <main id="main-content" class="content">
-        <h1>Welcome to SoyoSoyo SACCO Dashboard</h1>
+        <h1>Welcome to SoyoSoyoApp Dashboard</h1>
         <p>Select a menu item to begin managing your SACCO.</p>
     </main>
 </div>
