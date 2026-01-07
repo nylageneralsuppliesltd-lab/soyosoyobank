@@ -5,6 +5,8 @@ import { initMembersModule } from './modules/members.js';
 import { initDepositsModule } from './modules/deposits.js';
 import { renderDashboard } from './modules/dashboard.js';
 import { renderSettings } from './modules/settings.js';
+import { renderExpenses } from './modules/expenses.js';
+import { initExpensesModule } from './modules/expenses.js';
 import { saccoConfig } from './config.js';
 
 // Global references
@@ -81,6 +83,10 @@ function loadSection(section = 'dashboard') {
                 titleText = 'All Deposits & Transactions';
             }
             break;
+            case 'expenses':
+    renderExpenses();
+    titleText = 'Expenses';
+    break;
 
         // Future modules (Loans, Reports, etc.)
         default:
@@ -180,6 +186,7 @@ window.addEventListener('popstate', (e) => {
 initMenu();
 initMembersModule();
 initDepositsModule();
+initExpensesModule();
 
 // Load initial section from URL hash or default to dashboard
 const initialSection = window.location.hash.slice(1) || 'dashboard';
