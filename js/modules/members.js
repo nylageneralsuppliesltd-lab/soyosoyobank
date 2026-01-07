@@ -1,4 +1,4 @@
-// js/modules/members.js - Complete Members Module (Final Fixed Version)
+// js/modules/members.js - Complete Members Module with Export/Import CSV
 
 import { loadMembers, saveMembers } from '../storage.js';
 import { showAlert, formatCurrency } from '../utils/helpers.js';
@@ -56,7 +56,6 @@ function getMemberFormHTML() {
                     <input type="date" id="dob">
                 </div>
 
-                <!-- Gender as Dropdown -->
                 <div class="form-group">
                     <label>Gender</label>
                     <select id="gender">
@@ -77,7 +76,6 @@ function getMemberFormHTML() {
                     <input type="text" id="town" placeholder="e.g. Nairobi">
                 </div>
 
-                <!-- Employment Status as Dropdown -->
                 <div class="form-group">
                     <label>Employment Status</label>
                     <select id="employment-status">
@@ -383,66 +381,89 @@ function handleMemberSubmit(editMemberId = null) {
 }
 
 // ======================
-// MEMBERS LIST
+// MEMBERS LIST WITH EXPORT/IMPORT BUTTONS
 // ======================
 
 export function renderMembersList() {
     members = loadMembers();
-    // Replace this with your actual renderMembersTable(members) HTML when ready
-    // For now, a clean placeholder:
+
     document.getElementById('main-content').innerHTML = `
         <h1>Members List</h1>
-        <p class="subtitle">Total Members: ${members.length}</p>
-        <div class="table-container">
-            <table class="members-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Phone</th>
-                        <th>Role</th>
-                        <th>Balance</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${members.map(m => `
-                        <tr class="${!m.active ? 'inactive-row' : ''}">
-                            <td>${m.name}</td>
-                            <td>${m.phone}</td>
-                            <td>${m.role}</td>
-                            <td>${formatCurrency(m.balance)}</td>
-                            <td>${m.active ? 'Active' : 'Suspended'}</td>
-                            <td>
-                                <button onclick="renderMemberLedger(${m.id})">Ledger</button>
-                                <button onclick="renderEditMemberForm(${m.id})">Edit</button>
-                                ${m.active 
-                                    ? `<button onclick="suspendMember(${m.id})" style="background:#dc3545;">Suspend</button>`
-                                    : `<button onclick="reactivateMember(${m.id})" style="background:#28a745;">Reactivate</button>`
-                                }
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+        <p class="subtitle">Total Members: ${members.length} | Active: ${members.filter(m => m.active).length} | Suspended: ${members.filter(m => !m.active).length}</p>
+
+        <!-- Export / Import Buttons -->
+        <div class="table-actions" style="margin-bottom: 25px;">
+            <button class="submit-btn" style="background:#28a745;" onclick="window.exportMembersToCSV()">
+                📥 Download Members List (CSV)
+            </button>
+
+            <label class="submit-btn" style="background:#007bff; cursor:pointer;">
+                📤 Import Members from CSV
+                <input type="file" accept=".csv" style="display:none;" onchange="window.importMembers(event)">
+            </label>
         </div>
+
+        <!-- Members Table -->
+        ${members.length === 0 ? 
+            '<p>No members registered yet. Use the buttons above to import or <a href="#" onclick="renderCreateMemberForm()">register a new member</a>.</p>' :
+            `
+            <div class="table-container">
+                <table class="members-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Role</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${members.map(m => `
+                            <tr class="${!m.active ? 'inactive-row' : ''}">
+                                <td><strong>${m.name}</strong></td>
+                                <td>${m.phone}</td>
+                                <td>${m.role}</td>
+                                <td>${formatCurrency(m.balance || 0)}</td>
+                                <td>${m.active ? '<span style="color:#28a745;">Active</span>' : '<span style="color:#dc3545;">Suspended</span>'}</td>
+                                <td>
+                                    <button onclick="window.renderMemberLedger(${m.id})">Ledger</button>
+                                    <button onclick="window.renderEditMemberForm(${m.id})">Edit</button>
+                                    ${m.active 
+                                        ? `<button onclick="window.suspendMember(${m.id})" style="background:#dc3545;color:#fff;">Suspend</button>`
+                                        : `<button onclick="window.reactivateMember(${m.id})" style="background:#28a745;color:#fff;">Reactivate</button>`
+                                    }
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            `
+        }
     `;
 }
 
 // ======================
-// LEDGER, SUSPEND, EXPORT, ETC. (Unchanged from your version)
+// LEDGER
 // ======================
 
 export function renderMemberLedger(memberId) {
     const member = members.find(m => m.id === memberId);
-    if (!member) return showAlert('Member not found.');
+    if (!member) {
+        showAlert('Member not found.');
+        return;
+    }
 
     let contributions = 0;
     let loansOut = 0;
-    member.ledger.forEach(tx => {
-        if (['Contribution', 'Deposit', 'Share Contribution', 'Loan Repayment'].includes(tx.type)) contributions += tx.amount;
-        if (tx.type === 'Loan Disbursement') loansOut += tx.amount;
-    });
+    if (member.ledger) {
+        member.ledger.forEach(tx => {
+            if (['Contribution', 'Deposit', 'Share Contribution', 'Loan Repayment'].includes(tx.type)) contributions += tx.amount;
+            if (tx.type === 'Loan Disbursement') loansOut += tx.amount;
+        });
+    }
 
     document.getElementById('main-content').innerHTML = `
         <h1>Ledger - ${member.name}</h1>
@@ -450,28 +471,32 @@ export function renderMemberLedger(memberId) {
             Status: ${member.active ? '<span style="color:#28a745">Active</span>' : '<span style="color:#dc3545">Suspended</span>'} | 
             Contributions: ${formatCurrency(contributions)} | 
             Loans: ${formatCurrency(loansOut)} | 
-            Balance: ${formatCurrency(member.balance)}
+            Balance: ${formatCurrency(member.balance || 0)}
         </p>
         <div class="table-container">
             <table class="members-table">
                 <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Description</th><th>Balance After</th></tr></thead>
                 <tbody>
-                    ${member.ledger.length === 0 ? '<tr><td colspan="5">No transactions</td></tr>' :
-                     member.ledger.map(tx => `
+                    ${member.ledger && member.ledger.length === 0 ? '<tr><td colspan="5">No transactions yet</td></tr>' :
+                     (member.ledger || []).map(tx => `
                         <tr>
-                            <td>${new Date(tx.date).toLocaleDateString('en-GB')}</td>
-                            <td>${tx.type}</td>
-                            <td>${formatCurrency(tx.amount)}</td>
+                            <td>${tx.date || 'N/A'}</td>
+                            <td>${tx.type || 'Unknown'}</td>
+                            <td>${formatCurrency(tx.amount || 0)}</td>
                             <td>${tx.description || '-'}</td>
-                            <td>${formatCurrency(tx.balanceAfter)}</td>
+                            <td>${formatCurrency(tx.balanceAfter || 0)}</td>
                         </tr>
                      `).join('')}
                 </tbody>
             </table>
         </div>
-        <button class="submit-btn" style="margin-top:20px;" onclick="renderMembersList()">Back to List</button>
+        <button class="submit-btn" style="margin-top:20px;" onclick="renderMembersList()">Back to Members List</button>
     `;
 }
+
+// ======================
+// SUSPEND / REACTIVATE
+// ======================
 
 export function suspendMember(memberId) {
     if (confirm('Suspend this member?')) {
@@ -507,39 +532,26 @@ export function exportMembersToCSV() {
         return;
     }
 
-    // Enrich with calculated contributions and loans
     const enriched = members.map(m => {
         let contributions = 0;
         let loansOut = 0;
         if (m.ledger) {
             m.ledger.forEach(tx => {
-                if (['Contribution', 'Deposit', 'Share Contribution', 'Loan Repayment'].includes(tx.type)) {
-                    contributions += tx.amount;
-                }
-                if (tx.type === 'Loan Disbursement') {
-                    loansOut += tx.amount;
-                }
+                if (['Contribution', 'Deposit', 'Share Contribution', 'Loan Repayment'].includes(tx.type)) contributions += tx.amount;
+                if (tx.type === 'Loan Disbursement') loansOut += tx.amount;
             });
         }
-        return {
-            ...m,
-            contributions,
-            loansOut
-        };
+        return { ...m, contributions, loansOut };
     });
 
-    const headers = [
-        'Name', 'Phone', 'Email', 'ID Number', 'Role',
-        'Introducer Name', 'Introducer Member No.',
-        'Contributions', 'Loans Out', 'Balance', 'Status'
-    ];
+    const headers = ['Name','Phone','Email','ID Number','Role','Introducer Name','Introducer Member No.','Contributions','Loans Out','Balance','Status'];
 
     const rows = enriched.map(m => [
         m.name,
         m.phone,
         m.email || '',
         m.idNumber || '',
-        m.role || 'Member',
+        m.role,
         m.introducerName || '',
         m.introducerMemberNo || '',
         m.contributions || 0,
@@ -550,7 +562,7 @@ export function exportMembersToCSV() {
 
     let csv = headers.join(',') + '\n';
     rows.forEach(row => {
-        csv += row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',') + '\n';
+        csv += row.map(field => `"${(field + '').replace(/"/g, '""')}"`).join(',') + '\n';
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -562,9 +574,14 @@ export function exportMembersToCSV() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
-    showAlert('Members exported successfully!');
+    showAlert('Members list exported successfully!');
 }
+
+// ======================
+// IMPORT MEMBERS FROM CSV
+// ======================
 
 export function importMembers(event) {
     const file = event.target.files[0];
@@ -574,17 +591,17 @@ export function importMembers(event) {
     reader.onload = function(e) {
         const content = e.target.result;
         const lines = content.split(/\r?\n/).filter(line => line.trim());
+
         if (lines.length < 2) {
-            showAlert('CSV is empty or invalid.');
+            showAlert('CSV file is empty or has no data.');
             return;
         }
 
-        const parseCSVLine = (line) => {
+        const parseLine = (line) => {
             const result = [];
             let current = '';
             let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
+            for (let char of line + ',') {
                 if (char === '"') inQuotes = !inQuotes;
                 else if (char === ',' && !inQuotes) {
                     result.push(current.trim());
@@ -593,16 +610,14 @@ export function importMembers(event) {
                     current += char;
                 }
             }
-            result.push(current.trim());
             return result;
         };
 
-        const headerRow = parseCSVLine(lines[0]);
-        const headers = headerRow.map(h => h.toLowerCase());
-
+        const headers = parseLine(lines[0]).map(h => h.toLowerCase());
         let imported = 0;
+
         for (let i = 1; i < lines.length; i++) {
-            const values = parseCSVLine(lines[i]);
+            const values = parseLine(lines[i]);
             if (values.length < headers.length) continue;
 
             const row = {};
@@ -634,15 +649,15 @@ export function importMembers(event) {
         showAlert(`${imported} members imported successfully!`);
         renderMembersList();
     };
+
     reader.readAsText(file);
 }
 
 // ======================
-// MODULE INITIALIZATION – Expose functions to window for onclick handlers
+// INITIALIZER
 // ======================
 
 export function initMembersModule() {
-    // Expose key functions to global scope so onclick handlers can find them
     window.renderMembersList = renderMembersList;
     window.renderCreateMemberForm = renderCreateMemberForm;
     window.renderEditMemberForm = renderEditMemberForm;
@@ -651,6 +666,4 @@ export function initMembersModule() {
     window.reactivateMember = reactivateMember;
     window.exportMembersToCSV = exportMembersToCSV;
     window.importMembers = importMembers;
-
-    console.log('Members module initialized and functions exposed to window');
 }
