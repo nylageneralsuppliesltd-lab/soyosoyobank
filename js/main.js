@@ -1,94 +1,148 @@
-// js/main.js - Entry point (with Dashboard, Members & Deposits integrated)
+// js/main.js - App Entry Point (Updated with Settings & Clean Navigation)
 
 import { initMenu } from './modules/menu.js';
 import { initMembersModule } from './modules/members.js';
 import { initDepositsModule } from './modules/deposits.js';
-import { renderDashboard } from './modules/dashboard.js';  // ← New Dashboard import
+import { renderDashboard } from './modules/dashboard.js';
 import { renderSettings } from './modules/settings.js';
 import { saccoConfig } from './config.js';
 
+// Global references
 const mainContent = document.getElementById('main-content');
+const pageTitle = document.getElementById('page-title'); // Assuming you have <h1 id="page-title"> in index.html
 
 // Set dynamic page title
-document.title = `${saccoConfig.name} • Dashboard`;
+document.title = `${saccoConfig.name} Management System`;
 
+/**
+ * Main navigation handler
+ * @param {string} section - The section ID to load
+ */
 function loadSection(section = 'dashboard') {
-    // Dashboard - Home page
-    if (section === 'dashboard' || section === '') {
-        renderDashboard();
-        return;
+    // Clear previous content
+    if (mainContent) mainContent.innerHTML = '';
+    if (pageTitle) pageTitle.textContent = 'Loading...';
+
+    let titleText = '';
+
+    switch (section) {
+        case 'dashboard':
+            renderDashboard();
+            titleText = 'Dashboard';
+            break;
+
+        case 'settings':
+            renderSettings();
+            titleText = 'Settings & Configuration';
+            break;
+
+        // Members Module Sections
+        case 'create-member':
+            if (typeof window.renderCreateMemberForm === 'function') {
+                window.renderCreateMemberForm();
+                titleText = 'Register New Member';
+            }
+            break;
+        case 'members-list':
+            if (typeof window.renderMembersTable === 'function') {
+                window.renderMembersTable();
+                titleText = 'Members List';
+            }
+            break;
+
+        // Deposits Module Sections
+        case 'deposits-contributions':
+            if (typeof window.renderContributionForm === 'function') {
+                window.renderContributionForm();
+                titleText = 'Record Contribution';
+            }
+            break;
+        case 'deposits-fines':
+            if (typeof window.renderFineForm === 'function') {
+                window.renderFineForm();
+                titleText = 'Record Fine / Penalty';
+            }
+            break;
+        case 'deposits-income':
+            if (typeof window.renderIncomeForm === 'function') {
+                window.renderIncomeForm();
+                titleText = 'Record Other Income';
+            }
+            break;
+        case 'deposits-loan-repayments':
+            if (typeof window.renderLoanRepaymentForm === 'function') {
+                window.renderLoanRepaymentForm();
+                titleText = 'Record Loan Repayment';
+            }
+            break;
+        case 'deposits-list':
+            if (typeof window.renderDepositsHistory === 'function') {
+                window.renderDepositsHistory();
+                titleText = 'All Deposits & Transactions';
+            }
+            break;
+
+        // Future modules (Loans, Reports, etc.)
+        default:
+            titleText = section
+                .split('-')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+
+            mainContent.innerHTML = `
+                <div class="section-card" style="text-align:center; padding:40px;">
+                    <h1>${titleText}</h1>
+                    <p>This feature is under development and will be available in a future update.</p>
+                    <small>Coming soon: Loans, Reports, Exports, Member Portal...</small>
+                </div>
+            `;
+            break;
     }
 
-    // Members sections
-    if (section === 'create-member') {
-        if (typeof window.createMemberSection === 'function') {
-            window.createMemberSection();
-        } else {
-            mainContent.innerHTML = '<h1>Create Member</h1><p>Loading registration form...</p>';
-        }
-    } else if (section === 'members-list') {
-        if (typeof window.membersListSection === 'function') {
-            window.membersListSection();
-        } else {
-            mainContent.innerHTML = '<h1>View Members</h1><p>No members data available yet.</p>';
-        }
+    // Update page title
+    if (pageTitle) pageTitle.textContent = titleText;
 
-    // Deposits submodules
-    } else if (section === 'deposits-contributions') {
-        if (typeof window.recordContribution === 'function') {
-            window.recordContribution();
-        } else {
-            mainContent.innerHTML = '<h1>Record Contribution</h1><p>Deposits module loading...</p>';
-        }
-    } else if (section === 'deposits-fines') {
-        if (typeof window.recordFine === 'function') {
-            window.recordFine();
-        } else {
-            mainContent.innerHTML = '<h1>Record Fine</h1><p>Deposits module loading...</p>';
-        }
-    } else if (section === 'deposits-income') {
-        if (typeof window.recordIncome === 'function') {
-            window.recordIncome();
-        } else {
-            mainContent.innerHTML = '<h1>Record Other Income</h1><p>Deposits module loading...</p>';
-        }
-    } else if (section === 'deposits-loan-repayments') {
-        if (typeof window.recordLoanRepayment === 'function') {
-            window.recordLoanRepayment();
-        } else {
-            mainContent.innerHTML = '<h1>Record Loan Repayment</h1><p>Deposits module loading...</p>';
-        }
-    } else if (section === 'deposits-list') {
-        if (typeof window.depositsListSection === 'function') {
-            window.depositsListSection();
-        } else {
-            mainContent.innerHTML = '<h1>All Deposits</h1><p>Deposits history loading...</p>';
-        }
+    // Update URL hash (optional, for bookmarking)
+    history.pushState({ section }, titleText, `#${section}`);
+}
 
-    // Fallback for any other section (Reports, Settings, Loans, etc.)
-    } else {
-        const title = section
-            .split('-')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
+/**
+ * Highlight active menu item based on current section
+ * @param {string} section
+ */
+function setActiveMenu(section) {
+    // Remove all active classes
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.querySelectorAll('.submenu li').forEach(item => {
+        item.classList.remove('active');
+    });
 
-        mainContent.innerHTML = `
-            <h1>${title}</h1>
-            <p>This module is under development and will be available soon.</p>
-        `;
+    // Find and activate the correct menu item
+    const menuItem = document.querySelector(`[data-section="${section}"]`);
+    if (menuItem) {
+        menuItem.classList.add('active');
+        // If it's in a submenu, also activate parent
+        const parent = menuItem.closest('.has-submenu');
+        if (parent) parent.classList.add('active');
+    } else if (section === 'dashboard') {
+        // Dashboard is usually the top "Home" item
+        const homeItem = document.querySelector('.menu-item:not(.has-submenu)');
+        if (homeItem) homeItem.classList.add('active');
     }
 }
 
-// Navigation: Submenu items (Members, Deposits, etc.)
-document.querySelectorAll('.submenu li').forEach(item => {
-    item.addEventListener('click', (e) => {
-        e.stopPropagation();
+// Event Listeners for Navigation
 
-        // Update active menu
-        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-        item.closest('.menu-item').classList.add('active');
+// Top-level menu items (Dashboard, Settings, etc.)
+document.querySelectorAll('.menu-item > .menu-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+        const menuItem = link.parentElement;
+        const section = menuItem.dataset.section || 'dashboard';
 
-        loadSection(item.dataset.section);
+        loadSection(section);
+        setActiveMenu(section);
 
         // Close mobile sidebar
         if (window.innerWidth <= 992) {
@@ -97,19 +151,29 @@ document.querySelectorAll('.submenu li').forEach(item => {
     });
 });
 
-// In the top-level menu click handler (already in your code)
-document.querySelectorAll('.menu-item:not(.has-submenu) > .menu-link').forEach(link => {
-    link.addEventListener('click', () => {
-        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-        link.parentElement.classList.add('active');
+// Submenu items (inside Members, Deposits, etc.)
+document.querySelectorAll('.submenu li').forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const section = item.dataset.section;
 
-        const section = link.parentElement.dataset.section || 'dashboard';
-        loadSection(section);
+        if (section) {
+            loadSection(section);
+            setActiveMenu(section);
 
-        if (window.innerWidth <= 992) {
-            document.getElementById('sidebar').classList.remove('open');
+            // Close mobile sidebar
+            if (window.innerWidth <= 992) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
         }
     });
+});
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', (e) => {
+    const section = e.state?.section || 'dashboard';
+    loadSection(section);
+    setActiveMenu(section);
 });
 
 // Initialize all modules
@@ -117,5 +181,7 @@ initMenu();
 initMembersModule();
 initDepositsModule();
 
-// Load Dashboard on page start
-loadSection('dashboard');
+// Load initial section from URL hash or default to dashboard
+const initialSection = window.location.hash.slice(1) || 'dashboard';
+loadSection(initialSection);
+setActiveMenu(initialSection);
