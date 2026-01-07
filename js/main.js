@@ -2,6 +2,7 @@
 
 import { initMenu } from './modules/menu.js';
 import { initMembersModule } from './modules/members.js';
+import { saccoConfig } from './config.js';
 
 const mainContent = document.getElementById('main-content');
 
