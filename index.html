@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoyoSoyo App • Dashboard</title>
+    <title>SoyoSoyo SACCO • Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/phosphor-icons"></script>
@@ -11,30 +11,55 @@
 <body>
 
 <div class="layout">
+    <!-- HEADER FOR MOBILE (HAMBURGER MENU) -->
+    <header class="mobile-header">
+        <button id="toggle-sidebar" class="toggle-btn">
+            <i class="ph-list"></i>
+        </button>
+        <h2>SoyoSoyo SACCO</h2>
+    </header>
 
     <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="logo-box">
-           <img src="./assets/logo.png" alt="Logo">
-            <h2>SoyoSoyo Bank</h2>
+            <img src="./assets/logo.png" alt="SoyoSoyo Logo">
+            <h2>SoyoSoyo SACCO</h2>
+            <button id="close-sidebar" class="close-btn">
+                <i class="ph-x"></i>
+            </button>
         </div>
 
         <ul class="menu">
-            <li data-section="dashboard" class="active">
-                <i class="ph-house"></i> <span>Dashboard</span>
+            <li data-section="dashboard" class="active has-submenu">
+                <i class="ph-house"></i> 
+                <span>Dashboard</span>
+                <i class="ph-caret-down submenu-toggle"></i>
             </li>
+            <!-- Example submenu (hidden by default) -->
+            <ul class="submenu">
+                <li data-section="overview">Overview</li>
+                <li data-section="analytics">Analytics</li>
+            </ul>
 
-            <li data-section="members">
-                <i class="ph-users-three"></i> <span>Members</span>
+            <li data-section="members" class="has-submenu">
+                <i class="ph-users-three"></i> 
+                <span>Members</span>
+                <i class="ph-caret-down submenu-toggle"></i>
             </li>
-
-            <li data-section="create-member">
-                <i class="ph-user-plus"></i> <span>Create Member</span>
-            </li>
+            <ul class="submenu">
+                <li data-section="members-list">View Members</li>
+                <li data-section="create-member">Create Member</li>
+            </ul>
 
             <li data-section="loans">
-                <i class="ph-bank"></i> <span>Loans</span>
+                <i class="ph-bank"></i> 
+                <span>Loans</span>
+                <i class="ph-caret-down submenu-toggle"></i>
             </li>
+            <ul class="submenu">
+                <li data-section="loan-applications">Applications</li>
+                <li data-section="active-loans">Active Loans</li>
+            </ul>
 
             <li data-section="deposits">
                 <i class="ph-coins"></i> <span>Deposits</span>
@@ -52,10 +77,9 @@
 
     <!-- MAIN CONTENT -->
     <main id="main-content" class="content">
-        <h1>Welcome to SoyoSoyo Bank</h1>
-        <p>Select a menu item to begin.</p>
+        <h1>Welcome to SoyoSoyo SACCO Dashboard</h1>
+        <p>Select a menu item to begin managing your SACCO.</p>
     </main>
-
 </div>
 
 <script src="main.js"></script>
