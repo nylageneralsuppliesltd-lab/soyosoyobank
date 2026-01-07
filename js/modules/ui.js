@@ -6,13 +6,13 @@ export function renderCreateMemberForm() {
     return `
         <style>
             .required-label::after { content: " *"; color: red; font-weight: bold; }
-            .optional-section { opacity: 0.8; font-style: italic; }
         </style>
 
         <h1>SACCO Membership Registration</h1>
         <p class="subtitle">Fields marked with <span style="color:red;font-weight:bold;">*</span> are required.</p>
 
         <form class="form-card" id="create-member-form">
+
             <!-- Personal Details -->
             <h3>Section A: Personal Details</h3>
             <div class="form-group"><label class="required-label">Full Name</label><input type="text" id="full-name" required></div>
@@ -62,9 +62,9 @@ export function renderCreateMemberForm() {
                 </div>
             </div>
 
-            <!-- Nominees (Optional but mandatory if added) -->
-            <h3>Next of Kin / Nominees <span class="optional-section">(Optional)</span></h3>
-            <p><small>If added, all fields are required and shares must total 100%.</small></p>
+            <!-- Nominees (Optional) -->
+            <h3>Next of Kin / Nominees (Optional)</h3>
+            <p><small>If you add a nominee, all their fields are required and percentages must total 100%.</small></p>
             <div id="nok-container"></div>
             <button type="button" id="add-nok" class="submit-btn" style="background:#007bff;padding:10px 20px;margin:20px 0;">
                 + Add Nominee (Max 3)
