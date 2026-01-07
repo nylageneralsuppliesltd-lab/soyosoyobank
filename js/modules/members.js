@@ -40,7 +40,7 @@ function createMemberSection() {
         customGroup.style.display = roleSelect.value === 'Other' ? 'block' : 'none';
     });
 
-    // Add nominee button
+    // Add nominee (optional)
     let nokCount = 0;
     addNokBtn.addEventListener('click', () => {
         if (nokCount >= 3) {
@@ -65,11 +65,10 @@ function createMemberSection() {
         nokContainer.appendChild(entry);
     });
 
-    // Form submission
-    document.getElementById('create-member-form').addEventListener('submit', (e) => {
+    // Form submission (Create)
+    document.getElementById('create-member-form').addEventListener('submit', function submitHandler(e) {
         e.preventDefault();
 
-        // Core required fields
         const name = document.getElementById('full-name').value.trim();
         const phone = document.getElementById('phone').value.trim();
         const email = document.getElementById('email').value.trim();
@@ -111,14 +110,13 @@ function createMemberSection() {
             return;
         }
 
-        // Nominees - optional section
+        // Nominees (optional but mandatory if added)
         const nokEntries = Array.from(document.querySelectorAll('.nok-entry'));
         let nextOfKin = [];
         let totalShare = 0;
 
         if (nokEntries.length > 0) {
             let valid = true;
-
             for (const entry of nokEntries) {
                 const nokName = entry.querySelector('.nok-name').value.trim();
                 const nokRelationship = entry.querySelector('.nok-relationship').value.trim();
@@ -146,13 +144,7 @@ function createMemberSection() {
                 }
 
                 totalShare += share;
-                nextOfKin.push({
-                    name: nokName,
-                    relationship: nokRelationship,
-                    id: nokId,
-                    phone: nokPhone,
-                    share
-                });
+                nextOfKin.push({ name: nokName, relationship: nokRelationship, id: nokId, phone: nokPhone, share });
             }
 
             if (!valid) return;
@@ -163,7 +155,6 @@ function createMemberSection() {
             }
         }
 
-        // Create member object
         const newMember = {
             id: Date.now(),
             name,
@@ -195,7 +186,152 @@ function createMemberSection() {
 }
 
 // ======================
-// LIST, LEDGER, STATUS
+// EDIT MEMBER FUNCTION
+// ======================
+
+function editMember(memberId) {
+    const member = members.find(m => m.id === memberId);
+    if (!member) {
+        showAlert('Member not found.');
+        return;
+    }
+
+    document.getElementById('main-content').innerHTML = renderCreateMemberForm();
+
+    // Pre-fill all fields
+    document.getElementById('full-name').value = member.name || '';
+    document.getElementById('id-number').value = member.idNumber || '';
+    document.getElementById('dob').value = member.dob || '';
+    document.getElementById('phone').value = member.phone || '';
+    document.getElementById('email').value = member.email || '';
+    document.getElementById('physical-address').value = member.physicalAddress || '';
+    document.getElementById('town').value = member.town || '';
+
+    if (member.gender) {
+        const radio = document.querySelector(`input[name="gender"][value="${member.gender}"]`);
+        if (radio) radio.checked = true;
+    }
+
+    if (member.employmentStatus) {
+        const radio = document.querySelector(`input[name="employment-status"][value="${member.employmentStatus}"]`);
+        if (radio) radio.checked = true;
+    }
+
+    document.getElementById('employer-name').value = member.employerName || '';
+    document.getElementById('reg-no').value = member.regNo || '';
+    document.getElementById('employer-address').value = member.employerAddress || '';
+
+    // Role
+    const roleSelect = document.getElementById('role');
+    const customGroup = document.getElementById('custom-role-group');
+    if (['Member', 'Admin', 'Chairman', 'Vice Chairman', 'Secretary', 'Treasurer'].includes(member.role)) {
+        roleSelect.value = member.role;
+        customGroup.style.display = 'none';
+    } else {
+        roleSelect.value = 'Other';
+        customGroup.style.display = 'block';
+        document.getElementById('custom-role').value = member.role || '';
+    }
+
+    // Introducer
+    document.getElementById('introducer-name').value = member.introducerName || '';
+    document.getElementById('introducer-member-no').value = member.introducerMemberNo || '';
+
+    // Nominees
+    const nokContainer = document.getElementById('nok-container');
+    nokContainer.innerHTML = '';
+    let nokCount = 0;
+
+    if (member.nextOfKin && member.nextOfKin.length > 0) {
+        member.nextOfKin.forEach(nok => {
+            nokCount++;
+            const entry = document.createElement('div');
+            entry.className = 'nok-entry';
+            entry.innerHTML = `
+                <h4 style="margin-top:20px;">Nominee ${nokCount}</h4>
+                <div class="form-group"><label class="required-label">Name</label><input type="text" class="nok-name" value="${nok.name}" required></div>
+                <div class="form-group"><label class="required-label">Relationship</label><input type="text" class="nok-relationship" value="${nok.relationship || ''}" required></div>
+                <div class="form-group"><label class="required-label">ID No.</label><input type="text" class="nok-id" value="${nok.id || ''}" required></div>
+                <div class="form-group"><label class="required-label">Mobile Number</label><input type="tel" class="nok-phone" value="${nok.phone}" required></div>
+                <div class="form-group"><label class="required-label">Percentage Allocation %</label><input type="number" class="nok-share" value="${nok.share}" min="1" max="100" step="1" required></div>
+                <button type="button" style="background:#dc3545;color:#fff;padding:8px 12px;margin-top:10px;border:none;border-radius:6px;" onclick="this.closest('.nok-entry').remove();">
+                    Remove Nominee
+                </button>
+            `;
+            nokContainer.appendChild(entry);
+        });
+    }
+
+    // Change button text
+    document.querySelector('#create-member-form button[type="submit"]').textContent = 'Update Member';
+
+    // Override submit for update
+    document.getElementById('create-member-form').onsubmit = function(e) {
+        e.preventDefault();
+
+        const updatedPhone = document.getElementById('phone').value.trim();
+        if (updatedPhone !== member.phone && members.some(m => m.id !== member.id && m.phone === updatedPhone)) {
+            showAlert('Phone number already used by another member.');
+            return;
+        }
+
+        if (!isValidKenyanPhone(updatedPhone)) {
+            showAlert('Invalid phone number.');
+            return;
+        }
+
+        // Update member
+        member.name = document.getElementById('full-name').value.trim();
+        member.idNumber = document.getElementById('id-number').value.trim() || null;
+        member.dob = document.getElementById('dob').value || null;
+        member.phone = updatedPhone;
+        member.email = document.getElementById('email').value.trim() || null;
+        member.physicalAddress = document.getElementById('physical-address').value.trim() || null;
+        member.town = document.getElementById('town').value.trim() || null;
+        member.gender = document.querySelector('input[name="gender"]:checked')?.value || null;
+        member.employmentStatus = document.querySelector('input[name="employment-status"]:checked')?.value || null;
+        member.employerName = document.getElementById('employer-name').value.trim() || null;
+        member.regNo = document.getElementById('reg-no').value.trim() || null;
+        member.employerAddress = document.getElementById('employer-address').value.trim() || null;
+        member.introducerName = document.getElementById('introducer-name').value.trim();
+        member.introducerMemberNo = document.getElementById('introducer-member-no').value.trim();
+
+        const roleValue = roleSelect.value;
+        member.role = roleValue === 'Other' ? document.getElementById('custom-role').value.trim() : roleValue;
+
+        // Update nominees
+        const nokEntries = document.querySelectorAll('.nok-entry');
+        let totalShare = 0;
+        member.nextOfKin = [];
+
+        if (nokEntries.length > 0) {
+            for (const entry of nokEntries) {
+                const share = parseFloat(entry.querySelector('.nok-share').value);
+                if (isNaN(share)) continue;
+                totalShare += share;
+                member.nextOfKin.push({
+                    name: entry.querySelector('.nok-name').value.trim(),
+                    relationship: entry.querySelector('.nok-relationship').value.trim(),
+                    id: entry.querySelector('.nok-id').value.trim(),
+                    phone: entry.querySelector('.nok-phone').value.trim(),
+                    share
+                });
+            }
+
+            if (Math.abs(totalShare - 100) > 0.01) {
+                showAlert(`Nominee percentages must total 100%. Current: ${totalShare.toFixed(1)}%`);
+                return;
+            }
+        }
+
+        saveMembers(members);
+        showAlert('Member updated successfully!');
+        membersListSection();
+    };
+}
+
+// ======================
+// OTHER FUNCTIONS
 // ======================
 
 function membersListSection() {
@@ -243,7 +379,7 @@ function viewLedger(memberId) {
 }
 
 function showAddTransactionForm(memberId) {
-    alert('Add Transaction form will be implemented in the next module.');
+    alert('Add Transaction form will be implemented in the Deposits/Loans module.');
 }
 
 function suspendMember(memberId) {
@@ -267,7 +403,7 @@ function reactivateMember(memberId) {
 }
 
 // ======================
-// EXPORT TO CSV (Working & Reliable)
+// EXPORT TO CSV
 // ======================
 
 function exportMembersToCSV() {
@@ -322,7 +458,7 @@ function exportMembersToCSV() {
 }
 
 // ======================
-// IMPORT FROM CSV (Robust Parser)
+// IMPORT FROM CSV
 // ======================
 
 function importMembers(event) {
@@ -339,16 +475,14 @@ function importMembers(event) {
             return;
         }
 
-        // Simple CSV parser that handles quotes
         const parseCSVLine = (line) => {
             const result = [];
             let current = '';
             let inQuotes = false;
             for (let i = 0; i < line.length; i++) {
                 const char = line[i];
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === ',' && !inQuotes) {
                     result.push(current.trim());
                     current = '';
                 } else {
@@ -399,151 +533,6 @@ function importMembers(event) {
     };
 
     reader.readAsText(file);
-}
-function editMember(memberId) {
-    const member = members.find(m => m.id === memberId);
-    if (!member) {
-        showAlert('Member not found.');
-        return;
-    }
-
-    // Render the same create form but pre-filled with member data
-    document.getElementById('main-content').innerHTML = renderCreateMemberForm();
-
-    // Pre-fill all fields
-    document.getElementById('full-name').value = member.name || '';
-    document.getElementById('id-number').value = member.idNumber || '';
-    document.getElementById('dob').value = member.dob || '';
-    document.getElementById('phone').value = member.phone || '';
-    document.getElementById('email').value = member.email || '';
-    document.getElementById('physical-address').value = member.physicalAddress || '';
-    document.getElementById('town').value = member.town || '';
-
-    // Gender radio
-    if (member.gender) {
-        const genderRadio = document.querySelector(`input[name="gender"][value="${member.gender}"]`);
-        if (genderRadio) genderRadio.checked = true;
-    }
-
-    // Employment status radio
-    if (member.employmentStatus) {
-        const empRadio = document.querySelector(`input[name="employment-status"][value="${member.employmentStatus}"]`);
-        if (empRadio) empRadio.checked = true;
-    }
-
-    document.getElementById('employer-name').value = member.employerName || '';
-    document.getElementById('reg-no').value = member.regNo || '';
-    document.getElementById('employer-address').value = member.employerAddress || '';
-
-    // Role
-    const roleSelect = document.getElementById('role');
-    const customGroup = document.getElementById('custom-role-group');
-    if (['Member', 'Admin', 'Chairman', 'Vice Chairman', 'Secretary', 'Treasurer'].includes(member.role)) {
-        roleSelect.value = member.role;
-        customGroup.style.display = 'none';
-    } else {
-        roleSelect.value = 'Other';
-        customGroup.style.display = 'block';
-        document.getElementById('custom-role').value = member.role || '';
-    }
-
-    // Introducer
-    document.getElementById('introducer-name').value = member.introducerName || '';
-    document.getElementById('introducer-member-no').value = member.introducerMemberNo || '';
-
-    // Nominees (Next of Kin)
-    const nokContainer = document.getElementById('nok-container');
-    nokContainer.innerHTML = ''; // Clear default
-
-    if (member.nextOfKin && member.nextOfKin.length > 0) {
-        member.nextOfKin.forEach((nok, index) => {
-            const entry = document.createElement('div');
-            entry.className = 'nok-entry';
-            entry.innerHTML = `
-                <h4 style="margin-top:20px;">Nominee ${index + 1}</h4>
-                <div class="form-group"><label class="required-label">Name</label><input type="text" class="nok-name" value="${nok.name}" required></div>
-                <div class="form-group"><label class="required-label">Relationship</label><input type="text" class="nok-relationship" value="${nok.relationship || ''}" required></div>
-                <div class="form-group"><label class="required-label">ID No.</label><input type="text" class="nok-id" value="${nok.id || ''}" required></div>
-                <div class="form-group"><label class="required-label">Mobile Number</label><input type="tel" class="nok-phone" value="${nok.phone}" required></div>
-                <div class="form-group"><label class="required-label">Percentage Allocation %</label><input type="number" class="nok-share" value="${nok.share}" min="1" max="100" step="1" required></div>
-                <button type="button" style="background:#dc3545;color:#fff;padding:8px 12px;margin-top:10px;border:none;border-radius:6px;" onclick="this.closest('.nok-entry').remove();">
-                    Remove Nominee
-                </button>
-            `;
-            nokContainer.appendChild(entry);
-        });
-    }
-
-    // Change submit button text
-    const submitBtn = document.querySelector('#create-member-form button[type="submit"]');
-    submitBtn.textContent = 'Update Member';
-
-    // Override form submit for update
-    document.getElementById('create-member-form').onsubmit = function(e) {
-        e.preventDefault();
-
-        // Same validation as create (reuse logic or re-run)
-        // For brevity, we'll copy key parts
-
-        const updatedPhone = document.getElementById('phone').value.trim();
-        if (updatedPhone !== member.phone && members.some(m => m.phone === updatedPhone)) {
-            showAlert('Another member already uses this phone number.');
-            return;
-        }
-
-        if (!isValidKenyanPhone(updatedPhone)) {
-            showAlert('Invalid phone number.');
-            return;
-        }
-
-        // Update member object
-        member.name = document.getElementById('full-name').value.trim();
-        member.idNumber = document.getElementById('id-number').value.trim() || null;
-        member.dob = document.getElementById('dob').value || null;
-        member.phone = updatedPhone;
-        member.email = document.getElementById('email').value.trim() || null;
-        member.physicalAddress = document.getElementById('physical-address').value.trim() || null;
-        member.town = document.getElementById('town').value.trim() || null;
-        member.gender = document.querySelector('input[name="gender"]:checked')?.value || null;
-        member.employmentStatus = document.querySelector('input[name="employment-status"]:checked')?.value || null;
-        member.employerName = document.getElementById('employer-name').value.trim() || null;
-        member.regNo = document.getElementById('reg-no').value.trim() || null;
-        member.employerAddress = document.getElementById('employer-address').value.trim() || null;
-        member.introducerName = document.getElementById('introducer-name').value.trim();
-        member.introducerMemberNo = document.getElementById('introducer-member-no').value.trim();
-
-        // Role
-        const roleValue = roleSelect.value;
-        member.role = roleValue === 'Other' ? document.getElementById('custom-role').value.trim() : roleValue;
-
-        // Nominees
-        const nokEntries = document.querySelectorAll('.nok-entry');
-        let totalShare = 0;
-        member.nextOfKin = [];
-
-        if (nokEntries.length > 0) {
-            for (const entry of nokEntries) {
-                const share = parseFloat(entry.querySelector('.nok-share').value);
-                totalShare += share;
-                member.nextOfKin.push({
-                    name: entry.querySelector('.nok-name').value.trim(),
-                    relationship: entry.querySelector('.nok-relationship').value.trim(),
-                    id: entry.querySelector('.nok-id').value.trim(),
-                    phone: entry.querySelector('.nok-phone').value.trim(),
-                    share
-                });
-            }
-
-            if (Math.abs(totalShare - 100) > 0.01) {
-                showAlert(`Nominee percentages must total 100%. Current: ${totalShare}%`);
-                return;
-            }
-        }
-
-        saveMembers(members);
-        showAlert('Member updated successfully!');
-        membersListSection();
-    };
 }
 
 // ======================
