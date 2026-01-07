@@ -497,6 +497,75 @@ export function reactivateMember(memberId) {
     }
 }
 
+// ======================
+// EXPORT MEMBERS TO CSV
+// ======================
+
+export function exportMembersToCSV() {
+    if (members.length === 0) {
+        showAlert('No members to export.');
+        return;
+    }
+
+    // Enrich with calculated contributions and loans
+    const enriched = members.map(m => {
+        let contributions = 0;
+        let loansOut = 0;
+        if (m.ledger) {
+            m.ledger.forEach(tx => {
+                if (['Contribution', 'Deposit', 'Share Contribution', 'Loan Repayment'].includes(tx.type)) {
+                    contributions += tx.amount;
+                }
+                if (tx.type === 'Loan Disbursement') {
+                    loansOut += tx.amount;
+                }
+            });
+        }
+        return {
+            ...m,
+            contributions,
+            loansOut
+        };
+    });
+
+    const headers = [
+        'Name', 'Phone', 'Email', 'ID Number', 'Role',
+        'Introducer Name', 'Introducer Member No.',
+        'Contributions', 'Loans Out', 'Balance', 'Status'
+    ];
+
+    const rows = enriched.map(m => [
+        m.name,
+        m.phone,
+        m.email || '',
+        m.idNumber || '',
+        m.role || 'Member',
+        m.introducerName || '',
+        m.introducerMemberNo || '',
+        m.contributions || 0,
+        m.loansOut || 0,
+        m.balance || 0,
+        m.active ? 'Active' : 'Suspended'
+    ]);
+
+    let csv = headers.join(',') + '\n';
+    rows.forEach(row => {
+        csv += row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'soyosoyo_members.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showAlert('Members exported successfully!');
+}
+
 export function importMembers(event) {
     const file = event.target.files[0];
     if (!file) return;
