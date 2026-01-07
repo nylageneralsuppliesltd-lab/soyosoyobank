@@ -1,4 +1,4 @@
-// js/main.js - Final Working Entry Point (Direct Named Imports)
+// js/main.js - Final Entry Point (All Modules Integrated)
 
 import { initMenu } from './modules/menu.js';
 
@@ -11,30 +11,19 @@ import {
 
 // Deposits Module
 import { 
-    renderContributionForm,
-    renderFineForm,
-    renderIncomeForm,
-    renderLoanRepaymentForm,
-    renderDepositsHistory,
     initDepositsModule 
 } from './modules/deposits.js';
 
 // Dashboard
 import { renderDashboard } from './modules/dashboard.js';
 
-// Settings
-import { renderSettings } from './modules/settings.js';
-
-// Expenses
-import { renderExpenses } from './modules/expenses.js';
-
 import { saccoConfig } from './config.js';
 
 // DOM References
 const mainContent = document.getElementById('main-content');
-const pageTitle = document.getElementById('page-title');
+const pageTitle = document.querySelector('title'); // For dynamic title
 
-// Set page title
+// Set base page title
 document.title = `${saccoConfig.name} • Management System`;
 
 /**
@@ -43,24 +32,13 @@ document.title = `${saccoConfig.name} • Management System`;
 function loadSection(section = 'dashboard') {
     // Clear content
     if (mainContent) mainContent.innerHTML = '';
-    if (pageTitle) pageTitle.textContent = 'Loading...';
-
-    let titleText = '';
+    
+    let titleText = 'Dashboard';
 
     switch (section) {
         case 'dashboard':
             renderDashboard();
             titleText = 'Dashboard';
-            break;
-
-        case 'settings':
-            renderSettings();
-            titleText = 'Settings & Configuration';
-            break;
-
-        case 'expenses':
-            renderExpenses();
-            titleText = 'Expenses';
             break;
 
         // === Members ===
@@ -76,31 +54,43 @@ function loadSection(section = 'dashboard') {
 
         // === Deposits ===
         case 'deposits-contributions':
-            renderContributionForm();
+            if (typeof window.recordContribution === 'function') {
+                window.recordContribution();
+            } else {
+                mainContent.innerHTML = '<h1>Record Contribution</h1><p>Deposits module loading...</p>';
+            }
             titleText = 'Record Contribution';
             break;
 
         case 'deposits-fines':
-            renderFineForm();
-            titleText = 'Record Fine / Penalty';
+            if (typeof window.recordFine === 'function') {
+                window.recordFine();
+            }
+            titleText = 'Record Fine';
             break;
 
         case 'deposits-income':
-            renderIncomeForm();
+            if (typeof window.recordIncome === 'function') {
+                window.recordIncome();
+            }
             titleText = 'Record Other Income';
             break;
 
         case 'deposits-loan-repayments':
-            renderLoanRepaymentForm();
+            if (typeof window.recordLoanRepayment === 'function') {
+                window.recordLoanRepayment();
+            }
             titleText = 'Record Loan Repayment';
             break;
 
         case 'deposits-list':
-            renderDepositsHistory();
-            titleText = 'All Deposits & Transactions';
+            if (typeof window.depositsListSection === 'function') {
+                window.depositsListSection();
+            }
+            titleText = 'All Deposits History';
             break;
 
-        // === Placeholder for Future Modules (Loans, Reports) ===
+        // === Future Modules (Loans, Reports, Settings, Expenses) ===
         default:
             titleText = section
                 .split('-')
@@ -108,57 +98,65 @@ function loadSection(section = 'dashboard') {
                 .join(' ');
 
             mainContent.innerHTML = `
-                <div class="section-card" style="text-align:center; padding:60px; max-width:600px; margin:0 auto;">
+                <div class="section-card" style="text-align:center; padding:60px; max-width:700px; margin:0 auto;">
                     <h1>${titleText}</h1>
-                    <p>This feature is under development and will be available soon.</p>
-                    <small style="color:#666;">Coming next: Loans Management, Reports, Member Portal...</small>
+                    <p>This module is under development and will be available soon.</p>
+                    <p style="color:#666; margin-top:20px;">
+                        Upcoming features: Loans Management, Full Reports, Settings, Expenses, Member Portal...
+                    </p>
                 </div>
             `;
             break;
     }
 
-    // Update page title
-    if (pageTitle) pageTitle.textContent = titleText;
+    // Update browser title
+    document.title = `${titleText} • ${saccoConfig.name}`;
 
-    // Update browser history
-    history.pushState({ section }, titleText, `#${section}`);
+    // Update URL hash without reloading
+    if (history.pushState) {
+        history.pushState({ section }, titleText, `#${section}`);
+    }
 
-    // Highlight active menu item
+    // Highlight active menu
     setActiveMenu(section);
 }
 
 /**
- * Highlight the active menu item
+ * Highlight the active menu item based on current section
  */
 function setActiveMenu(section) {
     // Reset all
     document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
     document.querySelectorAll('.submenu li').forEach(item => item.classList.remove('active'));
 
-    // Activate matching item
-    const target = document.querySelector(`[data-section="${section}"]`);
-    if (target) {
-        target.classList.add('active');
-        // Also activate parent submenu if exists
-        const parentMenu = target.closest('.has-submenu');
-        if (parentMenu) parentMenu.classList.add('active');
+    // Find and activate the matching item
+    const targetItem = document.querySelector(`[data-section="${section}"]`);
+    if (targetItem) {
+        targetItem.classList.add('active');
+
+        // If it's in a submenu, open the parent
+        const parentHasSubmenu = targetItem.closest('.has-submenu');
+        if (parentHasSubmenu) {
+            parentHasSubmenu.classList.add('active');
+        }
     }
 
-    // Special case: dashboard is usually top-level
+    // Special case: Dashboard is top-level
     if (section === 'dashboard') {
-        const dashboardItem = document.querySelector('[data-section="dashboard"]');
+        const dashboardItem = document.querySelector('.menu-item[data-section="dashboard"]');
         if (dashboardItem) dashboardItem.classList.add('active');
     }
 }
 
 // === Navigation Event Listeners ===
 
-// Top-level menu items (Dashboard, Settings, Expenses, etc.)
+// Top-level menu items (Dashboard, Reports, Settings, etc.)
 document.querySelectorAll('.menu-item > .menu-link').forEach(link => {
     link.addEventListener('click', (e) => {
         e.stopPropagation();
         const menuItem = link.parentElement;
         const section = menuItem.dataset.section || 'dashboard';
+
         loadSection(section);
 
         // Close mobile sidebar
@@ -168,7 +166,7 @@ document.querySelectorAll('.menu-item > .menu-link').forEach(link => {
     });
 });
 
-// Submenu items (inside Members, Deposits, etc.)
+// Submenu items (inside Members, Deposits, Loans, etc.)
 document.querySelectorAll('.submenu li').forEach(item => {
     item.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -186,7 +184,7 @@ document.querySelectorAll('.submenu li').forEach(item => {
 
 // Handle browser back/forward buttons
 window.addEventListener('popstate', (e) => {
-    const section = e.state?.section || 'dashboard';
+    const section = e.state?.section || window.location.hash.slice(1) || 'dashboard';
     loadSection(section);
 });
 
@@ -195,7 +193,8 @@ initMenu();
 initMembersModule();
 initDepositsModule();
 
-// === Load Initial Section from URL or Default to Dashboard ===
+// === Load Initial Section ===
+// On first load: use URL hash, fallback to dashboard
 const initialSection = window.location.hash.slice(1) || 'dashboard';
 loadSection(initialSection);
 setActiveMenu(initialSection);
