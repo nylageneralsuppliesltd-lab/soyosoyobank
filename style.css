@@ -1,138 +1,278 @@
+/* style.css - Enhanced with SoyoSoyo SACCO theme, mobile responsiveness, collapsible sidebar & submenus */
+
+/* SoyoSoyo SACCO Brand Colors (based on common Kenyan SACCO themes: Green for growth/savings, Orange accent) */
+:root {
+    --primary-green: #28a745;     /* Main green (success, growth) */
+    --primary-orange: #fd7e14;    /* Accent orange (energy, calls to action) */
+    --dark: #212529;
+    --light-bg: #f8f9fa;
+    --card-bg: #ffffff;
+    --text: #333333;
+    --border: #dee2e6;
+}
+
 /* GLOBAL */
 body {
     margin: 0;
     font-family: 'Inter', sans-serif;
-    background: #f3f6fa;
-    color: #1a1a1a;
+    background: var(--light-bg);
+    color: var(--text);
+    overflow-x: hidden;
 }
 
 .layout {
     display: flex;
-    height: 100vh;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* MOBILE HEADER */
+.mobile-header {
+    display: none;
+    align-items: center;
+    padding: 15px 20px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.toggle-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    margin-right: 15px;
+}
+
+.mobile-header h2 {
+    font-size: 18px;
+    color: var(--primary-green);
 }
 
 /* SIDEBAR */
 .sidebar {
-    width: 270px;
-    background: rgba(255,255,255,0.65);
-    backdrop-filter: blur(18px);
-    border-right: 1px solid rgba(255,255,255,0.3);
-    box-shadow: 0 0 40px rgba(0,0,0,0.05);
-    padding: 25px;
+    width: 280px;
+    background: var(--card-bg);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
     display: flex;
     flex-direction: column;
+    transition: transform 0.3s ease;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 999;
+    overflow-y: auto;
 }
 
 .logo-box {
+    padding: 0 20px 30px;
     text-align: center;
-    margin-bottom: 40px;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
 }
 
 .logo-box img {
-    width: 85px;
+    width: 90px;
+    margin-bottom: 10px;
 }
 
 .logo-box h2 {
     font-size: 20px;
-    margin-top: 10px;
     font-weight: 600;
-    color: #004aad; /* SoyoSoyo blue */
+    color: var(--primary-green);
 }
 
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    display: none; /* Shown on mobile */
+}
+
+/* MENU */
 .menu {
     list-style: none;
-    padding: 0;
+    padding: 0 15px;
     margin: 0;
+    flex: 1;
 }
 
-.menu li {
-    padding: 14px 18px;
-    margin-bottom: 8px;
+.menu > li {
+    margin-bottom: 5px;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: background 0.2s;
+}
+
+.menu > li > div, /* For clickable row */
+.menu > li {
+    padding: 14px 15px;
     display: flex;
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    border-radius: 12px;
-    transition: 0.2s;
     font-size: 15px;
-    color: #333;
+    color: var(--text);
 }
 
-.menu li i {
+.menu i {
     font-size: 20px;
+    color: var(--primary-green);
 }
 
-.menu li.active,
-.menu li:hover {
-    background: #004aad;
+.submenu-toggle {
+    margin-left: auto;
+    transition: transform 0.3s;
+}
+
+.has-submenu.active .submenu-toggle {
+    transform: rotate(180deg);
+}
+
+.menu > li.active,
+.menu > li:hover {
+    background: var(--primary-green);
+    color: #fff;
+}
+
+.menu > li.active i,
+.menu > li:hover i {
+    color: #fff;
+}
+
+/* SUBMENU */
+.submenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: #f1f3f5;
+}
+
+.has-submenu.active .submenu {
+    max-height: 300px; /* Adjust as needed */
+}
+
+.submenu li {
+    padding: 10px 15px 10px 50px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.submenu li:hover {
+    background: var(--primary-orange);
     color: #fff;
 }
 
 /* MAIN CONTENT */
 .content {
     flex: 1;
-    padding: 40px;
+    padding: 30px;
+    margin-left: 280px; /* Sidebar width */
+    transition: margin-left 0.3s ease;
     overflow-y: auto;
 }
 
-h1 {
-    font-size: 26px;
-    font-weight: 600;
-    margin-bottom: 10px;
-}
-
-.subtitle {
-    font-size: 15px;
-    opacity: 0.7;
-    margin-bottom: 30px;
-}
-
-/* FORM CARD */
+/* FORM STYLES (enhanced) */
 .form-card {
-    background: #fff;
+    background: var(--card-bg);
     padding: 30px;
     border-radius: 14px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
-    max-width: 550px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    max-width: 600px;
 }
 
 .form-group {
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
 label {
     display: block;
     font-weight: 500;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    color: var(--dark);
 }
 
 input, select {
     width: 100%;
-    padding: 12px;
+    padding: 12px 14px;
     border-radius: 10px;
-    border: 1px solid #d8dfe8;
+    border: 1px solid var(--border);
     font-size: 15px;
-    outline: none;
-    transition: 0.2s;
+    transition: border 0.2s;
 }
 
 input:focus, select:focus {
-    border-color: #004aad;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(40,167,69,0.2);
 }
 
 .submit-btn {
-    margin-top: 20px;
     width: 100%;
     padding: 14px;
-    background: #004aad;
+    background: var(--primary-orange);
     color: #fff;
     border: none;
-    font-size: 16px;
     border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
-    transition: 0.2s;
+    transition: background 0.3s;
 }
 
 .submit-btn:hover {
-    background: #00337a;
+    background: #e96d00;
+}
+
+/* MOBILE STYLES */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .content {
+        margin-left: 0;
+        padding-top: 70px; /* Space for mobile header */
+    }
+
+    .mobile-header {
+        display: flex;
+    }
+
+    .close-btn {
+        display: block;
+    }
+
+    .menu > li > div, .menu > li {
+        font-size: 14px;
+    }
+
+    .submenu li {
+        font-size: 13px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    .form-card {
+        padding: 20px;
+    }
 }
