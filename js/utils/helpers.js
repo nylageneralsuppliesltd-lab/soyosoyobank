@@ -10,3 +10,6 @@ export function formatDate(dateString) {
 export function showAlert(message, type = 'success') {
     alert(message); // Can upgrade to nice toast later
 }
+export function showAlert(message) {
+    alert(message); // Simple for now - can upgrade to modal later
+}
