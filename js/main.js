@@ -4,6 +4,7 @@ import { initMenu } from './modules/menu.js';
 import { initMembersModule } from './modules/members.js';
 import { initDepositsModule } from './modules/deposits.js';
 import { renderDashboard } from './modules/dashboard.js';  // ← New Dashboard import
+import { renderSettings } from './modules/settings.js';
 import { saccoConfig } from './config.js';
 
 const mainContent = document.getElementById('main-content');
