@@ -89,6 +89,69 @@ function loadSection(section) {
         <p>This section is under development.</p>
     `;
 }
+// Members Data Simulation (localStorage)
+let members = JSON.parse(localStorage.getItem('members')) || [];
 
+// Save new member
+function saveMember() {
+    const newMember = {
+        id: Date.now(),
+        name: document.getElementById('full-name').value,
+        idNumber: document.getElementById('id-number').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        gender: document.getElementById('gender').value,
+        dob: document.getElementById('dob').value,
+        role: document.getElementById('role').value,
+        nokName: document.getElementById('nok-name').value,
+        nokPhone: document.getElementById('nok-phone').value,
+        ledger: [] // Array of transactions {date, type, amount, description}
+    };
+    members.push(newMember);
+    localStorage.setItem('members', JSON.stringify(members));
+    alert('Member created!');
+    loadSection('members-list'); // Redirect to list
+}
+
+// Update loadSection for members-list
+if (section === "members-list") {
+    let html = '<h1>View Members</h1><p class="subtitle">List of all SACCO members with roles and ledgers.</p><table class="members-table"><thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Next of Kin</th><th>Actions</th></tr></thead><tbody>';
+    members.forEach(member => {
+        html += `<tr><td>${member.id}</td><td>${member.name}</td><td>${member.role}</td><td>${member.nokName} (${member.nokPhone})</td><td><button onclick="viewLedger(${member.id})">View Ledger</button> <button onclick="editRole(${member.id})">Edit Role</button></td></tr>`;
+    });
+    html += '</tbody></table>';
+    mainContent.innerHTML = html;
+    return;
+}
+
+// View individual ledger
+window.viewLedger = function(id) {
+    const member = members.find(m => m.id === id);
+    let html = `<h1>Ledger for ${member.name}</h1><p>Individual statement and transactions.</p><table><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Description</th></tr></thead><tbody>`;
+    member.ledger.forEach(tx => {
+        html += `<tr><td>${tx.date}</td><td>${tx.type}</td><td>${tx.amount}</td><td>${tx.description}</td></tr>`;
+    });
+    html += '</tbody></table><button onclick="addTransaction(${id})">Add Transaction</button>';
+    mainContent.innerHTML = html;
+};
+
+// Add transaction (simulates deposit/loan/etc)
+window.addTransaction = function(id) {
+    // Placeholder - in real, add form
+    const tx = {date: new Date().toLocaleDateString(), type: 'Deposit', amount: 1000, description: 'Monthly savings'};
+    const member = members.find(m => m.id === id);
+    member.ledger.push(tx);
+    localStorage.setItem('members', JSON.stringify(members));
+    viewLedger(id);
+};
+
+// Edit role
+window.editRole = function(id) {
+    const newRole = prompt('Enter new role (Member/Admin/Guest):');
+    const member = members.find(m => m.id === id);
+    member.role = newRole;
+    localStorage.setItem('members', JSON.stringify(members));
+    loadSection('members-list');
+};
 // Initial load
 loadSection('dashboard');
