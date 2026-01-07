@@ -1,4 +1,4 @@
-// js/modules/members.js - Complete Members Module with Export/Import CSV
+// js/modules/members.js - Complete & Final Members Module
 
 import { loadMembers, saveMembers } from '../storage.js';
 import { showAlert, formatCurrency } from '../utils/helpers.js';
@@ -143,6 +143,28 @@ function getMemberFormHTML() {
 }
 
 // ======================
+// ADD NOMINEE ENTRY (Global - used in create and edit)
+// ======================
+
+function addNomineeEntry(nok = null, count) {
+    const nokContainer = document.getElementById('nok-container');
+    const entry = document.createElement('div');
+    entry.className = 'nok-entry';
+    entry.innerHTML = `
+        <h4 style="margin-top:20px;">Nominee ${count}</h4>
+        <div class="form-group"><label class="required-label">Name</label><input type="text" class="nok-name" value="${nok?.name || ''}" required></div>
+        <div class="form-group"><label class="required-label">Relationship</label><input type="text" class="nok-relationship" value="${nok?.relationship || ''}" required placeholder="e.g. Spouse, Child"></div>
+        <div class="form-group"><label class="required-label">ID No.</label><input type="text" class="nok-id" value="${nok?.id || ''}" required></div>
+        <div class="form-group"><label class="required-label">Mobile Number</label><input type="tel" class="nok-phone" value="${nok?.phone || ''}" required></div>
+        <div class="form-group"><label class="required-label">Percentage Allocation %</label><input type="number" class="nok-share" value="${nok?.share || ''}" min="1" max="100" step="1" required></div>
+        <button type="button" style="background:#dc3545;color:#fff;padding:8px 12px;margin-top:10px;border:none;border-radius:6px;" onclick="this.closest('.nok-entry').remove();">
+            Remove Nominee
+        </button>
+    `;
+    nokContainer.appendChild(entry);
+}
+
+// ======================
 // CREATE MEMBER
 // ======================
 
@@ -167,7 +189,7 @@ export function renderEditMemberForm(memberId) {
     document.getElementById('main-content').innerHTML = getMemberFormHTML();
     document.getElementById('form-title').textContent = 'Edit Member';
 
-    // Pre-fill all fields
+    // Pre-fill fields
     document.getElementById('full-name').value = member.name || '';
     document.getElementById('phone').value = member.phone || '';
     document.getElementById('email').value = member.email || '';
@@ -183,7 +205,7 @@ export function renderEditMemberForm(memberId) {
     document.getElementById('introducer-name').value = member.introducerName || '';
     document.getElementById('introducer-member-no').value = member.introducerMemberNo || '';
 
-    // Role handling
+    // Role
     const roleSelect = document.getElementById('role');
     const customGroup = document.getElementById('custom-role-group');
     const commonRoles = ['Member', 'Chairman', 'Vice Chairman', 'Secretary', 'Treasurer', 'Admin'];
@@ -196,11 +218,13 @@ export function renderEditMemberForm(memberId) {
         document.getElementById('custom-role').value = member.role || '';
     }
 
-    // Load existing nominees
+    // Pre-fill nominees
     const nokContainer = document.getElementById('nok-container');
     nokContainer.innerHTML = '';
     if (member.nextOfKin && member.nextOfKin.length > 0) {
-        member.nextOfKin.forEach((nok, index) => addNomineeEntry(nok, index + 1));
+        member.nextOfKin.forEach((nok, index) => {
+            addNomineeEntry(nok, index + 1);
+        });
     }
 
     // Change submit button
@@ -217,7 +241,6 @@ function setupFormLogic(editMemberId = null) {
     const roleSelect = document.getElementById('role');
     const customGroup = document.getElementById('custom-role-group');
     const addNokBtn = document.getElementById('add-nok');
-    const nokContainer = document.getElementById('nok-container');
 
     // Custom role toggle
     roleSelect.addEventListener('change', () => {
@@ -225,7 +248,7 @@ function setupFormLogic(editMemberId = null) {
     });
 
     // Add nominee
-    let nokCount = nokContainer.children.length;
+    let nokCount = document.querySelectorAll('.nok-entry').length;
     addNokBtn.addEventListener('click', () => {
         if (nokCount >= 3) {
             showAlert('Maximum of 3 nominees allowed.');
@@ -233,25 +256,6 @@ function setupFormLogic(editMemberId = null) {
         }
         addNomineeEntry(null, ++nokCount);
     });
-
-    function addNomineeEntry(nok = null, count) {
-        const entry = document.createElement('div');
-        entry.className = 'nok-entry';
-        entry.innerHTML = `
-            <h4 style="margin-top:20px;">Nominee ${count}</h4>
-            <div class="form-group"><label class="required-label">Name</label><input type="text" class="nok-name" value="${nok?.name || ''}" required></div>
-            <div class="form-group"><label class="required-label">Relationship</label><input type="text" class="nok-relationship" value="${nok?.relationship || ''}" required placeholder="e.g. Spouse, Child"></div>
-            <div class="form-group"><label class="required-label">ID No.</label><input type="text" class="nok-id" value="${nok?.id || ''}" required></div>
-            <div class="form-group"><label class="required-label">Mobile Number</label><input type="tel" class="nok-phone" value="${nok?.phone || ''}" required></div>
-            <div class="form-group"><label class="required-label">Percentage Allocation %</label><input type="number" class="nok-share" value="${nok?.share || ''}" min="1" max="100" step="1" required></div>
-            <button type="button" style="background:#dc3545;color:#fff;padding:8px 12px;margin-top:10px;border:none;border-radius:6px;">Remove Nominee</button>
-        `;
-        entry.querySelector('button').addEventListener('click', () => {
-            entry.remove();
-            nokCount--;
-        });
-        nokContainer.appendChild(entry);
-    }
 
     // Form submit
     document.getElementById('create-member-form').onsubmit = (e) => {
@@ -261,7 +265,7 @@ function setupFormLogic(editMemberId = null) {
 }
 
 // ======================
-// SUBMIT HANDLER (Create & Edit)
+// SUBMIT HANDLER
 // ======================
 
 function handleMemberSubmit(editMemberId = null) {
@@ -308,7 +312,7 @@ function handleMemberSubmit(editMemberId = null) {
         return;
     }
 
-    // Nominees validation
+    // Nominees
     const nokEntries = document.querySelectorAll('.nok-entry');
     let nextOfKin = [];
     let totalShare = 0;
@@ -381,7 +385,7 @@ function handleMemberSubmit(editMemberId = null) {
 }
 
 // ======================
-// MEMBERS LIST WITH EXPORT/IMPORT BUTTONS
+// MEMBERS LIST WITH EXPORT/IMPORT
 // ======================
 
 export function renderMembersList() {
@@ -394,18 +398,17 @@ export function renderMembersList() {
         <!-- Export / Import Buttons -->
         <div class="table-actions" style="margin-bottom: 25px;">
             <button class="submit-btn" style="background:#28a745;" onclick="window.exportMembersToCSV()">
-                📥 Download Members List (CSV)
+                📥 Download Members (CSV)
             </button>
 
             <label class="submit-btn" style="background:#007bff; cursor:pointer;">
-                📤 Import Members from CSV
+                📤 Import from CSV
                 <input type="file" accept=".csv" style="display:none;" onchange="window.importMembers(event)">
             </label>
         </div>
 
-        <!-- Members Table -->
         ${members.length === 0 ? 
-            '<p>No members registered yet. Use the buttons above to import or <a href="#" onclick="renderCreateMemberForm()">register a new member</a>.</p>' :
+            '<p>No members registered yet. Use the buttons above to import or register a new member.</p>' :
             `
             <div class="table-container">
                 <table class="members-table">
@@ -523,7 +526,7 @@ export function reactivateMember(memberId) {
 }
 
 // ======================
-// EXPORT MEMBERS TO CSV
+// EXPORT TO CSV
 // ======================
 
 export function exportMembersToCSV() {
@@ -576,11 +579,11 @@ export function exportMembersToCSV() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    showAlert('Members list exported successfully!');
+    showAlert('Members exported successfully!');
 }
 
 // ======================
-// IMPORT MEMBERS FROM CSV
+// IMPORT FROM CSV
 // ======================
 
 export function importMembers(event) {
@@ -593,7 +596,7 @@ export function importMembers(event) {
         const lines = content.split(/\r?\n/).filter(line => line.trim());
 
         if (lines.length < 2) {
-            showAlert('CSV file is empty or has no data.');
+            showAlert('CSV file is empty or invalid.');
             return;
         }
 
