@@ -1,89 +1,131 @@
-// js/modules/dashboard.js - Modern SACCO Dashboard (Fixed & Working)
+// js/modules/dashboard.js - Dynamic Real-Data Dashboard (2026)
 
 import { loadMembers } from '../storage.js';
+import { getItem } from '../storage.js';
+import { loadSettings } from './settings.js';
 import { formatCurrency } from '../utils/helpers.js';
 import { saccoConfig } from '../config.js';
 
-let members = loadMembers();
-
 export function renderDashboard() {
-    // Calculate key metrics
+    const members = loadMembers();
+    const deposits = getItem('deposits') || [];
+    const expenses = getItem('expenses') || [];
+    const settings = loadSettings();
+
+    // === Membership Metrics ===
     const totalMembers = members.length;
-    const activeMembers = members.filter(m => m.active).length;
+    const activeMembers = members.filter(m => m.active !== false).length;
     const suspendedMembers = totalMembers - activeMembers;
+
+    // Total shares/contributions balance from members
     const totalBalance = members.reduce((sum, m) => sum + (m.balance || 0), 0);
 
-    // Placeholder for future dynamic ledger types from Settings
-    const contributions = members.reduce((sum, m) => sum + (m.contributions || 0), 0);
-    const otherIncome = members.reduce((sum, m) => sum + (m.otherIncome || 0), 0);
-    const expenses = 73000; // Will be dynamic from expenses ledger later
+    // === Financial Metrics from Real Transactions ===
+    const contributionsTotal = deposits
+        .filter(d => d.type === 'contribution')
+        .reduce((sum, d) => sum + d.amount, 0);
 
-    // Placeholder bank/eWallet distribution (configurable in Settings later)
-    const balanceDistribution = {
-        'Bank A': Math.round(totalBalance * 0.38),
-        'Bank B': Math.round(totalBalance * 0.24),
-        'Bank C': Math.round(totalBalance * 0.14),
-        'eWallet': Math.round(totalBalance * 0.24)
-    };
+    const incomeTotal = deposits
+        .filter(d => d.type === 'income' || d.type === 'fine')
+        .reduce((sum, d) => sum + d.amount, 0);
 
-    // Monthly data placeholder - will be dynamic from ledger in future
-    const monthlyData = {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        contributions: [12000, 15000, 18000, 14000, 16000, 20000, 22000, 19000, 17000, 21000, 23000, 25000],
-        income: [5000, 6000, 4500, 7000, 8000, 6500, 9000, 7500, 6000, 8500, 9500, 10000],
-        expenses: [6000, 6500, 7000, 6200, 6800, 7200, 7500, 7000, 6800, 7300, 7600, 8000]
-    };
+    const expensesTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
 
+    // === Bank & eWallet Distribution (from Settings) ===
+    const bankAccounts = settings.bankAccounts || [];
+    const bankDistribution = bankAccounts.length > 0
+        ? bankAccounts
+        : [{ name: 'Main Account (Not Configured)', balance: totalBalance }];
+
+    // === Monthly Trend Data (Real from Transactions) ===
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    // Initialize 12 months
+    const monthly = Array.from({ length: 12 }, (_, i) => {
+        const date = new Date(currentYear, i, 1);
+        return {
+            label: date.toLocaleString('default', { month: 'short' }),
+            contributions: 0,
+            income: 0,
+            expenses: 0
+        };
+    });
+
+    // Populate contributions & income from deposits
+    deposits.forEach(d => {
+        const date = new Date(d.date);
+        if (date.getFullYear() === currentYear) {
+            const monthIndex = date.getMonth();
+            if (d.type === 'contribution') {
+                monthly[monthIndex].contributions += d.amount;
+            } else if (d.type === 'income' || d.type === 'fine') {
+                monthly[monthIndex].income += d.amount;
+            }
+        }
+    });
+
+    // Populate expenses
+    expenses.forEach(e => {
+        const date = new Date(e.date);
+        if (date.getFullYear() === currentYear) {
+            const monthIndex = date.getMonth();
+            monthly[monthIndex].expenses += e.amount;
+        }
+    });
+
+    const monthlyLabels = monthly.map(m => m.label);
+    const monthlyContributions = monthly.map(m => m.contributions);
+    const monthlyIncome = monthly.map(m => m.income);
+    const monthlyExpenses = monthly.map(m => m.expenses);
+
+    // === Render Dashboard ===
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = `
         <div class="dashboard">
             <h1>${saccoConfig.name} Dashboard</h1>
-            <p class="subtitle">Financial & Membership Overview – ${new Date().toLocaleDateString('en-GB')}</p>
+            <p class="subtitle">Financial & Membership Overview – ${now.toLocaleDateString('en-GB')}</p>
 
             <!-- Key Metric Cards -->
             <div class="metrics-grid">
                 <div class="metric-card" onclick="loadSection('members-list')">
-                    <h3>Total Balance</h3>
+                    <h3>Total SACCO Balance</h3>
                     <h2>${formatCurrency(totalBalance)}</h2>
-                    <p class="metric-link">Click for Banking & eWallet Breakdown →</p>
+                    <p class="metric-link">Bank & eWallet Distribution →</p>
                     <div class="balance-dist">
-                        ${Object.entries(balanceDistribution).map(([bank, amt]) => `
-                            <div><strong>${bank}:</strong> ${formatCurrency(amt)}</div>
+                        ${bankDistribution.map(acc => `
+                            <div><strong>${acc.name}:</strong> ${formatCurrency(acc.balance || 0)}</div>
                         `).join('')}
+                        ${bankAccounts.length === 0 ? 
+                            `<small style="color:#856404; grid-column:1/-1; margin-top:8px;">
+                                Configure accounts in Settings → Banking
+                            </small>` : ''
+                        }
                     </div>
                 </div>
 
                 <div class="metric-card" onclick="loadSection('deposits-contributions')">
-                    <h3>Contributions</h3>
-                    <h2>${formatCurrency(contributions)}</h2>
+                    <h3>Total Contributions</h3>
+                    <h2>${formatCurrency(contributionsTotal)}</h2>
                     <p class="metric-link">Record / View Contributions →</p>
                 </div>
 
                 <div class="metric-card" onclick="loadSection('deposits-income')">
                     <h3>Other Income</h3>
-                    <h2>${formatCurrency(otherIncome)}</h2>
-                    <p class="metric-link">Record / View Income →</p>
+                    <h2>${formatCurrency(incomeTotal)}</h2>
+                    <p class="metric-link">Fines, Interest, etc. →</p>
                 </div>
 
-                <div class="metric-card expenses-card">
+                <div class="metric-card expenses-card" onclick="loadSection('expenses')">
                     <h3>Total Expenses</h3>
-                    <h2>${formatCurrency(expenses)}</h2>
-                    <p class="metric-link">Click to expand breakdown ↓</p>
-                    <details style="margin-top:15px;">
-                        <summary style="cursor:pointer;color:#dc3545;font-weight:600;">View Breakdown</summary>
-                        <ul style="margin:12px 0;padding-left:22px;font-size:0.95em;">
-                            <li>Office Rent → KSh 15,000</li>
-                            <li>Staff Salaries → KSh 45,000</li>
-                            <li>Utilities → KSh 5,000</li>
-                            <li>Loan Interest → KSh 8,000</li>
-                        </ul>
-                    </details>
+                    <h2>${formatCurrency(expensesTotal)}</h2>
+                    <p class="metric-link">${expensesTotal > 0 ? 'Click for breakdown →' : 'No expenses recorded yet'}</p>
                 </div>
             </div>
 
-            <!-- Members Summary -->
+            <!-- Membership Summary -->
             <div class="section-card" onclick="loadSection('members-list')">
-                <h3>Membership Summary <span class="section-link">→ Full List</span></h3>
+                <h3>Membership Summary <span class="section-link">→ View Full List</span></h3>
                 <div class="members-summary">
                     <div class="stat">
                         <h2>${totalMembers}</h2>
@@ -102,24 +144,32 @@ export function renderDashboard() {
 
             <!-- Monthly Trend Chart -->
             <div class="section-card">
-                <h3>Monthly Financial Trends (2025)</h3>
-                <p class="chart-note">Hover over bars/lines for exact values • Contributions (bars) • Income & Expenses (lines)</p>
+                <h3>Financial Trends ${currentYear}</h3>
+                <p class="chart-note">
+                    ${deposits.length + expenses.length === 0 
+                        ? 'Start recording transactions to see trends here' 
+                        : 'Contributions (bars) • Income & Expenses (lines)'
+                    }
+                </p>
                 <canvas id="financial-chart" height="400"></canvas>
             </div>
         </div>
     `;
 
-    // Render Chart.js chart AFTER HTML is inserted
+    // === Render Chart ===
     const ctx = document.getElementById('financial-chart');
     if (ctx) {
-        new Chart(ctx, {
+        // Destroy previous chart if exists
+        if (ctx.chart) ctx.chart.destroy();
+
+        ctx.chart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: monthlyData.labels,
+                labels: monthlyLabels,
                 datasets: [
                     {
                         label: 'Contributions',
-                        data: monthlyData.contributions,
+                        data: monthlyContributions,
                         type: 'bar',
                         backgroundColor: 'rgba(40, 167, 69, 0.8)',
                         borderColor: '#28a745',
@@ -128,7 +178,7 @@ export function renderDashboard() {
                     },
                     {
                         label: 'Other Income',
-                        data: monthlyData.income,
+                        data: monthlyIncome,
                         type: 'line',
                         borderColor: '#007bff',
                         backgroundColor: 'rgba(0, 123, 255, 0.1)',
@@ -139,7 +189,7 @@ export function renderDashboard() {
                     },
                     {
                         label: 'Expenses',
-                        data: monthlyData.expenses,
+                        data: monthlyExpenses,
                         type: 'line',
                         borderColor: '#dc3545',
                         backgroundColor: 'rgba(220, 53, 69, 0.1)',
@@ -159,42 +209,27 @@ export function renderDashboard() {
                         intersect: false,
                         callbacks: {
                             label: (context) => {
-                                return `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`;
+                                const value = context.parsed.y;
+                                return `${context.dataset.label}: ${formatCurrency(value)}`;
                             }
                         }
                     },
                     legend: {
                         position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20
-                        }
+                        labels: { usePointStyle: true, padding: 20 }
                     }
                 },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
-                },
                 scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    },
+                    x: { grid: { display: false } },
                     y: {
                         beginAtZero: true,
                         ticks: {
                             callback: (value) => formatCurrency(value)
                         },
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)'
-                        }
+                        grid: { color: 'rgba(0,0,0,0.05)' }
                     }
                 }
             }
         });
-    } else {
-        console.error('Chart canvas #financial-chart not found in DOM');
     }
 }
