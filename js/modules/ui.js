@@ -63,6 +63,35 @@ export function renderMembersTable(members) {
 
 // Keep the create form (unchanged or minor updates if needed)
 export function renderCreateMemberForm() {
-    // Same as before...
-    return `...`; // (use previous version)
+    return `
+        <h1>Create New Member</h1>
+        <p class="subtitle">All fields marked * are required. Phone must be a valid Kenyan mobile number.</p>
+        <form class="form-card" id="create-member-form">
+            <div class="form-group"><label>Full Name *</label><input type="text" id="full-name" required placeholder="e.g. John Doe"></div>
+            <div class="form-group"><label>Phone Number *<br><small>(07xx, +2547xx or 2547xx)</small></label><input type="tel" id="phone" required placeholder="0712345678"></div>
+            <div class="form-group"><label>Email Address (Optional)</label><input type="email" id="email" placeholder="john@example.com"></div>
+            <div class="form-group"><label>ID / Passport Number</label><input type="text" id="id-number" placeholder="e.g. 12345678"></div>
+            <div class="form-group"><label>Gender</label><select id="gender"><option>Select</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+            <div class="form-group"><label>Date of Birth</label><input type="date" id="dob"></div>
+            <div class="form-group"><label>Role</label><select id="role"><option>Member</option><option>Admin</option><option>Chairman</option><option>Vice Chairman</option><option>Secretary</option><option>Treasurer</option><option>Other</option></select>
+                <div id="custom-role-group" style="display:none;margin-top:10px;"><label>Custom Role Name</label><input type="text" id="custom-role"></div>
+            </div>
+
+            <h3 style="margin-top:30px;">Next of Kin (Beneficiaries)</h3>
+            <p><small>Add up to 3. Percentage shares must total 100%.</small></p>
+
+            <div id="nok-container">
+                <div class="nok-entry">
+                    <h4>Next of Kin 1 *</h4>
+                    <div class="form-group"><label>Name *</label><input type="text" class="nok-name" required></div>
+                    <div class="form-group"><label>Phone *</label><input type="tel" class="nok-phone" required></div>
+                    <div class="form-group"><label>Share % *</label><input type="number" class="nok-share" min="1" max="100" required></div>
+                </div>
+            </div>
+
+            <button type="button" id="add-nok" class="submit-btn" style="background:#007bff;width:auto;padding:10px 20px;margin:20px 0;">+ Add Another Next of Kin</button>
+
+            <button type="submit" class="submit-btn">Create Member</button>
+        </form>
+    `;
 }
