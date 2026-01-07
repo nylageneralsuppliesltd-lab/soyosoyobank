@@ -1,4 +1,4 @@
-// js/modules/members.js - Complete & Final Members Module
+// js/modules/members.js - Complete Members Module (Modern ES6 Exports)
 
 import { loadMembers, saveMembers } from '../storage.js';
 import { showAlert, formatCurrency } from '../utils/helpers.js';
@@ -24,10 +24,10 @@ function isValidEmail(email) {
 }
 
 // ======================
-// CREATE MEMBER SECTION
+// CREATE MEMBER FORM
 // ======================
 
-function createMemberSection() {
+export function renderCreateMemberForm() {
     document.getElementById('main-content').innerHTML = renderCreateMemberForm();
 
     const roleSelect = document.getElementById('role');
@@ -40,7 +40,7 @@ function createMemberSection() {
         customGroup.style.display = roleSelect.value === 'Other' ? 'block' : 'none';
     });
 
-    // Add nominee (optional)
+    // Add nominee (max 3)
     let nokCount = 0;
     addNokBtn.addEventListener('click', () => {
         if (nokCount >= 3) {
@@ -58,147 +58,38 @@ function createMemberSection() {
             <div class="form-group"><label class="required-label">ID No.</label><input type="text" class="nok-id" required></div>
             <div class="form-group"><label class="required-label">Mobile Number</label><input type="tel" class="nok-phone" required></div>
             <div class="form-group"><label class="required-label">Percentage Allocation %</label><input type="number" class="nok-share" min="1" max="100" step="1" required></div>
-            <button type="button" style="background:#dc3545;color:#fff;padding:8px 12px;margin-top:10px;border:none;border-radius:6px;" onclick="this.closest('.nok-entry').remove(); nokCount--;">
+            <button type="button" style="background:#dc3545;color:#fff;padding:8px 12px;margin-top:10px;border:none;border-radius:6px;">
                 Remove Nominee
             </button>
         `;
+        entry.querySelector('button').addEventListener('click', () => {
+            entry.remove();
+            nokCount--;
+        });
         nokContainer.appendChild(entry);
     });
 
-    // Form submission (Create)
-    document.getElementById('create-member-form').addEventListener('submit', function submitHandler(e) {
+    // Form submission
+    document.getElementById('create-member-form').addEventListener('submit', function(e) {
         e.preventDefault();
-
-        const name = document.getElementById('full-name').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        const email = document.getElementById('email').value.trim();
-
-        if (!name || !phone) {
-            showAlert('Full Name and Phone Number are required!');
-            return;
-        }
-
-        if (!isValidKenyanPhone(phone)) {
-            showAlert('Invalid phone number. Use 07xx, +2547xx or 2547xx format.');
-            return;
-        }
-
-        if (email && !isValidEmail(email)) {
-            showAlert('Invalid email address.');
-            return;
-        }
-
-        if (members.some(m => m.phone === phone)) {
-            showAlert('A member with this phone number already exists!');
-            return;
-        }
-
-        // Role
-        const roleValue = roleSelect.value;
-        const customRole = document.getElementById('custom-role').value.trim();
-        const finalRole = roleValue === 'Other' ? customRole : roleValue;
-        if (roleValue === 'Other' && !customRole) {
-            showAlert('Please enter a custom role name.');
-            return;
-        }
-
-        // Introducer
-        const introducerName = document.getElementById('introducer-name').value.trim();
-        const introducerNo = document.getElementById('introducer-member-no').value.trim();
-        if (!introducerName || !introducerNo) {
-            showAlert('Introducer Name and Member No. are required.');
-            return;
-        }
-
-        // Nominees (optional but mandatory if added)
-        const nokEntries = Array.from(document.querySelectorAll('.nok-entry'));
-        let nextOfKin = [];
-        let totalShare = 0;
-
-        if (nokEntries.length > 0) {
-            let valid = true;
-            for (const entry of nokEntries) {
-                const nokName = entry.querySelector('.nok-name').value.trim();
-                const nokRelationship = entry.querySelector('.nok-relationship').value.trim();
-                const nokId = entry.querySelector('.nok-id').value.trim();
-                const nokPhone = entry.querySelector('.nok-phone').value.trim();
-                const shareInput = entry.querySelector('.nok-share').value;
-                const share = parseFloat(shareInput);
-
-                if (!nokName || !nokRelationship || !nokId || !nokPhone || !shareInput) {
-                    showAlert('All fields for added nominees are required.');
-                    valid = false;
-                    break;
-                }
-
-                if (!isValidKenyanPhone(nokPhone)) {
-                    showAlert('Invalid mobile number for nominee.');
-                    valid = false;
-                    break;
-                }
-
-                if (isNaN(share) || share < 1 || share > 100) {
-                    showAlert('Percentage must be between 1 and 100.');
-                    valid = false;
-                    break;
-                }
-
-                totalShare += share;
-                nextOfKin.push({ name: nokName, relationship: nokRelationship, id: nokId, phone: nokPhone, share });
-            }
-
-            if (!valid) return;
-
-            if (Math.abs(totalShare - 100) > 0.01) {
-                showAlert(`Nominee percentages must total 100%. Current: ${totalShare.toFixed(1)}%`);
-                return;
-            }
-        }
-
-        const newMember = {
-            id: Date.now(),
-            name,
-            phone,
-            email: email || null,
-            idNumber: document.getElementById('id-number').value.trim() || null,
-            gender: document.querySelector('input[name="gender"]:checked')?.value || null,
-            dob: document.getElementById('dob').value || null,
-            role: finalRole || 'Member',
-            physicalAddress: document.getElementById('physical-address')?.value.trim() || null,
-            town: document.getElementById('town')?.value.trim() || null,
-            employmentStatus: document.querySelector('input[name="employment-status"]:checked')?.value || null,
-            employerName: document.getElementById('employer-name')?.value.trim() || null,
-            regNo: document.getElementById('reg-no')?.value.trim() || null,
-            employerAddress: document.getElementById('employer-address')?.value.trim() || null,
-            introducerName,
-            introducerMemberNo: introducerNo,
-            nextOfKin: nextOfKin.length > 0 ? nextOfKin : null,
-            balance: 0,
-            ledger: [],
-            active: true
-        };
-
-        members.push(newMember);
-        saveMembers(members);
-        showAlert('Member registered successfully!');
-        membersListSection();
+        handleMemberSubmit(null); // null = create new
     });
 }
 
 // ======================
-// EDIT MEMBER FUNCTION
+// EDIT MEMBER FORM
 // ======================
 
-function editMember(memberId) {
+export function renderEditMemberForm(memberId) {
     const member = members.find(m => m.id === memberId);
     if (!member) {
         showAlert('Member not found.');
         return;
     }
 
-    document.getElementById('main-content').innerHTML = renderCreateMemberForm();
+    renderCreateMemberForm(); // Reuse same form HTML
 
-    // Pre-fill all fields
+    // Pre-fill fields
     document.getElementById('full-name').value = member.name || '';
     document.getElementById('id-number').value = member.idNumber || '';
     document.getElementById('dob').value = member.dob || '';
@@ -211,7 +102,6 @@ function editMember(memberId) {
         const radio = document.querySelector(`input[name="gender"][value="${member.gender}"]`);
         if (radio) radio.checked = true;
     }
-
     if (member.employmentStatus) {
         const radio = document.querySelector(`input[name="employment-status"][value="${member.employmentStatus}"]`);
         if (radio) radio.checked = true;
@@ -224,7 +114,8 @@ function editMember(memberId) {
     // Role
     const roleSelect = document.getElementById('role');
     const customGroup = document.getElementById('custom-role-group');
-    if (['Member', 'Admin', 'Chairman', 'Vice Chairman', 'Secretary', 'Treasurer'].includes(member.role)) {
+    const predefinedRoles = ['Member', 'Admin', 'Chairman', 'Vice Chairman', 'Secretary', 'Treasurer'];
+    if (predefinedRoles.includes(member.role)) {
         roleSelect.value = member.role;
         customGroup.style.display = 'none';
     } else {
@@ -241,7 +132,6 @@ function editMember(memberId) {
     const nokContainer = document.getElementById('nok-container');
     nokContainer.innerHTML = '';
     let nokCount = 0;
-
     if (member.nextOfKin && member.nextOfKin.length > 0) {
         member.nextOfKin.forEach(nok => {
             nokCount++;
@@ -254,10 +144,11 @@ function editMember(memberId) {
                 <div class="form-group"><label class="required-label">ID No.</label><input type="text" class="nok-id" value="${nok.id || ''}" required></div>
                 <div class="form-group"><label class="required-label">Mobile Number</label><input type="tel" class="nok-phone" value="${nok.phone}" required></div>
                 <div class="form-group"><label class="required-label">Percentage Allocation %</label><input type="number" class="nok-share" value="${nok.share}" min="1" max="100" step="1" required></div>
-                <button type="button" style="background:#dc3545;color:#fff;padding:8px 12px;margin-top:10px;border:none;border-radius:6px;" onclick="this.closest('.nok-entry').remove();">
+                <button type="button" style="background:#dc3545;color:#fff;padding:8px 12px;margin-top:10px;border:none;border-radius:6px;">
                     Remove Nominee
                 </button>
             `;
+            entry.querySelector('button').addEventListener('click', () => entry.remove());
             nokContainer.appendChild(entry);
         });
     }
@@ -266,147 +157,233 @@ function editMember(memberId) {
     document.querySelector('#create-member-form button[type="submit"]').textContent = 'Update Member';
 
     // Override submit for update
-    document.getElementById('create-member-form').onsubmit = function(e) {
+    document.getElementById('create-member-form').onsubmit = (e) => {
         e.preventDefault();
-
-        const updatedPhone = document.getElementById('phone').value.trim();
-        if (updatedPhone !== member.phone && members.some(m => m.id !== member.id && m.phone === updatedPhone)) {
-            showAlert('Phone number already used by another member.');
-            return;
-        }
-
-        if (!isValidKenyanPhone(updatedPhone)) {
-            showAlert('Invalid phone number.');
-            return;
-        }
-
-        // Update member
-        member.name = document.getElementById('full-name').value.trim();
-        member.idNumber = document.getElementById('id-number').value.trim() || null;
-        member.dob = document.getElementById('dob').value || null;
-        member.phone = updatedPhone;
-        member.email = document.getElementById('email').value.trim() || null;
-        member.physicalAddress = document.getElementById('physical-address').value.trim() || null;
-        member.town = document.getElementById('town').value.trim() || null;
-        member.gender = document.querySelector('input[name="gender"]:checked')?.value || null;
-        member.employmentStatus = document.querySelector('input[name="employment-status"]:checked')?.value || null;
-        member.employerName = document.getElementById('employer-name').value.trim() || null;
-        member.regNo = document.getElementById('reg-no').value.trim() || null;
-        member.employerAddress = document.getElementById('employer-address').value.trim() || null;
-        member.introducerName = document.getElementById('introducer-name').value.trim();
-        member.introducerMemberNo = document.getElementById('introducer-member-no').value.trim();
-
-        const roleValue = roleSelect.value;
-        member.role = roleValue === 'Other' ? document.getElementById('custom-role').value.trim() : roleValue;
-
-        // Update nominees
-        const nokEntries = document.querySelectorAll('.nok-entry');
-        let totalShare = 0;
-        member.nextOfKin = [];
-
-        if (nokEntries.length > 0) {
-            for (const entry of nokEntries) {
-                const share = parseFloat(entry.querySelector('.nok-share').value);
-                if (isNaN(share)) continue;
-                totalShare += share;
-                member.nextOfKin.push({
-                    name: entry.querySelector('.nok-name').value.trim(),
-                    relationship: entry.querySelector('.nok-relationship').value.trim(),
-                    id: entry.querySelector('.nok-id').value.trim(),
-                    phone: entry.querySelector('.nok-phone').value.trim(),
-                    share
-                });
-            }
-
-            if (Math.abs(totalShare - 100) > 0.01) {
-                showAlert(`Nominee percentages must total 100%. Current: ${totalShare.toFixed(1)}%`);
-                return;
-            }
-        }
-
-        saveMembers(members);
-        showAlert('Member updated successfully!');
-        membersListSection();
+        handleMemberSubmit(memberId); // pass ID = update
     };
 }
 
 // ======================
-// OTHER FUNCTIONS
+// SHARED SUBMIT HANDLER (Create & Update)
 // ======================
 
-function membersListSection() {
-    members = loadMembers();
+function handleMemberSubmit(memberId = null) {
+    const isEdit = memberId !== null;
+    const member = isEdit ? members.find(m => m.id === memberId) : null;
+
+    const name = document.getElementById('full-name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+
+    if (!name || !phone) {
+        showAlert('Full Name and Phone Number are required!');
+        return;
+    }
+
+    if (!isValidKenyanPhone(phone)) {
+        showAlert('Invalid phone number. Use 07xx, +2547xx or 2547xx format.');
+        return;
+    }
+
+    if (email && !isValidEmail(email)) {
+        showAlert('Invalid email address.');
+        return;
+    }
+
+    // Check duplicate phone (except for current member in edit mode)
+    if (members.some(m => m.id !== memberId && m.phone === phone)) {
+        showAlert('A member with this phone number already exists!');
+        return;
+    }
+
+    // Role
+    const roleSelect = document.getElementById('role');
+    const roleValue = roleSelect.value;
+    const customRole = document.getElementById('custom-role').value.trim();
+    const finalRole = roleValue === 'Other' ? customRole : roleValue;
+    if (roleValue === 'Other' && !customRole) {
+        showAlert('Please enter a custom role name.');
+        return;
+    }
+
+    // Introducer
+    const introducerName = document.getElementById('introducer-name').value.trim();
+    const introducerNo = document.getElementById('introducer-member-no').value.trim();
+    if (!introducerName || !introducerNo) {
+        showAlert('Introducer Name and Member No. are required.');
+        return;
+    }
+
+    // Nominees
+    const nokEntries = document.querySelectorAll('.nok-entry');
+    let nextOfKin = [];
+    let totalShare = 0;
+
+    if (nokEntries.length > 0) {
+        for (const entry of nokEntries) {
+            const nokName = entry.querySelector('.nok-name').value.trim();
+            const nokRelationship = entry.querySelector('.nok-relationship').value.trim();
+            const nokId = entry.querySelector('.nok-id').value.trim();
+            const nokPhone = entry.querySelector('.nok-phone').value.trim();
+            const shareInput = entry.querySelector('.nok-share').value;
+            const share = parseFloat(shareInput);
+
+            if (!nokName || !nokRelationship || !nokId || !nokPhone || !shareInput) {
+                showAlert('All fields for added nominees are required.');
+                return;
+            }
+
+            if (!isValidKenyanPhone(nokPhone)) {
+                showAlert('Invalid mobile number for nominee.');
+                return;
+            }
+
+            if (isNaN(share) || share < 1 || share > 100) {
+                showAlert('Percentage must be between 1 and 100.');
+                return;
+            }
+
+            totalShare += share;
+            nextOfKin.push({ name: nokName, relationship: nokRelationship, id: nokId, phone: nokPhone, share });
+        }
+
+        if (Math.abs(totalShare - 100) > 0.01) {
+            showAlert(`Nominee percentages must total 100%. Current: ${totalShare.toFixed(1)}%`);
+            return;
+        }
+    }
+
+    // Create or update member object
+    const memberData = {
+        name,
+        phone,
+        email: email || null,
+        idNumber: document.getElementById('id-number').value.trim() || null,
+        gender: document.querySelector('input[name="gender"]:checked')?.value || null,
+        dob: document.getElementById('dob').value || null,
+        role: finalRole || 'Member',
+        physicalAddress: document.getElementById('physical-address')?.value.trim() || null,
+        town: document.getElementById('town')?.value.trim() || null,
+        employmentStatus: document.querySelector('input[name="employment-status"]:checked')?.value || null,
+        employerName: document.getElementById('employer-name')?.value.trim() || null,
+        regNo: document.getElementById('reg-no')?.value.trim() || null,
+        employerAddress: document.getElementById('employer-address')?.value.trim() || null,
+        introducerName,
+        introducerMemberNo: introducerNo,
+        nextOfKin: nextOfKin.length > 0 ? nextOfKin : null,
+        balance: isEdit ? member.balance : 0,
+        ledger: isEdit ? member.ledger : [],
+        active: isEdit ? member.active : true
+    };
+
+    if (isEdit) {
+        Object.assign(member, memberData);
+    } else {
+        memberData.id = Date.now();
+        members.push(memberData);
+    }
+
+    saveMembers(members);
+    showAlert(isEdit ? 'Member updated successfully!' : 'Member registered successfully!');
+    renderMembersList();
+}
+
+// ======================
+// MEMBERS LIST
+// ======================
+
+export function renderMembersList() {
+    members = loadMembers(); // Refresh
     document.getElementById('main-content').innerHTML = renderMembersTable(members);
 }
 
-function viewLedger(memberId) {
+// ======================
+// LEDGER VIEW
+// ======================
+
+export function renderMemberLedger(memberId) {
     const member = members.find(m => m.id === memberId);
-    if (!member) return;
+    if (!member) {
+        showAlert('Member not found.');
+        return;
+    }
 
     let contributions = 0;
     let loansOut = 0;
     member.ledger.forEach(tx => {
-        if (['Deposit', 'Share Contribution', 'Loan Repayment'].includes(tx.type)) contributions += tx.amount;
+        if (['Deposit', 'Share Contribution', 'Loan Repayment', 'Contribution'].includes(tx.type)) {
+            contributions += tx.amount;
+        }
         if (tx.type === 'Loan Disbursement') loansOut += tx.amount;
     });
 
     document.getElementById('main-content').innerHTML = `
         <h1>Ledger - ${member.name}</h1>
         <p class="subtitle">
-            Status: ${member.active ? 'Active' : 'Suspended'} | 
+            Status: ${member.active ? '<span style="color:#28a745">Active</span>' : '<span style="color:#dc3545">Suspended</span>'} | 
             Contributions: ${formatCurrency(contributions)} | 
             Loans Out: ${formatCurrency(loansOut)} | 
             Balance: ${formatCurrency(member.balance)}
         </p>
-        <table class="members-table">
-            <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Description</th><th>Balance After</th></tr></thead>
-            <tbody>
-                ${member.ledger.length === 0 ? '<tr><td colspan="5">No transactions yet</td></tr>' : 
-                 member.ledger.map(tx => `
-                    <tr>
-                        <td>${tx.date}</td>
-                        <td>${tx.type}</td>
-                        <td>${formatCurrency(tx.amount)}</td>
-                        <td>${tx.description || '-'}</td>
-                        <td>${formatCurrency(tx.balanceAfter)}</td>
-                    </tr>
-                 `).join('')}
-            </tbody>
-        </table>
-        <button class="submit-btn" onclick="showAddTransactionForm(${memberId})" style="margin-top:20px;">Add Transaction</button>
-        <button class="submit-btn" style="background:#6c757d;margin-left:10px;" onclick="membersListSection()">Back to List</button>
+        <div class="table-container">
+            <table class="members-table">
+                <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Description</th><th>Balance After</th></tr></thead>
+                <tbody>
+                    ${member.ledger.length === 0 ? '<tr><td colspan="5" style="text-align:center;">No transactions yet</td></tr>' : 
+                     member.ledger.map(tx => `
+                        <tr>
+                            <td>${new Date(tx.date).toLocaleDateString('en-GB')}</td>
+                            <td>${tx.type}</td>
+                            <td>${formatCurrency(tx.amount)}</td>
+                            <td>${tx.description || '-'}</td>
+                            <td>${formatCurrency(tx.balanceAfter)}</td>
+                        </tr>
+                     `).join('')}
+                </tbody>
+            </table>
+        </div>
+        <button class="submit-btn" style="margin-top:20px;" onclick="alert('Transaction recording is done via Deposits/Loans modules')">
+            Add Transaction (via Deposits/Loans)
+        </button>
+        <button class="submit-btn" style="background:#6c757d;margin-left:10px;" onclick="renderMembersList()">
+            Back to Members List
+        </button>
     `;
 }
 
-function showAddTransactionForm(memberId) {
-    alert('Add Transaction form will be implemented in the Deposits/Loans module.');
-}
+// ======================
+// SUSPEND / REACTIVATE
+// ======================
 
-function suspendMember(memberId) {
-    if (confirm('Suspend this member?')) {
+export function suspendMember(memberId) {
+    if (confirm('Suspend this member? They will no longer be able to transact.')) {
         const member = members.find(m => m.id === memberId);
-        member.active = false;
-        saveMembers(members);
-        showAlert('Member suspended.');
-        membersListSection();
+        if (member) {
+            member.active = false;
+            saveMembers(members);
+            showAlert('Member suspended.');
+            renderMembersList();
+        }
     }
 }
 
-function reactivateMember(memberId) {
+export function reactivateMember(memberId) {
     if (confirm('Reactivate this member?')) {
         const member = members.find(m => m.id === memberId);
-        member.active = true;
-        saveMembers(members);
-        showAlert('Member reactivated.');
-        membersListSection();
+        if (member) {
+            member.active = true;
+            saveMembers(members);
+            showAlert('Member reactivated.');
+            renderMembersList();
+        }
     }
 }
 
 // ======================
-// EXPORT TO CSV
+// EXPORT / IMPORT CSV
 // ======================
 
-function exportMembersToCSV() {
+export function exportMembersToCSV() {
     if (members.length === 0) {
         showAlert('No members to export.');
         return;
@@ -416,14 +393,13 @@ function exportMembersToCSV() {
         let contributions = 0;
         let loansOut = 0;
         m.ledger.forEach(tx => {
-            if (['Deposit', 'Share Contribution', 'Loan Repayment'].includes(tx.type)) contributions += tx.amount;
+            if (['Deposit', 'Share Contribution', 'Loan Repayment', 'Contribution'].includes(tx.type)) contributions += tx.amount;
             if (tx.type === 'Loan Disbursement') loansOut += tx.amount;
         });
         return { ...m, contributions, loansOut };
     });
 
     const headers = ['Name','Phone','Email','ID Number','Role','Introducer Name','Introducer Member No.','Contributions','Loans Out','Balance','Status'];
-
     const rows = enriched.map(m => [
         m.name,
         m.phone,
@@ -448,20 +424,13 @@ function exportMembersToCSV() {
     const link = document.createElement('a');
     link.href = url;
     link.download = 'soyosoyo_members.csv';
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
     showAlert('Members exported successfully!');
 }
 
-// ======================
-// IMPORT FROM CSV
-// ======================
-
-function importMembers(event) {
+export function importMembers(event) {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -469,7 +438,6 @@ function importMembers(event) {
     reader.onload = function(e) {
         const content = e.target.result;
         const lines = content.split(/\r?\n/).filter(line => line.trim());
-
         if (lines.length < 2) {
             showAlert('CSV is empty or invalid.');
             return;
@@ -504,10 +472,9 @@ function importMembers(event) {
             const row = {};
             headers.forEach((h, idx) => row[h] = values[idx] || '');
 
-            const name = row['name'] || '';
-            const phone = row['phone'] || '';
-            if (!name || !phone) continue;
-
+            const name = row['name']?.trim();
+            const phone = row['phone']?.trim();
+            if (!name || !phone || !isValidKenyanPhone(phone)) continue;
             if (members.some(m => m.phone === phone)) continue;
 
             members.push({
@@ -529,24 +496,16 @@ function importMembers(event) {
 
         saveMembers(members);
         showAlert(`${imported} members imported successfully!`);
-        membersListSection();
+        renderMembersList();
     };
-
     reader.readAsText(file);
 }
 
 // ======================
-// INITIALIZER
+// MODULE INITIALIZATION
 // ======================
 
 export function initMembersModule() {
-    window.createMemberSection = createMemberSection;
-    window.membersListSection = membersListSection;
-    window.viewLedger = viewLedger;
-    window.showAddTransactionForm = showAddTransactionForm;
-    window.suspendMember = suspendMember;
-    window.reactivateMember = reactivateMember;
-    window.exportMembersToCSV = exportMembersToCSV;
-    window.importMembers = importMembers;
-    window.editMember = editMember;
+    // Optional: any setup code
+    console.log('Members module initialized');
 }
