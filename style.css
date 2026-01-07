@@ -1,4 +1,4 @@
-/* style.css - Fixed mobile visibility, variable fonts for mobile/desktop */
+/* style.css - No major changes, added inactive row style */
 
 :root {
     --primary-green: #28a745;
@@ -8,8 +8,8 @@
     --card-bg: #ffffff;
     --text: #333333;
     --border: #dee2e6;
-    --font-base: 15px; /* Desktop base */
-    --font-small: 13px; /* Mobile base */
+    --font-base: 15px;
+    --font-small: 13px;
     --header-large: 26px;
     --header-small: 22px;
 }
@@ -29,7 +29,6 @@ body {
     min-height: 100vh;
 }
 
-/* MOBILE HEADER - ENSURED VISIBILITY */
 .mobile-header {
     display: none;
     align-items: center;
@@ -40,7 +39,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 2000; /* Higher z-index for visibility */
+    z-index: 2000;
 }
 
 .toggle-btn {
@@ -57,7 +56,6 @@ body {
     margin-left: 10px;
 }
 
-/* SIDEBAR */
 .sidebar {
     width: 280px;
     background: var(--card-bg);
@@ -104,7 +102,6 @@ body {
     color: var(--dark);
 }
 
-/* MENU */
 .menu {
     list-style: none;
     padding: 0 15px;
@@ -122,7 +119,7 @@ body {
     color: var(--text);
     border-radius: 10px;
     transition: all 0.2s;
-    word-wrap: break-word; /* Fit long text */
+    word-wrap: break-word;
 }
 
 .menu i {
@@ -150,7 +147,6 @@ body {
     transform: rotate(180deg);
 }
 
-/* SUBMENU */
 .submenu {
     list-style: none;
     padding: 0;
@@ -180,7 +176,6 @@ body {
     color: #fff;
 }
 
-/* MAIN CONTENT */
 .content {
     flex: 1;
     padding: 40px;
@@ -200,7 +195,6 @@ h1 {
     margin-bottom: 30px;
 }
 
-/* FORM CARD */
 .form-card {
     background: var(--card-bg);
     padding: 30px;
@@ -251,49 +245,6 @@ input:focus, select:focus {
     background: #e96d00;
 }
 
-/* MOBILE STYLES - SMALLER FONTS, BETTER FIT */
-@media (max-width: 992px) {
-    body {
-        font-size: var(--font-small);
-    }
-
-    .sidebar {
-        width: 250px; /* Slimmer for mobile */
-        transform: translateX(-100%);
-    }
-
-    .sidebar.open {
-        transform: translateX(0);
-    }
-
-    .content {
-        margin-left: 0;
-        padding: 20px;
-        padding-top: 80px; /* Space for header */
-    }
-
-    .mobile-header {
-        display: flex;
-    }
-
-    .close-btn {
-        display: block;
-    }
-
-    .menu-link, .submenu li {
-        font-size: var(--font-small);
-        line-height: 1.4; /* Better spacing */
-    }
-
-    h1 {
-        font-size: var(--header-small);
-    }
-
-    .form-card {
-        padding: 20px;
-        max-width: 100%;
-    }
-}
 .members-table {
     width: 100%;
     border-collapse: collapse;
@@ -309,4 +260,92 @@ input:focus, select:focus {
 .members-table th {
     background: var(--primary-green);
     color: #fff;
+}
+
+.members-table td button {
+    padding: 6px 12px;
+    margin-right: 5px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.members-table td button:first-child {
+    background: #007bff;
+    color: #fff;
+}
+
+.members-table td button:nth-child(2) {
+    background: #ffc107;
+    color: #000;
+}
+
+.members-table td button:nth-child(3) {
+    background: #dc3545;
+    color: #fff;
+}
+
+.members-table .inactive-row {
+    background: #f8d7da;
+    color: #721c24;
+    opacity: 0.8;
+}
+
+#custom-role-group {
+    display: none;
+    margin-top: 10px;
+}
+
+@media (max-width: 992px) {
+    body {
+        font-size: var(--font-small);
+    }
+
+    .sidebar {
+        width: 250px;
+        transform: translateX(-100%);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .content {
+        margin-left: 0;
+        padding: 20px;
+        padding-top: 80px;
+    }
+
+    .mobile-header {
+        display: flex;
+    }
+
+    .close-btn {
+        display: block;
+    }
+
+    .menu-link, .submenu li {
+        font-size: var(--font-small);
+        line-height: 1.4;
+    }
+
+    h1 {
+        font-size: var(--header-small);
+    }
+
+    .form-card {
+        padding: 20px;
+        max-width: 100%;
+    }
+
+    .members-table th, .members-table td {
+        padding: 8px;
+        font-size: 12px;
+    }
+
+    .members-table td button {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
 }
