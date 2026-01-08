@@ -198,3 +198,6 @@ initDepositsModule();
 const initialSection = window.location.hash.slice(1) || 'dashboard';
 loadSection(initialSection);
 setActiveMenu(initialSection);
+
+// === EXPOSE loadSection FOR onclick HANDLERS ===
+window.loadSection = loadSection;
