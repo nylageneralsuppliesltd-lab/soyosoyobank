@@ -40,61 +40,52 @@ export function saveSettings(settings) {
     setItem('settings', settings);
 }
 
-// Main Settings Dashboard - FULL & FINAL VERSION (All Cards Clickable)
-
+// ============== MAIN SETTINGS DASHBOARD (ALL CARDS CLICKABLE) ==============
 export function renderSettings() {
     document.getElementById('main-content').innerHTML = `
         <div class="settings-page">
             <h1>Settings & Configuration</h1>
-            <p class="subtitle">Click any card below to add, edit, or manage items. All changes are saved automatically.</p>
+            <p class="subtitle">Click any card to add, edit, or manage items. All changes save automatically.</p>
 
             <div class="settings-grid">
-                <!-- Contribution Types -->
                 <div class="section-card nav-card" onclick="loadSection('settings-contributions')">
                     <h3>Contribution Types</h3>
                     <p class="help-text">Monthly Shares, Registration Fee, Building Fund, Education Fund, etc.<br>
                     Configure amount, arrears rules, statement display, and refundability.</p>
                 </div>
 
-                <!-- Invoice Templates -->
                 <div class="section-card nav-card" onclick="loadSection('settings-invoices')">
                     <h3>Invoice Templates</h3>
                     <p class="help-text">Create invoice types with amount payable, due date, sending options, and description.</p>
                 </div>
 
-                <!-- Expense Categories -->
                 <div class="section-card nav-card" onclick="loadSection('settings-expenses')">
                     <h3>Expense Categories</h3>
                     <p class="help-text">Office Rent, Staff Salaries, Utilities, Transport, Stationery.<br>
                     Add description and mark as administrative expense if needed.</p>
                 </div>
 
-                <!-- Fine Categories -->
                 <div class="section-card nav-card" onclick="loadSection('settings-fines')">
                     <h3>Fine Categories</h3>
                     <p class="help-text">Late Payment Fine, Meeting Absence, Loan Default Interest, etc.</p>
                 </div>
 
-                <!-- Group Roles -->
                 <div class="section-card nav-card" onclick="loadSection('settings-roles')">
                     <h3>Group Roles</h3>
                     <p class="help-text">Chairman, Vice Chairman, Secretary, Treasurer, Committee Member.<br>
                     Assign role description and permissions (view, edit, approve, etc.).</p>
                 </div>
 
-                <!-- Asset Categories -->
                 <div class="section-card nav-card" onclick="loadSection('settings-assets')">
                     <h3>Asset Categories</h3>
                     <p class="help-text">Land, Buildings, Vehicles, Furniture, Office Equipment, Investments.</p>
                 </div>
 
-                <!-- Income Categories -->
                 <div class="section-card nav-card" onclick="loadSection('settings-income')">
                     <h3>Income Categories</h3>
                     <p class="help-text">Interest Received, Donations, Fines Collected, Asset Sales, Other Income.</p>
                 </div>
 
-                <!-- Accounts -->
                 <div class="section-card nav-card" onclick="loadSection('settings-accounts')">
                     <h3>Accounts</h3>
                     <p class="help-text">Petty Cash, M-Pesa Till, Airtel Money, Equity Bank, Co-op Bank, etc.<br>
@@ -108,7 +99,8 @@ export function renderSettings() {
         </div>
     `;
 }
-// Generic List View (for all categories)
+
+// ============== GENERIC LIST VIEW ==============
 function renderListView(key, title, fields = ['name']) {
     const settings = loadSettings();
     const items = settings[key] || [];
@@ -121,11 +113,11 @@ function renderListView(key, title, fields = ['name']) {
             + Add New ${title.slice(0, -1)}
         </button>
         <button class="submit-btn" style="background:#6c757d; margin-left:10px;" onclick="renderSettings()">
-            ← Back
+            ← Back to Settings
         </button>
 
-        ${items.length === 0 ?
-            `<p style="color:#999; margin:30px 0; font-style:italic;">No items yet. Click "+ Add New" above.</p>` :
+        ${items.length === 0 ? 
+            `<p style="color:#999; margin:30px 0; font-style:italic;">No items defined yet. Click "+ Add New" to create one.</p>` :
             `
             <div class="table-container" style="margin-top:20px;">
                 <table class="members-table">
@@ -158,12 +150,12 @@ window.deleteItem = function(key, index, title) {
         const settings = loadSettings();
         settings[key].splice(index, 1);
         saveSettings(settings);
-        showAlert(`${title.slice(0, -1)} deleted.`);
+        showAlert(`${title.slice(0, -1)} deleted`);
         renderListView(key, title);
     }
 };
 
-// Generic Add/Edit Form Router
+// ============== ADD/EDIT FORM ROUTER ==============
 window.renderAddEditForm = function(key, title, editIndex) {
     if (key === 'contributionTypes') renderContributionForm(editIndex);
     else if (key === 'invoiceTemplates') renderInvoiceForm(editIndex);
@@ -175,7 +167,7 @@ window.renderAddEditForm = function(key, title, editIndex) {
     else if (key === 'accounts') renderAccountsDashboard();
 };
 
-// === CONTRIBUTION TYPES ===
+// ============== CONTRIBUTION TYPES FORM ==============
 function renderContributionForm(editIndex = null) {
     const settings = loadSettings();
     const item = editIndex !== null ? settings.contributionTypes[editIndex] : {};
@@ -185,15 +177,15 @@ function renderContributionForm(editIndex = null) {
             <h1>${editIndex !== null ? 'Edit' : 'Add'} Contribution Type</h1>
             <form id="contrib-form">
                 <div class="form-group">
-                    <label class="required-label">Contribution Name</label>
+                    <label class="required-label">Contribution Name *</label>
                     <input type="text" id="name" value="${item.name || ''}" required>
                 </div>
                 <div class="form-group">
-                    <label class="required-label">Contribution Amount per Member</label>
+                    <label class="required-label">Contribution Amount per Member *</label>
                     <input type="number" id="amount" value="${item.amount || ''}" min="0" required>
                 </div>
                 <div class="form-group">
-                    <label class="required-label">Contribution Type</label>
+                    <label class="required-label">Contribution Type *</label>
                     <select id="type">
                         <option value="Shares" ${item.type === 'Shares' ? 'selected' : ''}>Shares</option>
                         <option value="Savings" ${item.type === 'Savings' ? 'selected' : ''}>Savings</option>
@@ -202,7 +194,7 @@ function renderContributionForm(editIndex = null) {
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="required-label">Contribution Category</label>
+                    <label class="required-label">Contribution Category *</label>
                     <input type="text" id="category" value="${item.category || ''}" required>
                 </div>
                 <div class="form-group">
@@ -257,7 +249,7 @@ function renderContributionForm(editIndex = null) {
     };
 }
 
-// === INVOICE TEMPLATES ===
+// ============== INVOICE TEMPLATES FORM ==============
 function renderInvoiceForm(editIndex = null) {
     const settings = loadSettings();
     const item = editIndex !== null ? settings.invoiceTemplates[editIndex] : {};
@@ -267,11 +259,11 @@ function renderInvoiceForm(editIndex = null) {
             <h1>${editIndex !== null ? 'Edit' : 'Create'} Invoice Template</h1>
             <form id="invoice-form">
                 <div class="form-group">
-                    <label class="required-label">Invoice Type</label>
+                    <label class="required-label">Invoice Type *</label>
                     <input type="text" id="type" value="${item.type || ''}" required>
                 </div>
                 <div class="form-group">
-                    <label class="required-label">Send Invoices To</label>
+                    <label class="required-label">Send Invoices To *</label>
                     <select id="sendTo">
                         <option value="All Members" ${item.sendTo === 'All Members' ? 'selected' : ''}>All Members</option>
                         <option value="Active Only" ${item.sendTo === 'Active Only' ? 'selected' : ''}>Active Only</option>
@@ -279,15 +271,15 @@ function renderInvoiceForm(editIndex = null) {
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="required-label">Amount Payable</label>
+                    <label class="required-label">Amount Payable *</label>
                     <input type="number" id="amount" value="${item.amount || ''}" min="0" required>
                 </div>
                 <div class="form-group">
-                    <label class="required-label">Invoice Date</label>
+                    <label class="required-label">Invoices Date *</label>
                     <input type="date" id="invoiceDate" value="${item.invoiceDate || new Date().toISOString().split('T')[0]}" required>
                 </div>
                 <div class="form-group">
-                    <label class="required-label">Contribution Date / Due Date</label>
+                    <label class="required-label">Contribution Date / Due Date *</label>
                     <input type="date" id="dueDate" value="${item.dueDate || new Date().toISOString().split('T')[0]}" required>
                 </div>
                 <div class="form-group">
@@ -327,7 +319,7 @@ function renderInvoiceForm(editIndex = null) {
     };
 }
 
-// === EXPENSE CATEGORIES ===
+// ============== EXPENSE CATEGORIES FORM ==============
 function renderExpenseCategoryForm(editIndex = null) {
     const settings = loadSettings();
     const item = editIndex !== null ? settings.expenseCategories[editIndex] : {};
@@ -337,7 +329,7 @@ function renderExpenseCategoryForm(editIndex = null) {
             <h1>${editIndex !== null ? 'Edit' : 'Add'} Expense Category</h1>
             <form id="expense-form">
                 <div class="form-group">
-                    <label class="required-label">Group Expense Category Name</label>
+                    <label class="required-label">Group Expense Category Name *</label>
                     <input type="text" id="name" value="${item.name || ''}" required>
                 </div>
                 <div class="form-group">
@@ -380,7 +372,7 @@ function renderExpenseCategoryForm(editIndex = null) {
     };
 }
 
-// === FINE CATEGORIES ===
+// ============== FINE CATEGORIES FORM ==============
 function renderFineCategoryForm(editIndex = null) {
     const settings = loadSettings();
     const item = editIndex !== null ? settings.fineCategories[editIndex] : {};
@@ -390,7 +382,7 @@ function renderFineCategoryForm(editIndex = null) {
             <h1>${editIndex !== null ? 'Edit' : 'Add'} Fine Category</h1>
             <form id="fine-form">
                 <div class="form-group">
-                    <label class="required-label">Group Fine Category Name</label>
+                    <label class="required-label">Group Fine Category Name *</label>
                     <input type="text" id="name" value="${item.name || ''}" required>
                 </div>
                 <div style="margin-top:30px;">
@@ -421,7 +413,7 @@ function renderFineCategoryForm(editIndex = null) {
     };
 }
 
-// === GROUP ROLES WITH PERMISSIONS ===
+// ============== GROUP ROLES WITH PERMISSIONS ==============
 function renderGroupRoleForm(editIndex = null) {
     const settings = loadSettings();
     const item = editIndex !== null ? settings.groupRoles[editIndex] : { permissions: [] };
@@ -436,7 +428,7 @@ function renderGroupRoleForm(editIndex = null) {
             <h1>${editIndex !== null ? 'Edit' : 'Add'} Group Role</h1>
             <form id="role-form">
                 <div class="form-group">
-                    <label class="required-label">Group Role Name</label>
+                    <label class="required-label">Group Role Name *</label>
                     <input type="text" id="name" value="${item.name || ''}" required>
                 </div>
                 <div class="form-group">
@@ -466,8 +458,7 @@ function renderGroupRoleForm(editIndex = null) {
 
     document.getElementById('role-form').onsubmit = (e) => {
         e.preventDefault();
-        const permissions = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
-            .map(cb => cb.value);
+        const permissions = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
 
         const newItem = {
             name: document.getElementById('name').value.trim(),
@@ -487,7 +478,7 @@ function renderGroupRoleForm(editIndex = null) {
     };
 }
 
-// === ASSET CATEGORIES ===
+// ============== ASSET CATEGORIES FORM ==============
 function renderAssetCategoryForm(editIndex = null) {
     const settings = loadSettings();
     const item = editIndex !== null ? settings.assetCategories[editIndex] : {};
@@ -497,11 +488,11 @@ function renderAssetCategoryForm(editIndex = null) {
             <h1>${editIndex !== null ? 'Edit' : 'Add'} Asset Category</h1>
             <form id="asset-form">
                 <div class="form-group">
-                    <label class="required-label">Group Asset Category Name</label>
+                    <label class="required-label">Group Asset Category Name *</label>
                     <input type="text" id="name" value="${item.name || ''}" required>
                 </div>
                 <div class="form-group">
-                    <label>Group Asset Category Description</label>
+                    <label>Group Asset Category Description *</label>
                     <textarea id="description" rows="3">${item.description || ''}</textarea>
                 </div>
                 <div style="margin-top:30px;">
@@ -533,7 +524,7 @@ function renderAssetCategoryForm(editIndex = null) {
     };
 }
 
-// === INCOME CATEGORIES ===
+// ============== INCOME CATEGORIES FORM ==============
 function renderIncomeCategoryForm(editIndex = null) {
     const settings = loadSettings();
     const item = editIndex !== null ? settings.incomeCategories[editIndex] : {};
@@ -543,7 +534,7 @@ function renderIncomeCategoryForm(editIndex = null) {
             <h1>${editIndex !== null ? 'Edit' : 'Create'} Income Category</h1>
             <form id="income-form">
                 <div class="form-group">
-                    <label class="required-label">Income Category Name</label>
+                    <label class="required-label">Income Category Name *</label>
                     <input type="text" id="name" value="${item.name || ''}" required>
                 </div>
                 <div class="form-group">
@@ -579,23 +570,23 @@ function renderIncomeCategoryForm(editIndex = null) {
     };
 }
 
-// === ACCOUNTS DASHBOARD ===
+// ============== ACCOUNTS DASHBOARD ==============
 function renderAccountsDashboard() {
     document.getElementById('main-content').innerHTML = `
         <div class="settings-page">
             <h1>Accounts Management</h1>
-            <p class="subtitle">Add and manage Petty Cash, Mobile Money, and Bank Accounts</p>
+            <p class="subtitle">Choose an account type to manage</p>
 
             <div class="settings-grid">
-                <div class="section-card nav-card" onclick="renderPettyCashForm()">
+                <div class="section-card nav-card" onclick="renderPettyCashList()">
                     <h3>Petty Cash Account</h3>
-                    <p class="help-text">Manage cash held at office or safe.</p>
+                    <p class="help-text">Cash held at office or safe</p>
                 </div>
-                <div class="section-card nav-card" onclick="renderMobileMoneyForm()">
+                <div class="section-card nav-card" onclick="renderMobileMoneyList()">
                     <h3>Mobile Money Account</h3>
                     <p class="help-text">M-Pesa Till, Airtel Money, etc.</p>
                 </div>
-                <div class="section-card nav-card" onclick="renderBankAccountForm()">
+                <div class="section-card nav-card" onclick="renderBankList()">
                     <h3>Bank Account</h3>
                     <p class="help-text">Equity, Co-op, KCB, etc.</p>
                 </div>
@@ -606,6 +597,7 @@ function renderAccountsDashboard() {
         </div>
     `;
 }
+
 
 // Petty Cash
 function renderPettyCashForm(editIndex = null) {
