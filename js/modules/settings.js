@@ -836,7 +836,7 @@ function renderBankAccountForm(editIndex = null) {
         </div>
     `;
 
-   document.getElementById('bank-form').onsubmit = (e) => {
+document.getElementById('bank-form').onsubmit = (e) => {
     e.preventDefault();
     const settings = loadSettings();
     ensureArray('accounts.bank');
@@ -859,17 +859,6 @@ function renderBankAccountForm(editIndex = null) {
     showAlert('Bank account saved!');
     renderAccountsDashboard();
 };
-
-        if (editIndex !== null) {
-            settings.accounts.bank[editIndex] = newItem;
-        } else {
-            settings.accounts.bank.push(newItem);
-        }
-
-        saveSettings(settings);
-        showAlert('Bank account saved!');
-        renderAccountsDashboard();
-    };
 }
 // Petty Cash List
 function renderPettyCashList() {
