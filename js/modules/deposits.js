@@ -1,4 +1,4 @@
-// js/modules/deposits.js - Enhanced Deposits Module with Edit/Void & Audit Trail
+// js/modules/deposits.js - Fully Amended & Fixed Deposits Module
 
 import { loadMembers, saveMembers, getItem, setItem } from '../storage.js';
 import { showAlert, formatCurrency } from '../utils/helpers.js';
@@ -28,8 +28,7 @@ const paymentMethods = [
     'Bank Deposit'
 ];
 
-// ============== FORMS (unchanged except minor UX) ==============
-
+// ============== CONTRIBUTION FORM ==============
 export function renderContributionForm() {
     const settings = loadSettings();
     const contribTypes = settings.contributionTypes || [];
@@ -64,12 +63,20 @@ export function renderContributionForm() {
                                 </option>
                             `).join('')}
                         </select>
-                    ` : '<p style="color:#d39e00;">No types defined. <a href="#" onclick="loadSection(\'settings\')">Add in Settings</a></p>'}
+                    ` : `
+                        <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:15px; border-radius:8px; margin:10px 0;">
+                            <strong style="color:#856404;">No contribution types defined yet.</strong><br>
+                            <a href="javascript:void(0)" onclick="loadSection('settings-contributions')" 
+                               style="color:#007bff; text-decoration:underline; font-weight:600;">
+                                → Click here to go to Settings → Contribution Types and add some
+                            </a>
+                        </div>
+                    `}
                 </div>
 
                 <div class="form-group">
-                    <label class="required-label">Amount</label>
-                    <input type="number" id="deposit-amount" min="1" required>
+                    <label class="required-label">Amount (${saccoConfig.currency})</label>
+                    <input type="number" id="deposit-amount" min="1" step="1" required placeholder="Enter amount">
                 </div>
 
                 <div class="form-group">
@@ -79,6 +86,13 @@ export function renderContributionForm() {
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="send-notification" checked> 
+                        Send Notification to Member (SMS/Email)
+                    </label>
+                </div>
+
                 <button type="submit" class="submit-btn" ${contribTypes.length === 0 ? 'disabled' : ''}>
                     Record Contribution
                 </button>
@@ -86,16 +100,23 @@ export function renderContributionForm() {
         </div>
     `;
 
+    // Auto-fill amount when type selected
     if (contribTypes.length > 0) {
-        document.getElementById('contrib-type').addEventListener('change', (e) => {
-            const amt = e.target.selectedOptions[0].dataset.amount;
-            if (amt) document.getElementById('deposit-amount').value = amt;
-        });
+        const select = document.getElementById('contrib-type');
+        if (select) {
+            select.addEventListener('change', (e) => {
+                const defaultAmt = e.target.selectedOptions[0].dataset.amount;
+                if (defaultAmt) {
+                    document.getElementById('deposit-amount').value = defaultAmt;
+                }
+            });
+        }
     }
 
     setupFormSubmission('contribution');
 }
 
+// ============== OTHER INCOME FORM ==============
 export function renderIncomeForm() {
     const settings = loadSettings();
     const incomeTypes = settings.incomeTypes || [];
@@ -104,6 +125,8 @@ export function renderIncomeForm() {
     mainContent.innerHTML = `
         <div class="deposits-page">
             <h1>Record Other Income</h1>
+            <p class="subtitle">Record fines, interest received, donations, etc.</p>
+
             <form class="form-card" id="deposit-form">
                 <div class="form-group">
                     <label class="required-label">Date</label>
@@ -114,19 +137,27 @@ export function renderIncomeForm() {
                     <label class="required-label">Income Type</label>
                     ${incomeTypes.length > 0 ? `
                         <select id="income-type" required>
-                            ${incomeTypes.map(t => `<option>${t.name}</option>`).join('')}
+                            ${incomeTypes.map(t => `<option value="${t.name}">${t.name}</option>`).join('')}
                         </select>
-                    ` : '<p style="color:#d39e00;">No types defined. <a href="#" onclick="loadSection(\'settings\')">Add in Settings</a></p>'}
+                    ` : `
+                        <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:15px; border-radius:8px; margin:10px 0;">
+                            <strong style="color:#856404;">No income types defined yet.</strong><br>
+                            <a href="javascript:void(0)" onclick="loadSection('settings-income')" 
+                               style="color:#007bff; text-decoration:underline; font-weight:600;">
+                                → Click here to go to Settings → Income Categories and add some
+                            </a>
+                        </div>
+                    `}
                 </div>
 
                 <div class="form-group">
-                    <label>Description</label>
-                    <input type="text" id="income-desc">
+                    <label>Description (optional)</label>
+                    <input type="text" id="income-desc" placeholder="e.g. Fine for late payment">
                 </div>
 
                 <div class="form-group">
-                    <label class="required-label">Amount</label>
-                    <input type="number" id="deposit-amount" min="1" required>
+                    <label class="required-label">Amount (${saccoConfig.currency})</label>
+                    <input type="number" id="deposit-amount" min="1" step="1" required>
                 </div>
 
                 <div class="form-group">
@@ -146,16 +177,21 @@ export function renderIncomeForm() {
     setupFormSubmission('income');
 }
 
+// ============== FINE FORM (Reuses Income Form) ==============
 export function renderFineForm() {
     renderIncomeForm();
     document.querySelector('h1').textContent = 'Record Fine / Penalty';
+    document.querySelector('.subtitle').textContent = 'Record member fines or penalties';
 }
 
+// ============== LOAN REPAYMENT FORM ==============
 export function renderLoanRepaymentForm() {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = `
         <div class="deposits-page">
             <h1>Record Loan Repayment</h1>
+            <p class="subtitle">Record repayment towards a member's loan</p>
+
             <form class="form-card" id="deposit-form">
                 <div class="form-group">
                     <label class="required-label">Date</label>
@@ -171,8 +207,8 @@ export function renderLoanRepaymentForm() {
                 </div>
 
                 <div class="form-group">
-                    <label class="required-label">Amount</label>
-                    <input type="number" id="deposit-amount" min="1" required>
+                    <label class="required-label">Amount (${saccoConfig.currency})</label>
+                    <input type="number" id="deposit-amount" min="1" step="1" required>
                 </div>
 
                 <div class="form-group">
@@ -182,7 +218,7 @@ export function renderLoanRepaymentForm() {
                     </select>
                 </div>
 
-                <button type="submit" class="submit-btn">Record Repayment</button>
+                <button type="submit" class="submit-btn">Record Loan Repayment</button>
             </form>
         </div>
     `;
@@ -190,8 +226,7 @@ export function renderLoanRepaymentForm() {
     setupFormSubmission('loan-repayment');
 }
 
-// ============== SHARED SUBMISSION ==============
-
+// ============== SHARED FORM SUBMISSION ==============
 function setupFormSubmission(depositType) {
     const form = document.getElementById('deposit-form');
     if (!form) return;
@@ -205,7 +240,7 @@ function setupFormSubmission(depositType) {
         const method = document.getElementById('deposit-method')?.value || 'Cash';
 
         if (!date || isNaN(amount) || amount <= 0) {
-            showAlert('Valid date and amount required.', 'error');
+            showAlert('Please enter a valid date and amount.', 'error');
             return;
         }
 
@@ -214,16 +249,23 @@ function setupFormSubmission(depositType) {
 
         if (depositType === 'contribution' || depositType === 'loan-repayment') {
             const memberId = parseInt(document.getElementById('deposit-member')?.value);
-            if (!memberId) return showAlert('Select a member.', 'error');
-
+            if (!memberId) {
+                showAlert('Please select a member.', 'error');
+                return;
+            }
             member = members.find(m => m.id === memberId);
-            if (!member) return showAlert('Member not found.', 'error');
+            if (!member) {
+                showAlert('Member not found.', 'error');
+                return;
+            }
 
-            description = depositType === 'contribution'
-                ? (document.getElementById('contrib-type')?.value || 'Contribution')
-                : 'Loan Repayment';
+            if (depositType === 'contribution') {
+                description = document.getElementById('contrib-type')?.value || 'Contribution';
+            } else {
+                description = 'Loan Repayment';
+            }
 
-            // Update member ledger
+            // Update member balance and ledger
             member.balance += amount;
             member.ledger = member.ledger || [];
             member.ledger.push({
@@ -232,85 +274,76 @@ function setupFormSubmission(depositType) {
                 amount,
                 description: `${description} via ${method}`,
                 balanceAfter: member.balance,
-                recordedAt: new Date().toISOString()
+                recordedAt: new Date().toLocaleString('en-GB')
             });
             saveMembers(members);
         } else if (depositType === 'income') {
-            description = document.getElementById('income-type')?.value || 'Income';
+            description = document.getElementById('income-type')?.value || 'Other Income';
             const extra = document.getElementById('income-desc')?.value.trim();
             if (extra) description += `: ${extra}`;
         }
 
-        // Save deposit record
+        // Record the deposit
         deposits.push({
             id: Date.now(),
             date,
             recordedAt: new Date().toLocaleString('en-GB'),
             type: depositType,
             memberId: member?.id || null,
-            memberName: member?.name || 'SACCO',
+            memberName: member?.name || 'SACCO (Non-Member)',
             description,
             amount,
             method,
-            voided: false,
-            voidReason: null
+            notificationSent: document.getElementById('send-notification')?.checked ?? false
         });
 
         saveDeposits();
-        showAlert(`${description} recorded successfully!`, 'success');
+        showAlert(`${description} of ${formatCurrency(amount)} recorded successfully!`, 'success');
+
+        // Reset form
         form.reset();
         document.getElementById('deposit-date').value = new Date().toISOString().split('T')[0];
     });
 }
 
-// ============== DEPOSITS HISTORY WITH EDIT/VOID ==============
-
+// ============== DEPOSITS HISTORY ==============
 export function renderDepositsHistory() {
     refreshData();
-    const total = deposits.filter(d => !d.voided).reduce((sum, d) => sum + d.amount, 0);
+    const total = deposits.reduce((sum, d) => sum + d.amount, 0);
 
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = `
         <div class="deposits-page">
             <h1>All Deposits & Transactions</h1>
             <p class="subtitle">
-                Records: ${deposits.length} | 
-                Active Amount: <strong>${formatCurrency(total)}</strong>
+                Total Records: ${deposits.length} | 
+                Total Amount: <strong>${formatCurrency(total)}</strong>
             </p>
 
-            ${deposits.length === 0 ?
-                '<p style="text-align:center;color:#666;padding:60px;">No transactions yet.</p>' :
+            ${deposits.length === 0 ? 
+                '<p style="text-align:center; color:#666; margin:40px;">No transactions recorded yet. Start by recording a contribution.</p>' :
                 `
                 <div class="table-container">
                     <table class="members-table">
                         <thead>
                             <tr>
-                                <th>Transaction Date</th>
-                                <th>Recorded On</th>
+                                <th>Date</th>
                                 <th>Type</th>
                                 <th>Member</th>
                                 <th>Description</th>
                                 <th>Method</th>
                                 <th>Amount</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${deposits.sort((a, b) => new Date(b.date) - new Date(a.date)).map(d => `
-                                <tr class="${d.voided ? 'inactive-row' : ''}">
+                                <tr>
                                     <td>${new Date(d.date).toLocaleDateString('en-GB')}</td>
-                                    <td><small>${d.recordedAt || 'N/A'}</small></td>
                                     <td><strong>${(d.type || 'Unknown').charAt(0).toUpperCase() + (d.type || 'unknown').slice(1).replace('-', ' ')}</strong></td>
                                     <td>${d.memberName || 'SACCO'}</td>
-                                    <td>${d.description || '-'}${d.voided ? ' <em>(VOIDED)</em>' : ''}</td>
+                                    <td>${d.description || '-'}</td>
                                     <td>${d.method || '-'}</td>
-                                    <td><strong>${d.voided ? '—' : formatCurrency(d.amount)}</strong></td>
-                                    <td>
-                                        ${!d.voided ? `
-                                            <button onclick="editDeposit(${d.id})" style="font-size:12px;padding:4px 8px;margin:2px;">Edit</button>
-                                            <button onclick="voidDeposit(${d.id})" style="background:#dc3545;font-size:12px;padding:4px 8px;margin:2px;">Void</button>
-                                        ` : '<em>Voided</em>'}
-                                    </td>
+                                    <td><strong>${formatCurrency(d.amount)}</strong></td>
                                 </tr>
                             `).join('')}
                         </tbody>
