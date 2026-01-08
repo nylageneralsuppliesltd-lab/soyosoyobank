@@ -7,7 +7,6 @@ export function loadSettings() {
     let settings = getItem('settings');
 
     if (!settings) {
-        // Initialize with default structure
         settings = {
             contributionTypes: [],
             invoiceTemplates: [],
@@ -20,19 +19,26 @@ export function loadSettings() {
                 pettyCash: [],
                 mobileMoney: [],
                 bank: []
+            },
+            // New: Global SACCO defaults (optional)
+            saccoDefaults: {
+                invoiceAllMembers: true,
+                smsNotifications: true,
+                emailNotifications: false,
+                finesEnabled: false
             }
         };
         setItem('settings', settings);
 
         setTimeout(() => {
             showAlert(
-                'Welcome to Settings! Your SACCO configuration has been initialized. Click any card to start adding Contribution Types, Bank Accounts, Expense Categories, Roles, etc.',
+                'Settings initialized! Add Contribution Types with frequency, invoicing, notifications, and fines settings.',
                 'info',
                 10000
             );
         }, 500);
     } else {
-        // === SAFETY FIX: Ensure all arrays exist even if localStorage was corrupted or old ===
+        // Safety: ensure arrays exist
         if (!settings.contributionTypes) settings.contributionTypes = [];
         if (!settings.invoiceTemplates) settings.invoiceTemplates = [];
         if (!settings.expenseCategories) settings.expenseCategories = [];
@@ -40,19 +46,22 @@ export function loadSettings() {
         if (!settings.groupRoles) settings.groupRoles = [];
         if (!settings.assetCategories) settings.assetCategories = [];
         if (!settings.incomeCategories) settings.incomeCategories = [];
-
-        if (!settings.accounts) settings.accounts = {};
+        if (!settings.accounts) settings.accounts = { pettyCash: [], mobileMoney: [], bank: [] };
         if (!settings.accounts.pettyCash) settings.accounts.pettyCash = [];
         if (!settings.accounts.mobileMoney) settings.accounts.mobileMoney = [];
         if (!settings.accounts.bank) settings.accounts.bank = [];
+        if (!settings.saccoDefaults) settings.saccoDefaults = {
+            invoiceAllMembers: true,
+            smsNotifications: true,
+            emailNotifications: false,
+            finesEnabled: false
+        };
 
-        // Save the repaired structure back to storage
         setItem('settings', settings);
     }
 
     return settings;
 }
-
 export function saveSettings(settings) {
     setItem('settings', settings);
 }
@@ -216,36 +225,112 @@ function renderContributionForm(editIndex = null) {
     document.getElementById('main-content').innerHTML = `
         <div class="form-card">
             <h1>${editIndex !== null ? 'Edit' : 'Add'} Contribution Type</h1>
-            <form id="form">
-                <div class="form-group"><label>Name *</label><input type="text" id="name" value="${item.name || ''}" required></div>
-                <div class="form-group"><label>Amount *</label><input type="number" id="amount" value="${item.amount || ''}" min="0" required></div>
-                <div class="form-group"><label>Type *</label>
-                    <select id="type">
-                        <option>Shares</option><option>Savings</option><option>Loan</option><option>Other</option>
+            <form id="contribution-form-${editIndex ?? 'new'}">
+                <div class="form-group">
+                    <label class="required-label">Contribution Name *</label>
+                    <input type="text" id="contrib-name" value="${item.name || ''}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="required-label">Minimum Contribution Amount *</label>
+                    <input type="number" id="contrib-amount" value="${item.amount || ''}" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="required-label">Contribution Type *</label>
+                    <select id="contrib-type">
+                        <option value="Regular" ${item.type === 'Regular' ? 'selected' : ''}>Regular Contribution</option>
+                        <option value="OneTime" ${item.type === 'OneTime' ? 'selected' : ''}>One Time Contribution</option>
                     </select>
                 </div>
-                <div class="form-group"><label>Category *</label><input type="text" id="category" value="${item.category || ''}" required></div>
-                <div class="form-group"><label><input type="checkbox" id="disable-arrears" ${item.disableArrears ? 'checked' : ''}> Disable arrears?</label></div>
-                <div class="form-group"><label><input type="checkbox" id="show-statement" ${item.showInStatement !== false ? 'checked' : ''}> Show in statement?</label></div>
-                <div class="form-group"><label><input type="checkbox" id="non-refundable" ${item.nonRefundable ? 'checked' : ''}> Non-refundable?</label></div>
-                <button type="submit" class="submit-btn">Save</button>
-                <button type="button" class="submit-btn" style="background:#6c757d; margin-left:10px;" onclick="renderListView('contributionTypes', 'Contribution Types')">
-                    Cancel
-                </button>
+
+                <div class="form-group" id="frequency-group" style="${item.type === 'Regular' || !item.type ? '' : 'display:none'}">
+                    <label>Contribution Frequency *</label>
+                    <select id="contrib-frequency">
+                        <option value="Monthly" ${item.frequency === 'Monthly' ? 'selected' : ''}>Once a Month (Monthly)</option>
+                        <option value="Weekly" ${item.frequency === 'Weekly' ? 'selected' : ''}>Weekly</option>
+                        <option value="Quarterly" ${item.frequency === 'Quarterly' ? 'selected' : ''}>Quarterly</option>
+                    </select>
+                    <input type="text" id="contrib-day" value="${item.dayOfMonth || ''}" placeholder="e.g. Every 3rd Day of the Month">
+                </div>
+
+                <div class="form-group">
+                    <label>Invoice Date (for reminders)</label>
+                    <input type="date" id="invoice-date" value="${item.invoiceDate || ''}">
+                </div>
+
+                <div class="form-group">
+                    <label>Contribution Due Date</label>
+                    <input type="date" id="due-date" value="${item.dueDate || ''}">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="sms-notif" ${item.smsNotifications !== false ? 'checked' : ''}>
+                        SMS Notifications Enabled
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="email-notif" ${item.emailNotifications ? 'checked' : ''}>
+                        Email Notifications Enabled
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="fines-enabled" ${item.finesEnabled ? 'checked' : ''}>
+                        Fines for Late Payment Enabled
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="invoice-all" ${item.invoiceAllMembers !== false ? 'checked' : ''}>
+                        Invoice All Members
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="visible-invoicing" ${item.visibleInvoicing !== false ? 'checked' : ''}>
+                        Visible Invoicing Active (show in statements)
+                    </label>
+                </div>
+
+                <div style="margin-top:30px;">
+                    <button type="submit" class="submit-btn">Save Contribution Type</button>
+                    <button type="button" class="submit-btn" style="background:#6c757d; margin-left:10px;" onclick="renderListView('contributionTypes', 'Contribution Types')">
+                        Cancel
+                    </button>
+                </div>
             </form>
         </div>
     `;
 
-    document.getElementById('form').onsubmit = (e) => {
+    // Show/hide frequency fields
+    document.getElementById('contrib-type').addEventListener('change', (e) => {
+        document.getElementById('frequency-group').style.display = e.target.value === 'Regular' ? 'block' : 'none';
+    });
+
+    // Unique form ID to avoid conflicts
+    const formId = `contribution-form-${editIndex ?? 'new'}`;
+    document.getElementById(formId).onsubmit = (e) => {
         e.preventDefault();
         const newItem = {
-            name: document.getElementById('name').value.trim(),
-            amount: parseFloat(document.getElementById('amount').value),
-            type: document.getElementById('type').value,
-            category: document.getElementById('category').value.trim(),
-            disableArrears: document.getElementById('disable-arrears').checked,
-            showInStatement: document.getElementById('show-statement').checked,
-            nonRefundable: document.getElementById('non-refundable').checked
+            name: document.getElementById('contrib-name').value.trim(),
+            amount: parseFloat(document.getElementById('contrib-amount').value),
+            type: document.getElementById('contrib-type').value,
+            frequency: document.getElementById('contrib-type').value === 'Regular' ? document.getElementById('contrib-frequency').value : null,
+            dayOfMonth: document.getElementById('contrib-day').value.trim() || null,
+            invoiceDate: document.getElementById('invoice-date').value || null,
+            dueDate: document.getElementById('due-date').value || null,
+            smsNotifications: document.getElementById('sms-notif').checked,
+            emailNotifications: document.getElementById('email-notif').checked,
+            finesEnabled: document.getElementById('fines-enabled').checked,
+            invoiceAllMembers: document.getElementById('invoice-all').checked,
+            visibleInvoicing: document.getElementById('visible-invoicing').checked
         };
 
         if (editIndex !== null) {
@@ -255,7 +340,7 @@ function renderContributionForm(editIndex = null) {
         }
 
         saveSettings(settings);
-        showAlert('Saved!');
+        showAlert('Contribution type saved successfully!');
         renderListView('contributionTypes', 'Contribution Types');
     };
 }
