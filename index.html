@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoyoSoyo SACCO • Dashboard</title>
+    <title>SoyoSoyo SACCO • Management System</title>
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -25,10 +27,10 @@
         <button id="toggle-sidebar" class="toggle-btn" aria-label="Open menu">
             <i class="ph-list ph-bold"></i>
         </button>
-        <h2>SoyoSoyo SACCO</h2>
         <div class="mobile-logo">
-            <img src="./assets/logo.png" alt="Logo">
+            <img src="./assets/logo.png" alt="SoyoSoyo SACCO">
         </div>
+        <h2>SoyoSoyo SACCO</h2>
     </header>
 
     <!-- SIDEBAR -->
@@ -92,30 +94,34 @@
                     <li data-section="loan-repayments">Repayment History</li>
                 </ul>
             </li>
-<li class="menu-item" data-section="expenses">
-    <div class="menu-link">
-        <i class="ph-arrow-fat-lines-down ph-bold"></i> 
-        <span>Expenses</span>
-    </div>
-</li>
-        <li class="menu-item has-submenu" data-section="reports">
-    <div class="menu-link">
-        <i class="ph-chart-bar"></i> 
-        <span>Reports</span>
-        <i class="ph-caret-down submenu-toggle"></i>
-    </div>
-    <ul class="submenu">
-        <li data-section="reports-balance-sheet">Balance Sheet</li>
-        <li data-section="reports-income-statement">Income Statement</li>
-        <li data-section="reports-member-statements">Member Statements</li>
-        <li data-section="reports-deposits-summary">Deposits Summary</li>
-        <li data-section="reports-loans-portfolio">Loans Portfolio</li>
-        <li data-section="reports-sasra-monthly">SASRA Monthly Return</li>
-        <li data-section="reports-sasra-annual">SASRA Annual Return</li>
-        <li data-section="reports-dividends">Dividend Recommendation</li>
-        <li data-section="reports-aging">Loan Aging Report</li>
-    </ul>
-</li>
+
+            <!-- Expenses -->
+            <li class="menu-item" data-section="expenses">
+                <div class="menu-link">
+                    <i class="ph-arrow-fat-lines-down ph-bold"></i> 
+                    <span>Expenses</span>
+                </div>
+            </li>
+
+            <!-- Reports -->
+            <li class="menu-item has-submenu">
+                <div class="menu-link">
+                    <i class="ph-chart-bar ph-bold"></i> 
+                    <span>Reports</span>
+                    <i class="ph-caret-down submenu-toggle"></i>
+                </div>
+                <ul class="submenu">
+                    <li data-section="reports-balance-sheet">Balance Sheet</li>
+                    <li data-section="reports-income-statement">Income Statement</li>
+                    <li data-section="reports-member-statements">Member Statements</li>
+                    <li data-section="reports-deposits-summary">Deposits Summary</li>
+                    <li data-section="reports-loans-portfolio">Loans Portfolio</li>
+                    <li data-section="reports-sasra-monthly">SASRA Monthly Return</li>
+                    <li data-section="reports-sasra-annual">SASRA Annual Return</li>
+                    <li data-section="reports-dividends">Dividend Recommendation</li>
+                    <li data-section="reports-aging">Loan Aging Report</li>
+                </ul>
+            </li>
 
             <!-- Settings -->
             <li class="menu-item" data-section="settings">
@@ -128,26 +134,26 @@
 
         <div class="sidebar-footer">
             <small>Version 1.0 • Offline Ready</small>
-            <small>&copy; 2026 SoyoSoyo SACCO</small>
+            <small>© 2026 SoyoSoyo SACCO</small>
         </div>
     </aside>
 
     <!-- MAIN CONTENT AREA -->
     <main class="content">
-        <!-- Dynamic Page Title -->
+        <!-- Dynamic Page Header -->
         <div class="page-header">
             <h1 id="page-title">Dashboard</h1>
             <p id="page-subtitle" class="subtitle">Financial & Membership Overview</p>
         </div>
 
-        <!-- Main Content injected here by modules -->
+        <!-- Main Content injected here -->
         <div id="main-content">
-            <!-- Dashboard or other module content loads here -->
+            <!-- Modules load content here -->
         </div>
     </main>
 </div>
 
-<!-- Main App Script (ES6 Modules) -->
+<!-- Main App Script -->
 <script type="module" src="js/main.js"></script>
 
 </body>
