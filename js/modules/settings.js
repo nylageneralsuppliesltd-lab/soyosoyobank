@@ -164,6 +164,9 @@ window.renderAddEditForm = function(key, title, editIndex) {
     else if (key === 'groupRoles') renderGroupRoleForm(editIndex);
     else if (key === 'assetCategories') renderAssetCategoryForm(editIndex);
     else if (key === 'incomeCategories') renderIncomeCategoryForm(editIndex);
+    else if (key === 'accounts.pettyCash') renderPettyCashForm(editIndex);
+    else if (key === 'accounts.mobileMoney') renderMobileMoneyForm(editIndex);
+    else if (key === 'accounts.bank') renderBankAccountForm(editIndex);
     else if (key === 'accounts') renderAccountsDashboard();
 };
 
@@ -765,6 +768,20 @@ function renderBankAccountForm(editIndex = null) {
         showAlert('Bank account saved!');
         renderAccountsDashboard();
     };
+}
+// Petty Cash List
+function renderPettyCashList() {
+    renderListView('accounts.pettyCash', 'Petty Cash Accounts', ['name', 'balance']);
+}
+
+// Mobile Money List
+function renderMobileMoneyList() {
+    renderListView('accounts.mobileMoney', 'Mobile Money Accounts', ['name', 'provider', 'number', 'balance']);
+}
+
+// Bank List
+function renderBankList() {
+    renderListView('accounts.bank', 'Bank Accounts', ['bankName', 'branch', 'accountName', 'accountNumber', 'balance']);
 }
 
 // === ROUTING ===
