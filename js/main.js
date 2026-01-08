@@ -1,6 +1,7 @@
 // js/main.js - FINAL FIXED & OPTIMIZED VERSION
 
 import { initMenu } from './modules/menu.js';
+import { renderGeneralLedger } from './modules/generalLedger.js';
 
 // Members Module - Direct imports
 import { 
@@ -116,7 +117,10 @@ function loadSection(section = 'dashboard') {
             renderDepositsHistory();
             titleText = 'All Deposits & Transactions';
             break;
-
+case 'general-ledger':
+    renderGeneralLedger();
+    titleText = 'General Ledger';
+    break;
         // === Fallback ===
         default:
             titleText = section
