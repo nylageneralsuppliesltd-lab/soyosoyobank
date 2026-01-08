@@ -7,6 +7,7 @@ export function loadSettings() {
     let settings = getItem('settings');
 
     if (!settings) {
+        // Initialize with default structure
         settings = {
             contributionTypes: [],
             invoiceTemplates: [],
@@ -24,8 +25,29 @@ export function loadSettings() {
         setItem('settings', settings);
 
         setTimeout(() => {
-            showAlert('Settings ready! Click cards to add items like Contribution Types, Accounts, etc.', 'info', 8000);
+            showAlert(
+                'Welcome to Settings! Your SACCO configuration has been initialized. Click any card to start adding Contribution Types, Bank Accounts, Expense Categories, Roles, etc.',
+                'info',
+                10000
+            );
         }, 500);
+    } else {
+        // === SAFETY FIX: Ensure all arrays exist even if localStorage was corrupted or old ===
+        if (!settings.contributionTypes) settings.contributionTypes = [];
+        if (!settings.invoiceTemplates) settings.invoiceTemplates = [];
+        if (!settings.expenseCategories) settings.expenseCategories = [];
+        if (!settings.fineCategories) settings.fineCategories = [];
+        if (!settings.groupRoles) settings.groupRoles = [];
+        if (!settings.assetCategories) settings.assetCategories = [];
+        if (!settings.incomeCategories) settings.incomeCategories = [];
+
+        if (!settings.accounts) settings.accounts = {};
+        if (!settings.accounts.pettyCash) settings.accounts.pettyCash = [];
+        if (!settings.accounts.mobileMoney) settings.accounts.mobileMoney = [];
+        if (!settings.accounts.bank) settings.accounts.bank = [];
+
+        // Save the repaired structure back to storage
+        setItem('settings', settings);
     }
 
     return settings;
@@ -34,7 +56,18 @@ export function loadSettings() {
 export function saveSettings(settings) {
     setItem('settings', settings);
 }
-
+// Ensure nested arrays exist
+function ensureArray(path) {
+    let obj = settings;
+    const parts = path.split('.');
+    for (let i = 0; i < parts.length - 1; i++) {
+        if (!obj[parts[i]]) obj[parts[i]] = {};
+        obj = obj[parts[i]];
+    }
+    if (!obj[parts[parts.length - 1]]) {
+        obj[parts[parts.length - 1]] = [];
+    }
+}
 // ============== MAIN DASHBOARD ==============
 export function renderSettings() {
     document.getElementById('main-content').innerHTML = `
@@ -594,23 +627,26 @@ function renderPettyCashForm(editIndex = null) {
         </div>
     `;
 
-    document.getElementById('petty-form').onsubmit = (e) => {
-        e.preventDefault();
-        const newItem = {
-            name: document.getElementById('name').value.trim(),
-            balance: parseFloat(document.getElementById('balance').value) || 0
-        };
+document.getElementById('petty-form').onsubmit = (e) => {
+    e.preventDefault();
+    const settings = loadSettings();
+    ensureArray('accounts.pettyCash');
 
-        if (editIndex !== null) {
-            settings.accounts.pettyCash[editIndex] = newItem;
-        } else {
-            settings.accounts.pettyCash.push(newItem);
-        }
-
-        saveSettings(settings);
-        showAlert('Petty cash account saved!');
-        renderAccountsDashboard();
+    const newItem = {
+        name: document.getElementById('name').value.trim(),
+        balance: parseFloat(document.getElementById('balance').value) || 0
     };
+
+    if (editIndex !== null) {
+        settings.accounts.pettyCash[editIndex] = newItem;
+    } else {
+        settings.accounts.pettyCash.push(newItem);
+    }
+
+    saveSettings(settings);
+    showAlert('Petty cash account saved!');
+    renderAccountsDashboard();
+};
 }
 
 // Mobile Money
@@ -648,25 +684,28 @@ function renderMobileMoneyForm(editIndex = null) {
         </div>
     `;
 
-    document.getElementById('mobile-form').onsubmit = (e) => {
-        e.preventDefault();
-        const newItem = {
-            name: document.getElementById('name').value.trim(),
-            provider: document.getElementById('provider').value.trim(),
-            number: document.getElementById('number').value.trim(),
-            balance: parseFloat(document.getElementById('balance').value) || 0
-        };
+  document.getElementById('mobile-form').onsubmit = (e) => {
+    e.preventDefault();
+    const settings = loadSettings();
+    ensureArray('accounts.mobileMoney');
 
-        if (editIndex !== null) {
-            settings.accounts.mobileMoney[editIndex] = newItem;
-        } else {
-            settings.accounts.mobileMoney.push(newItem);
-        }
-
-        saveSettings(settings);
-        showAlert('Mobile money account saved!');
-        renderAccountsDashboard();
+    const newItem = {
+        name: document.getElementById('name').value.trim(),
+        provider: document.getElementById('provider').value.trim(),
+        number: document.getElementById('number').value.trim(),
+        balance: parseFloat(document.getElementById('balance').value) || 0
     };
+
+    if (editIndex !== null) {
+        settings.accounts.mobileMoney[editIndex] = newItem;
+    } else {
+        settings.accounts.mobileMoney.push(newItem);
+    }
+
+    saveSettings(settings);
+    showAlert('Mobile money account saved!');
+    renderAccountsDashboard();
+};
 }
 
 // Bank Account
@@ -712,16 +751,29 @@ function renderBankAccountForm(editIndex = null) {
         </div>
     `;
 
-    document.getElementById('bank-form').onsubmit = (e) => {
-        e.preventDefault();
-        const newItem = {
-            bankName: document.getElementById('bankName').value.trim(),
-            branch: document.getElementById('branch').value.trim(),
-            accountName: document.getElementById('accountName').value.trim(),
-            accountNumber: document.getElementById('accountNumber').value.trim(),
-            balance: parseFloat(document.getElementById('balance').value) || 0
-            // Password not saved
-        };
+   document.getElementById('bank-form').onsubmit = (e) => {
+    e.preventDefault();
+    const settings = loadSettings();
+    ensureArray('accounts.bank');
+
+    const newItem = {
+        bankName: document.getElementById('bankName').value.trim(),
+        branch: document.getElementById('branch').value.trim(),
+        accountName: document.getElementById('accountName').value.trim(),
+        accountNumber: document.getElementById('accountNumber').value.trim(),
+        balance: parseFloat(document.getElementById('balance').value) || 0
+    };
+
+    if (editIndex !== null) {
+        settings.accounts.bank[editIndex] = newItem;
+    } else {
+        settings.accounts.bank.push(newItem);
+    }
+
+    saveSettings(settings);
+    showAlert('Bank account saved!');
+    renderAccountsDashboard();
+};
 
         if (editIndex !== null) {
             settings.accounts.bank[editIndex] = newItem;
