@@ -912,12 +912,14 @@ export function initSettingsModule() {
         renderSettings();
     }
 }
+
 // EXPOSE FUNCTIONS TO GLOBAL SCOPE FOR INLINE ONCLICK
 window.renderSettings = renderSettings;
 window.renderListView = renderListView;
 window.renderAddEditForm = renderAddEditForm;
 window.deleteItem = deleteItem;
 window.renderAccountsDashboard = renderAccountsDashboard;
+
 // Run on load and hash change
 window.addEventListener('load', () => {
     if (window.location.hash.startsWith('#settings')) {
