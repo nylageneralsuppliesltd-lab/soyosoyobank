@@ -18,6 +18,31 @@ function refreshData() {
     members = loadMembers();
     deposits = getItem('deposits') || [];
 }
+// Get all available accounts from settings
+function getAllAccounts() {
+    const settings = loadSettings();
+    const accounts = [];
+
+    // Cash is always available
+    accounts.push({ type: 'cash', name: 'Cash', id: 'cash' });
+
+    // Petty Cash
+    (settings.accounts?.pettyCash || []).forEach(acc => {
+        accounts.push({ type: 'pettyCash', name: acc.name, id: `petty_${acc.name}` });
+    });
+
+    // Mobile Money
+    (settings.accounts?.mobileMoney || []).forEach(acc => {
+        accounts.push({ type: 'mobileMoney', name: `${acc.provider} - ${acc.name || acc.number}`, id: `mobile_${acc.number}` });
+    });
+
+    // Bank Accounts
+    (settings.accounts?.bank || []).forEach(acc => {
+        accounts.push({ type: 'bank', name: `${acc.bankName} - ${acc.accountName || acc.accountNumber}`, id: `bank_${acc.accountNumber}` });
+    });
+
+    return accounts;
+}
 
 // Payment methods
 const paymentMethods = [
@@ -32,6 +57,7 @@ const paymentMethods = [
 export function renderContributionForm() {
     const settings = loadSettings();
     const contribTypes = settings.contributionTypes || [];
+    const accounts = getAllAccounts();
 
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = `
@@ -58,17 +84,16 @@ export function renderContributionForm() {
                     ${contribTypes.length > 0 ? `
                         <select id="contrib-type" required>
                             ${contribTypes.map(t => `
-                                <option value="${t.name}" data-amount="${t.defaultAmount || ''}">
-                                    ${t.name} ${t.defaultAmount ? `(Default: ${formatCurrency(t.defaultAmount)})` : ''}
+                                <option value="${t.name}" data-amount="${t.amount || ''}">
+                                    ${t.name} ${t.amount ? `(Amount: ${formatCurrency(t.amount)})` : ''}
                                 </option>
                             `).join('')}
                         </select>
                     ` : `
-                        <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:15px; border-radius:8px; margin:10px 0;">
-                            <strong style="color:#856404;">No contribution types defined yet.</strong><br>
-                            <a href="javascript:void(0)" onclick="loadSection('settings-contributions')" 
-                               style="color:#007bff; text-decoration:underline; font-weight:600;">
-                                → Click here to go to Settings → Contribution Types and add some
+                        <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:15px; border-radius:8px;">
+                            <strong>No contribution types defined.</strong><br>
+                            <a href="javascript:void(0)" onclick="loadSection('settings-contributions')" style="color:#007bff; text-decoration:underline;">
+                                → Go to Settings → Contribution Types to add
                             </a>
                         </div>
                     `}
@@ -76,21 +101,22 @@ export function renderContributionForm() {
 
                 <div class="form-group">
                     <label class="required-label">Amount (${saccoConfig.currency})</label>
-                    <input type="number" id="deposit-amount" min="1" step="1" required placeholder="Enter amount">
+                    <input type="number" id="deposit-amount" min="1" step="1" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Payment Method</label>
-                    <select id="deposit-method">
-                        ${paymentMethods.map(m => `<option>${m}</option>`).join('')}
+                    <label class="required-label">Received Into Account</label>
+                    <select id="deposit-account" required>
+                        <option value="">Select Account</option>
+                        ${accounts.map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('')}
                     </select>
-                </div>
-
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="send-notification" checked> 
-                        Send Notification to Member (SMS/Email)
-                    </label>
+                    ${accounts.length === 1 ? `
+                        <p style="color:#d39e00; margin-top:8px;">
+                            Only Cash available. <a href="javascript:void(0)" onclick="loadSection('settings-accounts')" style="color:#007bff; text-decoration:underline;">
+                                → Add Bank/Mobile Accounts in Settings
+                            </a>
+                        </p>
+                    ` : ''}
                 </div>
 
                 <button type="submit" class="submit-btn" ${contribTypes.length === 0 ? 'disabled' : ''}>
@@ -100,33 +126,27 @@ export function renderContributionForm() {
         </div>
     `;
 
-    // Auto-fill amount when type selected
     if (contribTypes.length > 0) {
-        const select = document.getElementById('contrib-type');
-        if (select) {
-            select.addEventListener('change', (e) => {
-                const defaultAmt = e.target.selectedOptions[0].dataset.amount;
-                if (defaultAmt) {
-                    document.getElementById('deposit-amount').value = defaultAmt;
-                }
-            });
-        }
+        document.getElementById('contrib-type').addEventListener('change', (e) => {
+            const amt = e.target.selectedOptions[0].dataset.amount;
+            if (amt) document.getElementById('deposit-amount').value = amt;
+        });
     }
 
     setupFormSubmission('contribution');
 }
 
-// ============== OTHER INCOME FORM ==============
+// ============== OTHER FORMS (Income, Fine, Loan Repayment) - Similar Enhancements ==============
+
 export function renderIncomeForm() {
     const settings = loadSettings();
-    const incomeTypes = settings.incomeTypes || [];
+    const incomeTypes = settings.incomeCategories || [];
+    const accounts = getAllAccounts();
 
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = `
         <div class="deposits-page">
             <h1>Record Other Income</h1>
-            <p class="subtitle">Record fines, interest received, donations, etc.</p>
-
             <form class="form-card" id="deposit-form">
                 <div class="form-group">
                     <label class="required-label">Date</label>
@@ -134,36 +154,36 @@ export function renderIncomeForm() {
                 </div>
 
                 <div class="form-group">
-                    <label class="required-label">Income Type</label>
+                    <label class="required-label">Income Category</label>
                     ${incomeTypes.length > 0 ? `
                         <select id="income-type" required>
                             ${incomeTypes.map(t => `<option value="${t.name}">${t.name}</option>`).join('')}
                         </select>
                     ` : `
-                        <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:15px; border-radius:8px; margin:10px 0;">
-                            <strong style="color:#856404;">No income types defined yet.</strong><br>
-                            <a href="javascript:void(0)" onclick="loadSection('settings-income')" 
-                               style="color:#007bff; text-decoration:underline; font-weight:600;">
-                                → Click here to go to Settings → Income Categories and add some
+                        <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:15px; border-radius:8px;">
+                            <strong>No income categories defined.</strong><br>
+                            <a href="javascript:void(0)" onclick="loadSection('settings-income')" style="color:#007bff; text-decoration:underline;">
+                                → Go to Settings → Income Categories
                             </a>
                         </div>
                     `}
                 </div>
 
                 <div class="form-group">
-                    <label>Description (optional)</label>
-                    <input type="text" id="income-desc" placeholder="e.g. Fine for late payment">
+                    <label>Description</label>
+                    <input type="text" id="income-desc" placeholder="e.g. Interest Received">
                 </div>
 
                 <div class="form-group">
-                    <label class="required-label">Amount (${saccoConfig.currency})</label>
-                    <input type="number" id="deposit-amount" min="1" step="1" required>
+                    <label class="required-label">Amount</label>
+                    <input type="number" id="deposit-amount" min="1" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Payment Method</label>
-                    <select id="deposit-method">
-                        ${paymentMethods.map(m => `<option>${m}</option>`).join('')}
+                    <label class="required-label">Received Into Account</label>
+                    <select id="deposit-account" required>
+                        <option value="">Select Account</option>
+                        ${accounts.map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('')}
                     </select>
                 </div>
 
@@ -177,21 +197,18 @@ export function renderIncomeForm() {
     setupFormSubmission('income');
 }
 
-// ============== FINE FORM (Reuses Income Form) ==============
 export function renderFineForm() {
     renderIncomeForm();
     document.querySelector('h1').textContent = 'Record Fine / Penalty';
-    document.querySelector('.subtitle').textContent = 'Record member fines or penalties';
 }
 
-// ============== LOAN REPAYMENT FORM ==============
 export function renderLoanRepaymentForm() {
+    const accounts = getAllAccounts();
+
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = `
         <div class="deposits-page">
             <h1>Record Loan Repayment</h1>
-            <p class="subtitle">Record repayment towards a member's loan</p>
-
             <form class="form-card" id="deposit-form">
                 <div class="form-group">
                     <label class="required-label">Date</label>
@@ -207,18 +224,19 @@ export function renderLoanRepaymentForm() {
                 </div>
 
                 <div class="form-group">
-                    <label class="required-label">Amount (${saccoConfig.currency})</label>
-                    <input type="number" id="deposit-amount" min="1" step="1" required>
+                    <label class="required-label">Amount</label>
+                    <input type="number" id="deposit-amount" min="1" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Payment Method</label>
-                    <select id="deposit-method">
-                        ${paymentMethods.map(m => `<option>${m}</option>`).join('')}
+                    <label class="required-label">Received Into Account</label>
+                    <select id="deposit-account" required>
+                        <option value="">Select Account</option>
+                        ${accounts.map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('')}
                     </select>
                 </div>
 
-                <button type="submit" class="submit-btn">Record Loan Repayment</button>
+                <button type="submit" class="submit-btn">Record Repayment</button>
             </form>
         </div>
     `;
@@ -226,7 +244,7 @@ export function renderLoanRepaymentForm() {
     setupFormSubmission('loan-repayment');
 }
 
-// ============== SHARED FORM SUBMISSION ==============
+// ============== SHARED SUBMISSION (Updated Narration with Account) ==============
 function setupFormSubmission(depositType) {
     const form = document.getElementById('deposit-form');
     if (!form) return;
@@ -237,10 +255,17 @@ function setupFormSubmission(depositType) {
 
         const date = document.getElementById('deposit-date').value;
         const amount = parseFloat(document.getElementById('deposit-amount').value);
-        const method = document.getElementById('deposit-method')?.value || 'Cash';
+        const accountId = document.getElementById('deposit-account')?.value || 'cash';
+        const accounts = getAllAccounts();
+        const selectedAccount = accounts.find(acc => acc.id === accountId) || { name: 'Cash' };
 
         if (!date || isNaN(amount) || amount <= 0) {
-            showAlert('Please enter a valid date and amount.', 'error');
+            showAlert('Valid date and amount required.', 'error');
+            return;
+        }
+
+        if (!accountId) {
+            showAlert('Please select an account.', 'error');
             return;
         }
 
@@ -249,15 +274,10 @@ function setupFormSubmission(depositType) {
 
         if (depositType === 'contribution' || depositType === 'loan-repayment') {
             const memberId = parseInt(document.getElementById('deposit-member')?.value);
-            if (!memberId) {
-                showAlert('Please select a member.', 'error');
-                return;
-            }
+            if (!memberId) return showAlert('Select a member.', 'error');
+
             member = members.find(m => m.id === memberId);
-            if (!member) {
-                showAlert('Member not found.', 'error');
-                return;
-            }
+            if (!member) return showAlert('Member not found.', 'error');
 
             if (depositType === 'contribution') {
                 description = document.getElementById('contrib-type')?.value || 'Contribution';
@@ -265,63 +285,61 @@ function setupFormSubmission(depositType) {
                 description = 'Loan Repayment';
             }
 
-            // Update member balance and ledger
+            // Update member ledger with account in narration
             member.balance += amount;
             member.ledger = member.ledger || [];
             member.ledger.push({
                 date,
                 type: depositType === 'contribution' ? 'Contribution' : 'Loan Repayment',
                 amount,
-                description: `${description} via ${method}`,
+                description: `${description} via ${selectedAccount.name}`,
+                account: selectedAccount.name,
                 balanceAfter: member.balance,
                 recordedAt: new Date().toLocaleString('en-GB')
             });
             saveMembers(members);
         } else if (depositType === 'income') {
-            description = document.getElementById('income-type')?.value || 'Other Income';
+            description = document.getElementById('income-type')?.value || 'Income';
             const extra = document.getElementById('income-desc')?.value.trim();
             if (extra) description += `: ${extra}`;
         }
 
-        // Record the deposit
+        // Save deposit with account
         deposits.push({
             id: Date.now(),
             date,
             recordedAt: new Date().toLocaleString('en-GB'),
             type: depositType,
             memberId: member?.id || null,
-            memberName: member?.name || 'SACCO (Non-Member)',
+            memberName: member?.name || 'SACCO',
             description,
+            narration: `${description} via ${selectedAccount.name}`,
             amount,
-            method,
-            notificationSent: document.getElementById('send-notification')?.checked ?? false
+            account: selectedAccount.name,
+            accountId,
+            voided: false
         });
 
         saveDeposits();
-        showAlert(`${description} of ${formatCurrency(amount)} recorded successfully!`, 'success');
-
-        // Reset form
+        showAlert(`${description} of ${formatCurrency(amount)} recorded via ${selectedAccount.name}!`, 'success');
         form.reset();
         document.getElementById('deposit-date').value = new Date().toISOString().split('T')[0];
     });
 }
 
-// ============== DEPOSITS HISTORY ==============
+// ============== DEPOSITS HISTORY (Shows Account) ==============
 export function renderDepositsHistory() {
     refreshData();
-    const total = deposits.reduce((sum, d) => sum + d.amount, 0);
+    const total = deposits.filter(d => !d.voided).reduce((sum, d) => sum + d.amount, 0);
 
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = `
         <div class="deposits-page">
             <h1>All Deposits & Transactions</h1>
-            <p class="subtitle">
-                Total Records: ${deposits.length} | 
-                Total Amount: <strong>${formatCurrency(total)}</strong>
-            </p>
+            <p class="subtitle">Total Active Amount: <strong>${formatCurrency(total)}</strong></p>
 
             ${deposits.length === 0 ? 
-                '<p style="text-align:center; color:#666; margin:40px;">No transactions recorded yet. Start by recording a contribution.</p>' :
+                '<p style="text-align:center; color:#666; padding:60px;">No transactions yet.</p>' :
                 `
                 <div class="table-container">
                     <table class="members-table">
@@ -330,20 +348,20 @@ export function renderDepositsHistory() {
                                 <th>Date</th>
                                 <th>Type</th>
                                 <th>Member</th>
-                                <th>Description</th>
-                                <th>Method</th>
+                                <th>Narration</th>
+                                <th>Account</th>
                                 <th>Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${deposits.sort((a, b) => new Date(b.date) - new Date(a.date)).map(d => `
-                                <tr>
+                                <tr class="${d.voided ? 'inactive-row' : ''}">
                                     <td>${new Date(d.date).toLocaleDateString('en-GB')}</td>
-                                    <td><strong>${(d.type || 'Unknown').charAt(0).toUpperCase() + (d.type || 'unknown').slice(1).replace('-', ' ')}</strong></td>
-                                    <td>${d.memberName || 'SACCO'}</td>
-                                    <td>${d.description || '-'}</td>
-                                    <td>${d.method || '-'}</td>
-                                    <td><strong>${formatCurrency(d.amount)}</strong></td>
+                                    <td><strong>${(d.type || 'Unknown').charAt(0).toUpperCase() + (d.type || 'unknown').slice(1)}</strong></td>
+                                    <td>${d.memberName}</td>
+                                    <td>${d.narration || d.description}</td>
+                                    <td>${d.account || 'Cash'}</td>
+                                    <td><strong>${d.voided ? '—' : formatCurrency(d.amount)}</strong></td>
                                 </tr>
                             `).join('')}
                         </tbody>
