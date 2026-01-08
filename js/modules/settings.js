@@ -1,8 +1,7 @@
-// js/modules/settings.js - Complete Settings Module with All Requested Fields & Full Details
+// js/modules/settings.js - FINAL FIXED & FULLY WORKING VERSION
 
 import { getItem, setItem } from '../storage.js';
 import { showAlert } from '../utils/helpers.js';
-import { saccoConfig } from '../config.js';
 
 export function loadSettings() {
     let settings = getItem('settings');
@@ -25,11 +24,7 @@ export function loadSettings() {
         setItem('settings', settings);
 
         setTimeout(() => {
-            showAlert(
-                'Welcome to Settings! Start by adding Contribution Types, Bank Accounts, Expense Categories, and Roles to unlock full features.',
-                'info',
-                10000
-            );
+            showAlert('Settings ready! Click cards to add items like Contribution Types, Accounts, etc.', 'info', 8000);
         }, 500);
     }
 
@@ -40,61 +35,50 @@ export function saveSettings(settings) {
     setItem('settings', settings);
 }
 
-// ============== MAIN SETTINGS DASHBOARD (ALL CARDS CLICKABLE) ==============
+// ============== MAIN DASHBOARD ==============
 export function renderSettings() {
     document.getElementById('main-content').innerHTML = `
         <div class="settings-page">
             <h1>Settings & Configuration</h1>
-            <p class="subtitle">Click any card to add, edit, or manage items. All changes save automatically.</p>
+            <p class="subtitle">Click any card to add or manage items</p>
 
             <div class="settings-grid">
                 <div class="section-card nav-card" onclick="loadSection('settings-contributions')">
                     <h3>Contribution Types</h3>
-                    <p class="help-text">Monthly Shares, Registration Fee, Building Fund, Education Fund, etc.<br>
-                    Configure amount, arrears rules, statement display, and refundability.</p>
+                    <p class="help-text">Monthly Shares, Registration Fee, etc.</p>
                 </div>
-
                 <div class="section-card nav-card" onclick="loadSection('settings-invoices')">
                     <h3>Invoice Templates</h3>
-                    <p class="help-text">Create invoice types with amount payable, due date, sending options, and description.</p>
+                    <p class="help-text">Invoice types and due dates</p>
                 </div>
-
                 <div class="section-card nav-card" onclick="loadSection('settings-expenses')">
                     <h3>Expense Categories</h3>
-                    <p class="help-text">Office Rent, Staff Salaries, Utilities, Transport, Stationery.<br>
-                    Add description and mark as administrative expense if needed.</p>
+                    <p class="help-text">Rent, Salaries, Utilities</p>
                 </div>
-
                 <div class="section-card nav-card" onclick="loadSection('settings-fines')">
                     <h3>Fine Categories</h3>
-                    <p class="help-text">Late Payment Fine, Meeting Absence, Loan Default Interest, etc.</p>
+                    <p class="help-text">Late Payment, Absenteeism</p>
                 </div>
-
                 <div class="section-card nav-card" onclick="loadSection('settings-roles')">
                     <h3>Group Roles</h3>
-                    <p class="help-text">Chairman, Vice Chairman, Secretary, Treasurer, Committee Member.<br>
-                    Assign role description and permissions (view, edit, approve, etc.).</p>
+                    <p class="help-text">Chairman, Secretary, Treasurer</p>
                 </div>
-
                 <div class="section-card nav-card" onclick="loadSection('settings-assets')">
                     <h3>Asset Categories</h3>
-                    <p class="help-text">Land, Buildings, Vehicles, Furniture, Office Equipment, Investments.</p>
+                    <p class="help-text">Land, Buildings, Vehicles</p>
                 </div>
-
                 <div class="section-card nav-card" onclick="loadSection('settings-income')">
                     <h3>Income Categories</h3>
-                    <p class="help-text">Interest Received, Donations, Fines Collected, Asset Sales, Other Income.</p>
+                    <p class="help-text">Interest, Donations, Asset Sales</p>
                 </div>
-
                 <div class="section-card nav-card" onclick="loadSection('settings-accounts')">
                     <h3>Accounts</h3>
-                    <p class="help-text">Petty Cash, M-Pesa Till, Airtel Money, Equity Bank, Co-op Bank, etc.<br>
-                    Track balances and account details.</p>
+                    <p class="help-text">Petty Cash, M-Pesa, Bank Accounts</p>
                 </div>
             </div>
 
             <div class="save-note">
-                <strong>✓ All changes are saved automatically • Start with Contribution Types and Bank Accounts</strong>
+                <strong>✓ Changes saved automatically</strong>
             </div>
         </div>
     `;
@@ -103,27 +87,35 @@ export function renderSettings() {
 // ============== GENERIC LIST VIEW ==============
 function renderListView(key, title, fields = ['name']) {
     const settings = loadSettings();
-    const items = settings[key] || [];
+    let items = [];
+
+    // Handle nested accounts
+    if (key.includes('.')) {
+        const parts = key.split('.');
+        items = settings[parts[0]]?.[parts[1]] || [];
+    } else {
+        items = settings[key] || [];
+    }
 
     document.getElementById('main-content').innerHTML = `
         <h1>${title}</h1>
         <p class="subtitle">Total: ${items.length}</p>
 
-        <button class="submit-btn" style="background:#28a745;" onclick="renderAddEditForm('${key}', '${title}', null)">
-            + Add New ${title.slice(0, -1)}
+        <button class="submit-btn" style="background:#28a745;" onclick="window.renderAddEditForm('${key}', '${title}', null)">
+            + Add New
         </button>
         <button class="submit-btn" style="background:#6c757d; margin-left:10px;" onclick="renderSettings()">
-            ← Back to Settings
+            ← Back
         </button>
 
         ${items.length === 0 ? 
-            `<p style="color:#999; margin:30px 0; font-style:italic;">No items defined yet. Click "+ Add New" to create one.</p>` :
+            `<p style="color:#999; margin:30px 0;">No items yet. Click "+ Add New".</p>` :
             `
             <div class="table-container" style="margin-top:20px;">
                 <table class="members-table">
                     <thead>
                         <tr>
-                            ${fields.map(f => `<th>${f.charAt(0).toUpperCase() + f.slice(1).replace(/([A-Z])/g, ' $1')}</th>`).join('')}
+                            ${fields.map(f => `<th>${f.charAt(0).toUpperCase() + f.slice(1)}</th>`).join('')}
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -132,8 +124,8 @@ function renderListView(key, title, fields = ['name']) {
                             <tr>
                                 ${fields.map(field => `<td>${item[field] ?? ''}</td>`).join('')}
                                 <td>
-                                    <button onclick="renderAddEditForm('${key}', '${title}', ${index})" style="font-size:12px;padding:4px 8px;margin:2px;">Edit</button>
-                                    <button onclick="deleteItem('${key}', ${index}, '${title}')" style="background:#dc3545;font-size:12px;padding:4px 8px;margin:2px;">Delete</button>
+                                    <button onclick="window.renderAddEditForm('${key}', '${title}', ${index})">Edit</button>
+                                    <button onclick="window.deleteItem('${key}', ${index})" style="background:#dc3545; margin-left:5px;">Delete</button>
                                 </td>
                             </tr>
                         `).join('')}
@@ -145,17 +137,29 @@ function renderListView(key, title, fields = ['name']) {
     `;
 }
 
-window.deleteItem = function(key, index, title) {
+// ============== DELETE ITEM ==============
+window.deleteItem = function(key, index) {
     if (confirm('Delete this item permanently?')) {
         const settings = loadSettings();
-        settings[key].splice(index, 1);
+
+        if (key.includes('.')) {
+            const parts = key.split('.');
+            settings[parts[0]][parts[1]].splice(index, 1);
+        } else {
+            settings[key].splice(index, 1);
+        }
+
         saveSettings(settings);
-        showAlert(`${title.slice(0, -1)} deleted`);
-        renderListView(key, title);
+        showAlert('Item deleted');
+        // Refresh current view
+        const hash = window.location.hash.slice(1);
+        if (hash.startsWith('settings-')) {
+            initSettingsModule();
+        }
     }
 };
 
-// ============== ADD/EDIT FORM ROUTER ==============
+// ============== ADD/EDIT ROUTER ==============
 window.renderAddEditForm = function(key, title, editIndex) {
     if (key === 'contributionTypes') renderContributionForm(editIndex);
     else if (key === 'invoiceTemplates') renderInvoiceForm(editIndex);
@@ -170,7 +174,8 @@ window.renderAddEditForm = function(key, title, editIndex) {
     else if (key === 'accounts') renderAccountsDashboard();
 };
 
-// ============== CONTRIBUTION TYPES FORM ==============
+// ============== FORMS (All Fixed) ==============
+
 function renderContributionForm(editIndex = null) {
     const settings = loadSettings();
     const item = editIndex !== null ? settings.contributionTypes[editIndex] : {};
@@ -178,57 +183,27 @@ function renderContributionForm(editIndex = null) {
     document.getElementById('main-content').innerHTML = `
         <div class="form-card">
             <h1>${editIndex !== null ? 'Edit' : 'Add'} Contribution Type</h1>
-            <form id="contrib-form">
-                <div class="form-group">
-                    <label class="required-label">Contribution Name *</label>
-                    <input type="text" id="name" value="${item.name || ''}" required>
-                </div>
-                <div class="form-group">
-                    <label class="required-label">Contribution Amount per Member *</label>
-                    <input type="number" id="amount" value="${item.amount || ''}" min="0" required>
-                </div>
-                <div class="form-group">
-                    <label class="required-label">Contribution Type *</label>
+            <form id="form">
+                <div class="form-group"><label>Name *</label><input type="text" id="name" value="${item.name || ''}" required></div>
+                <div class="form-group"><label>Amount *</label><input type="number" id="amount" value="${item.amount || ''}" min="0" required></div>
+                <div class="form-group"><label>Type *</label>
                     <select id="type">
-                        <option value="Shares" ${item.type === 'Shares' ? 'selected' : ''}>Shares</option>
-                        <option value="Savings" ${item.type === 'Savings' ? 'selected' : ''}>Savings</option>
-                        <option value="Loan" ${item.type === 'Loan' ? 'selected' : ''}>Loan Related</option>
-                        <option value="Other" ${item.type === 'Other' ? 'selected' : ''}>Other</option>
+                        <option>Shares</option><option>Savings</option><option>Loan</option><option>Other</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label class="required-label">Contribution Category *</label>
-                    <input type="text" id="category" value="${item.category || ''}" required>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="disable-arrears" ${item.disableArrears ? 'checked' : ''}>
-                        Disable arrears for this contribution?
-                    </label>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="show-statement" ${item.showInStatement !== false ? 'checked' : ''}>
-                        Display this contribution in the member's statement report?
-                    </label>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="non-refundable" ${item.nonRefundable ? 'checked' : ''}>
-                        Is this contribution non-refundable?
-                    </label>
-                </div>
-                <div style="margin-top:30px;">
-                    <button type="submit" class="submit-btn">Save</button>
-                    <button type="button" class="submit-btn" style="background:#6c757d; margin-left:10px;" onclick="renderListView('contributionTypes', 'Contribution Types')">
-                        Cancel
-                    </button>
-                </div>
+                <div class="form-group"><label>Category *</label><input type="text" id="category" value="${item.category || ''}" required></div>
+                <div class="form-group"><label><input type="checkbox" id="disable-arrears" ${item.disableArrears ? 'checked' : ''}> Disable arrears?</label></div>
+                <div class="form-group"><label><input type="checkbox" id="show-statement" ${item.showInStatement !== false ? 'checked' : ''}> Show in statement?</label></div>
+                <div class="form-group"><label><input type="checkbox" id="non-refundable" ${item.nonRefundable ? 'checked' : ''}> Non-refundable?</label></div>
+                <button type="submit" class="submit-btn">Save</button>
+                <button type="button" class="submit-btn" style="background:#6c757d; margin-left:10px;" onclick="renderListView('contributionTypes', 'Contribution Types')">
+                    Cancel
+                </button>
             </form>
         </div>
     `;
 
-    document.getElementById('contrib-form').onsubmit = (e) => {
+    document.getElementById('form').onsubmit = (e) => {
         e.preventDefault();
         const newItem = {
             name: document.getElementById('name').value.trim(),
@@ -247,11 +222,10 @@ function renderContributionForm(editIndex = null) {
         }
 
         saveSettings(settings);
-        showAlert('Contribution type saved successfully!');
+        showAlert('Saved!');
         renderListView('contributionTypes', 'Contribution Types');
     };
 }
-
 // ============== INVOICE TEMPLATES FORM ==============
 function renderInvoiceForm(editIndex = null) {
     const settings = loadSettings();
@@ -573,35 +547,26 @@ function renderIncomeCategoryForm(editIndex = null) {
     };
 }
 
-// ============== ACCOUNTS DASHBOARD ==============
+// ============== ACCOUNTS ==============
 function renderAccountsDashboard() {
     document.getElementById('main-content').innerHTML = `
         <div class="settings-page">
             <h1>Accounts Management</h1>
-            <p class="subtitle">Choose an account type to manage</p>
-
             <div class="settings-grid">
-                <div class="section-card nav-card" onclick="renderPettyCashList()">
-                    <h3>Petty Cash Account</h3>
-                    <p class="help-text">Cash held at office or safe</p>
+                <div class="section-card nav-card" onclick="renderListView('accounts.pettyCash', 'Petty Cash Accounts', ['name', 'balance'])">
+                    <h3>Petty Cash</h3>
                 </div>
-                <div class="section-card nav-card" onclick="renderMobileMoneyList()">
-                    <h3>Mobile Money Account</h3>
-                    <p class="help-text">M-Pesa Till, Airtel Money, etc.</p>
+                <div class="section-card nav-card" onclick="renderListView('accounts.mobileMoney', 'Mobile Money Accounts', ['name', 'provider', 'number', 'balance'])">
+                    <h3>Mobile Money</h3>
                 </div>
-                <div class="section-card nav-card" onclick="renderBankList()">
-                    <h3>Bank Account</h3>
-                    <p class="help-text">Equity, Co-op, KCB, etc.</p>
+                <div class="section-card nav-card" onclick="renderListView('accounts.bank', 'Bank Accounts', ['bankName', 'branch', 'accountName', 'accountNumber', 'balance'])">
+                    <h3>Bank Accounts</h3>
                 </div>
             </div>
-            <button class="submit-btn" style="background:#6c757d; margin-top:20px;" onclick="renderSettings()">
-                ← Back to Settings
-            </button>
+            <button class="submit-btn" style="background:#6c757d;" onclick="renderSettings()">Back</button>
         </div>
     `;
 }
-
-
 // Petty Cash
 function renderPettyCashForm(editIndex = null) {
     const settings = loadSettings();
@@ -784,32 +749,39 @@ function renderBankList() {
     renderListView('accounts.bank', 'Bank Accounts', ['bankName', 'branch', 'accountName', 'accountNumber', 'balance']);
 }
 
-// === ROUTING ===
+// ============== ROUTING ==============
 export function initSettingsModule() {
     const hash = window.location.hash.slice(1);
 
     if (hash === 'settings') {
         renderSettings();
     } else if (hash === 'settings-contributions') {
-        renderListView('contributionTypes', 'Contribution Types');
+        renderListView('contributionTypes', 'Contribution Types', ['name', 'amount', 'type', 'category']);
     } else if (hash === 'settings-invoices') {
-        renderListView('invoiceTemplates', 'Invoice Templates');
+        renderListView('invoiceTemplates', 'Invoice Templates', ['type', 'sendTo', 'amount']);
     } else if (hash === 'settings-expenses') {
-        renderListView('expenseCategories', 'Expense Categories');
+        renderListView('expenseCategories', 'Expense Categories', ['name', 'description']);
     } else if (hash === 'settings-fines') {
-        renderListView('fineCategories', 'Fine Categories');
+        renderListView('fineCategories', 'Fine Categories', ['name']);
     } else if (hash === 'settings-roles') {
-        renderListView('groupRoles', 'Group Roles');
+        renderListView('groupRoles', 'Group Roles', ['name', 'description']);
     } else if (hash === 'settings-assets') {
-        renderListView('assetCategories', 'Asset Categories');
+        renderListView('assetCategories', 'Asset Categories', ['name', 'description']);
     } else if (hash === 'settings-income') {
-        renderListView('incomeCategories', 'Income Categories');
+        renderListView('incomeCategories', 'Income Categories', ['name', 'description']);
     } else if (hash === 'settings-accounts') {
         renderAccountsDashboard();
     } else {
         renderSettings();
     }
 }
+
+// Run on load and hash change
+window.addEventListener('load', () => {
+    if (window.location.hash.startsWith('#settings')) {
+        initSettingsModule();
+    }
+});
 
 window.addEventListener('hashchange', () => {
     if (window.location.hash.startsWith('#settings')) {
