@@ -27,10 +27,11 @@
         <button id="toggle-sidebar" class="toggle-btn" aria-label="Open menu">
             <i class="ph-list ph-bold"></i>
         </button>
-        <div class="mobile-logo">
-            <img src="./assets/logo.png" alt="SoyoSoyo SACCO">
+        <div class="mobile-title">
+            <img src="./assets/logo.png" alt="SoyoSoyo SACCO" class="mobile-logo-img">
+            <h2>SoyoSoyo SACCO</h2>
         </div>
-        <h2>SoyoSoyo SACCO</h2>
+        <div style="width: 40px;"></div>
     </header>
 
     <!-- SIDEBAR -->
@@ -81,7 +82,7 @@
                 </ul>
             </li>
 
-            <!-- Loans (Future) -->
+            <!-- Loans -->
             <li class="menu-item has-submenu">
                 <div class="menu-link">
                     <i class="ph-hand-coins ph-bold"></i> 
@@ -138,23 +139,16 @@
         </div>
     </aside>
 
-    <!-- MAIN CONTENT AREA -->
+    <!-- MAIN CONTENT -->
     <main class="content">
-        <!-- Dynamic Page Header -->
         <div class="page-header">
             <h1 id="page-title">Dashboard</h1>
             <p id="page-subtitle" class="subtitle">Financial & Membership Overview</p>
         </div>
-
-        <!-- Main Content injected here -->
-        <div id="main-content">
-            <!-- Modules load content here -->
-        </div>
+        <div id="main-content"></div>
     </main>
 </div>
 
-<!-- Main App Script -->
 <script type="module" src="js/main.js"></script>
-
 </body>
 </html>
