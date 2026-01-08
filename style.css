@@ -704,3 +704,153 @@ input:focus, select:focus {
     color: #666;
     font-size: 1.1em;
 }
+/* === SETTINGS PAGE IMPROVEMENTS === */
+.settings-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin: 30px 0;
+}
+
+.nav-card {
+    background: #fff;
+    padding: 28px;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.nav-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    border-color: var(--primary-green);
+}
+
+.nav-card h3 {
+    font-size: 1.4em;
+    color: var(--primary-green);
+    margin: 0 0 12px 0;
+}
+
+.nav-card p {
+    margin: 0;
+    color: #666;
+    font-size: 0.95em;
+}
+
+/* List View in Settings */
+.items-list {
+    min-height: 80px;
+    margin-bottom: 20px;
+}
+
+.item-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    padding: 14px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 12px;
+}
+
+.item-row input {
+    flex: 1;
+    min-width: 180px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.item-row input[type="number"] {
+    width: 140px;
+}
+
+.remove-btn {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.remove-btn:hover {
+    background: #c82333;
+}
+
+.add-btn {
+    background: var(--primary-green);
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+}
+
+.empty-text {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 30px 0;
+}
+
+.save-status {
+    text-align: center;
+    padding: 18px;
+    background: #d4edda;
+    color: #155724;
+    border-radius: 12px;
+    margin: 40px 0 20px;
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+/* Better spacing for settings forms */
+.settings-page .form-card {
+    max-width: 800px;
+}
+
+/* Make inline inputs look better */
+.edit-input {
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.edit-input:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(40,167,69,0.15);
+}
+
+/* Responsive adjustments for settings grid */
+@media (max-width: 768px) {
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .item-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .item-row input {
+        min-width: 100%;
+    }
+    
+    .item-row .remove-btn {
+        width: 100%;
+    }
+}
