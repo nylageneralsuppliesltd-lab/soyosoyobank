@@ -1,4 +1,4 @@
-// js/main.js - Final & Complete Entry Point (All Fixes Applied)
+// js/main.js - Final Entry Point (All Modules & Fixes Integrated)
 
 import { initMenu } from './modules/menu.js';
 
@@ -15,10 +15,10 @@ import { initDepositsModule } from './modules/deposits.js';
 // Dashboard
 import { renderDashboard } from './modules/dashboard.js';
 
-// Settings (Future - placeholder ready)
-import { renderSettings } from './modules/settings.js';
+// Settings Module
+import { renderSettings, initSettingsModule } from './modules/settings.js';
 
-// Expenses (Future - placeholder ready)
+// Expenses (Future placeholder)
 import { renderExpenses } from './modules/expenses.js';
 
 import { saccoConfig } from './config.js';
@@ -44,8 +44,28 @@ function loadSection(section = 'dashboard') {
             titleText = 'Dashboard';
             break;
 
+        // === Settings & All Sub-Settings ===
         case 'settings':
-            renderSettings();
+        case 'settings-account-managers':
+        case 'settings-account-managers-add':
+        case 'settings-accounts':
+        case 'settings-accounts-add':
+        case 'settings-contributions':
+        case 'settings-contributions-add':
+        case 'settings-invoices':
+        case 'settings-invoices-add':
+        case 'settings-expenses':
+        case 'settings-expenses-add':
+        case 'settings-fines':
+        case 'settings-fines-add':
+        case 'settings-roles':
+        case 'settings-roles-add':
+        case 'settings-assets':
+        case 'settings-assets-add':
+        case 'settings-income':
+        case 'settings-income-add':
+            renderSettings();           // Renders the main settings dashboard or list
+            initSettingsModule();       // Handles routing for sub-views (add/list)
             titleText = 'Settings & Configuration';
             break;
 
@@ -101,7 +121,7 @@ function loadSection(section = 'dashboard') {
             }
             break;
 
-        // === Future Modules (Loans, Reports) ===
+        // === Fallback for Future Modules ===
         default:
             titleText = section
                 .split('-')
@@ -120,7 +140,7 @@ function loadSection(section = 'dashboard') {
             break;
     }
 
-    // Update page title
+    // Update browser title
     document.title = `${titleText} • ${saccoConfig.name}`;
 
     // Update URL hash
@@ -133,7 +153,6 @@ function loadSection(section = 'dashboard') {
     // Highlight active menu
     setActiveMenu(section);
 }
-
 /**
  * Highlight active menu item
  */
@@ -202,5 +221,5 @@ const initialSection = window.location.hash.slice(1) || 'dashboard';
 loadSection(initialSection);
 setActiveMenu(initialSection);
 
-// === EXPOSE loadSection GLOBALLY (for any onclick in HTML) ===
+// === EXPOSE loadSection GLOBALLY (for onclick in HTML) ===
 window.loadSection = loadSection;
