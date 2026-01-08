@@ -1,50 +1,57 @@
-// js/main.js - Final Entry Point (All Modules & Fixes Integrated)
+// js/main.js - FINAL FIXED & OPTIMIZED VERSION
 
 import { initMenu } from './modules/menu.js';
 
-// Members Module
+// Members Module - Direct imports
 import { 
     renderCreateMemberForm, 
     renderMembersList, 
     initMembersModule 
 } from './modules/members.js';
 
-// Deposits Module
-import { initDepositsModule } from './modules/deposits.js';
+// Deposits Module - Direct imports (updated to match latest deposits.js)
+import { 
+    renderContributionForm,
+    renderFineForm,
+    renderIncomeForm,
+    renderLoanRepaymentForm,
+    renderDepositsHistory,
+    initDepositsModule 
+} from './modules/deposits.js';
 
 // Dashboard
 import { renderDashboard } from './modules/dashboard.js';
 
-// Settings Module
-import { renderSettings, initSettingsModule } from './modules/settings.js';
+// Settings
+import { renderSettings } from './modules/settings.js'; // initSettingsModule not needed if it handles internally
 
-// Expenses (Future placeholder)
+// Expenses
 import { renderExpenses } from './modules/expenses.js';
 
 import { saccoConfig } from './config.js';
 
 // DOM References
 const mainContent = document.getElementById('main-content');
+const pageTitle = document.getElementById('page-title'); // Recommended: add <h1 id="page-title"> in index.html
 
-// Set base title
+// Base title
 document.title = `${saccoConfig.name} • Management System`;
 
 /**
- * Load a section by ID
+ * Load a section
  */
 function loadSection(section = 'dashboard') {
     if (mainContent) mainContent.innerHTML = '';
+    if (pageTitle) pageTitle.textContent = 'Loading...';
 
     let titleText = 'Dashboard';
 
     switch (section) {
-        // === Core Modules ===
         case 'dashboard':
             renderDashboard();
             titleText = 'Dashboard';
             break;
 
-        // === Settings & All Sub-Settings ===
         case 'settings':
         case 'settings-account-managers':
         case 'settings-account-managers-add':
@@ -64,8 +71,7 @@ function loadSection(section = 'dashboard') {
         case 'settings-assets-add':
         case 'settings-income':
         case 'settings-income-add':
-            renderSettings();           // Renders the main settings dashboard or list
-            initSettingsModule();       // Handles routing for sub-views (add/list)
+            renderSettings();
             titleText = 'Settings & Configuration';
             break;
 
@@ -85,47 +91,37 @@ function loadSection(section = 'dashboard') {
             titleText = 'Members List';
             break;
 
-        // === Deposits ===
+        // === Deposits - Now using direct function calls ===
         case 'deposits-contributions':
-            if (typeof window.recordContribution === 'function') {
-                window.recordContribution();
-                titleText = 'Record Contribution';
-            }
+            renderContributionForm();
+            titleText = 'Record Contribution';
             break;
 
         case 'deposits-fines':
-            if (typeof window.recordFine === 'function') {
-                window.recordFine();
-                titleText = 'Record Fine';
-            }
+            renderFineForm();
+            titleText = 'Record Fine / Penalty';
             break;
 
         case 'deposits-income':
-            if (typeof window.recordIncome === 'function') {
-                window.recordIncome();
-                titleText = 'Record Other Income';
-            }
+            renderIncomeForm();
+            titleText = 'Record Other Income';
             break;
 
         case 'deposits-loan-repayments':
-            if (typeof window.recordLoanRepayment === 'function') {
-                window.recordLoanRepayment();
-                titleText = 'Record Loan Repayment';
-            }
+            renderLoanRepaymentForm();
+            titleText = 'Record Loan Repayment';
             break;
 
         case 'deposits-list':
-            if (typeof window.depositsListSection === 'function') {
-                window.depositsListSection();
-                titleText = 'Deposits History';
-            }
+            renderDepositsHistory();
+            titleText = 'All Deposits & Transactions';
             break;
 
-        // === Fallback for Future Modules ===
+        // === Fallback ===
         default:
             titleText = section
                 .split('-')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .map(w => w.charAt(0).toUpperCase() + w.slice(1))
                 .join(' ');
 
             mainContent.innerHTML = `
@@ -140,64 +136,73 @@ function loadSection(section = 'dashboard') {
             break;
     }
 
-    // Update browser title
+    // Update page title
+    if (pageTitle) pageTitle.textContent = titleText;
     document.title = `${titleText} • ${saccoConfig.name}`;
 
-    // Update URL hash
-    if (history.pushState) {
-        history.pushState({ section }, titleText, `#${section}`);
-    } else {
-        window.location.hash = section;
-    }
+    // Update URL
+    history.pushState({ section }, titleText, `#${section}`);
 
-    // Highlight active menu
+    // Highlight menu
     setActiveMenu(section);
 }
+
 /**
- * Highlight active menu item
+ * Set active menu state
  */
 function setActiveMenu(section) {
-    // Reset all
     document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
     document.querySelectorAll('.submenu li').forEach(item => item.classList.remove('active'));
 
-    // Activate current section
     const target = document.querySelector(`[data-section="${section}"]`);
     if (target) {
         target.classList.add('active');
-        const parent = target.closest('.menu-item.has-submenu');
+        const parent = target.closest('.has-submenu');
         if (parent) parent.classList.add('active');
     }
 
-    // Dashboard special case
     if (section === 'dashboard') {
-        const dash = document.querySelector('[data-section="dashboard"]');
-        if (dash) dash.classList.add('active');
+        document.querySelector('[data-section="dashboard"]')?.classList.add('active');
     }
 }
 
-// === Navigation Listeners ===
+// ===================================================================
+// NAVIGATION LISTENERS - FIXED FOR SUBMENU BEHAVIOR
+// ===================================================================
 
-// Top-level menu items (Dashboard, Settings, Expenses)
-document.querySelectorAll('.menu-item:not(.has-submenu) > .menu-link').forEach(link => {
+// Top-level menu items: ONLY navigate if NOT has-submenu
+document.querySelectorAll('.menu-item > .menu-link').forEach(link => {
     link.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const section = link.parentElement.dataset.section || 'dashboard';
+        const parentItem = link.parentElement;
+
+        // If this is a parent with submenu → do NOT navigate, just let menu.js toggle it
+        if (parentItem.classList.contains('has-submenu')) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+
+        // Otherwise: normal navigation
+        const section = parentItem.dataset.section || 'dashboard';
         loadSection(section);
 
+        // Close mobile menu
         if (window.innerWidth <= 992) {
             document.getElementById('sidebar').classList.remove('open');
         }
     });
 });
 
-// Submenu items
+// Submenu items: These ARE the navigation triggers
 document.querySelectorAll('.submenu li').forEach(item => {
     item.addEventListener('click', (e) => {
-        e.stopPropagation();
+        e.stopPropagation(); // Prevent bubbling to parent
+
         const section = item.dataset.section;
         if (section) {
             loadSection(section);
+
+            // Close mobile menu
             if (window.innerWidth <= 992) {
                 document.getElementById('sidebar').classList.remove('open');
             }
@@ -205,21 +210,24 @@ document.querySelectorAll('.submenu li').forEach(item => {
     });
 });
 
-// Back/forward button support
+// Back/Forward support
 window.addEventListener('popstate', (e) => {
     const section = e.state?.section || window.location.hash.slice(1) || 'dashboard';
     loadSection(section);
 });
 
-// === Initialize Modules ===
+// ===================================================================
+// INITIALIZATION
+// ===================================================================
+
 initMenu();
 initMembersModule();
 initDepositsModule();
 
-// === Load Initial Section ===
+// Load initial view
 const initialSection = window.location.hash.slice(1) || 'dashboard';
 loadSection(initialSection);
 setActiveMenu(initialSection);
 
-// === EXPOSE loadSection GLOBALLY (for onclick in HTML) ===
+// Optional: Expose globally if any inline onclick still exists
 window.loadSection = loadSection;
