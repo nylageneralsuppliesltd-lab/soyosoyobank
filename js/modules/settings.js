@@ -715,7 +715,9 @@ function renderPettyCashForm(editIndex = null) {
 document.getElementById('petty-form').onsubmit = (e) => {
     e.preventDefault();
     const settings = loadSettings();
-    ensureArray('accounts.pettyCash');
+
+    if (!settings.accounts) settings.accounts = {};
+    if (!settings.accounts.pettyCash) settings.accounts.pettyCash = [];
 
     const newItem = {
         name: document.getElementById('name').value.trim(),
@@ -769,10 +771,12 @@ function renderMobileMoneyForm(editIndex = null) {
         </div>
     `;
 
-  document.getElementById('mobile-form').onsubmit = (e) => {
+document.getElementById('mobile-form').onsubmit = (e) => {
     e.preventDefault();
     const settings = loadSettings();
-    ensureArray('accounts.mobileMoney');
+
+    if (!settings.accounts) settings.accounts = {};
+    if (!settings.accounts.mobileMoney) settings.accounts.mobileMoney = [];
 
     const newItem = {
         name: document.getElementById('name').value.trim(),
@@ -835,11 +839,13 @@ function renderBankAccountForm(editIndex = null) {
             </form>
         </div>
     `;
-
 document.getElementById('bank-form').onsubmit = (e) => {
     e.preventDefault();
     const settings = loadSettings();
-    ensureArray('accounts.bank');
+
+    // Ensure the array exists (safe way without separate function)
+    if (!settings.accounts) settings.accounts = {};
+    if (!settings.accounts.bank) settings.accounts.bank = [];
 
     const newItem = {
         bankName: document.getElementById('bankName').value.trim(),
