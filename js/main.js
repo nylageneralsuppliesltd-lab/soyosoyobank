@@ -20,6 +20,16 @@ import {
     initDepositsModule 
 } from './modules/deposits.js';
 
+// Withdrawals Module
+import { 
+    renderExpenseForm,
+    renderDividendPayoutForm,
+    renderContributionRefundForm,
+    renderAccountTransferForm,
+    renderWithdrawalsList,
+    initWithdrawalsModule 
+} from './modules/withdrawals.js';
+
 // Dashboard
 import { renderDashboard } from './modules/dashboard.js';
 
@@ -126,7 +136,32 @@ function loadSection(section = 'dashboard') {
             renderDepositsHistory();
             titleText = 'All Deposits & Transactions';
             break;
+        // === Withdrawals ===
+        case 'record-expense':
+            renderExpenseForm();
+            titleText = 'Record Expense';
+            break;
 
+        case 'record-dividend':
+            renderDividendPayoutForm();
+            titleText = 'Record Dividend Payout';
+            break;
+
+        case 'contribution-refund':
+            renderContributionRefundForm();
+            titleText = 'Contribution Refund';
+            break;
+
+        case 'account-transfer':
+            renderAccountTransferForm();
+            titleText = 'Account to Account Transfer';
+            break;
+
+        case 'withdrawals-list':
+            renderWithdrawalsList();
+            titleText = 'List of Withdrawals';
+            break;
+            
         // === REPORTS - NOW FULLY WORKING ===
         case 'balance-sheet':
             balanceSheet();
