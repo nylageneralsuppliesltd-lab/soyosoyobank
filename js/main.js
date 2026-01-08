@@ -36,8 +36,7 @@ import { renderDashboard } from './modules/dashboard.js';
 // Settings
 import { renderSettings, initSettingsModule } from './modules/settings.js';
 
-// Expenses
-import { renderExpenses } from './modules/expenses.js';
+
 
 // Reports - FULLY INTEGRATED
 import { 
@@ -90,10 +89,7 @@ function loadSection(section = 'dashboard') {
             titleText = 'Settings & Configuration';
             break;
 
-        case 'expenses':
-            renderExpenses();
-            titleText = 'Record Expenses';
-            break;
+        
 
         case 'general-ledger':
             renderGeneralLedger();
