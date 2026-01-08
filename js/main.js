@@ -1,4 +1,4 @@
-// js/main.js - FINAL & FULLY WORKING VERSION (All Modules Integrated)
+// js/main.js - FINAL VERSION WITH FULL REPORTS SUPPORT
 
 import { initMenu } from './modules/menu.js';
 import { renderGeneralLedger } from './modules/generalLedger.js';
@@ -29,8 +29,19 @@ import { renderSettings, initSettingsModule } from './modules/settings.js';
 // Expenses
 import { renderExpenses } from './modules/expenses.js';
 
-// Reports (if you have reports.js)
-import { initReportsModule } from './modules/reports.js'; // Add this if you have reports
+// Reports - FULLY INTEGRATED
+import { 
+    balanceSheet,
+    incomeStatement,
+    memberStatements,
+    depositsSummary,
+    loansPortfolio,
+    sasraMonthly,
+    sasraAnnual,
+    dividendRecommendation,
+    loanAging,
+    initReportsModule 
+} from './modules/reports.js';
 
 import { saccoConfig } from './config.js';
 
@@ -55,7 +66,7 @@ function loadSection(section = 'dashboard') {
             titleText = 'Dashboard';
             break;
 
-        // === SETTINGS - All sub-pages handled by initSettingsModule() ===
+        // === SETTINGS ===
         case 'settings':
         case 'settings-contributions':
         case 'settings-invoices':
@@ -116,6 +127,52 @@ function loadSection(section = 'dashboard') {
             titleText = 'All Deposits & Transactions';
             break;
 
+        // === REPORTS - NOW FULLY WORKING ===
+        case 'balance-sheet':
+            balanceSheet();
+            titleText = 'Balance Sheet';
+            break;
+
+        case 'income-statement':
+            incomeStatement();
+            titleText = 'Income Statement';
+            break;
+
+        case 'member-statements':
+            memberStatements();
+            titleText = 'Member Statements';
+            break;
+
+        case 'deposits-summary':
+            depositsSummary();
+            titleText = 'Deposits Summary';
+            break;
+
+        case 'loans-portfolio':
+            loansPortfolio();
+            titleText = 'Loans Portfolio';
+            break;
+
+        case 'sasra-monthly':
+            sasraMonthly();
+            titleText = 'SASRA Monthly Return';
+            break;
+
+        case 'sasra-annual':
+            sasraAnnual();
+            titleText = 'SASRA Annual Return';
+            break;
+
+        case 'dividend-recommendation':
+            dividendRecommendation();
+            titleText = 'Dividend Recommendation';
+            break;
+
+        case 'loan-aging':
+            loanAging();
+            titleText = 'Loan Aging Report';
+            break;
+
         // === Fallback ===
         default:
             titleText = section
@@ -128,41 +185,33 @@ function loadSection(section = 'dashboard') {
                     <h1>${titleText}</h1>
                     <p>This module is under development and will be available soon.</p>
                     <p style="color:#666; margin-top:20px;">
-                        Upcoming: Loans Management, Reports, Dividends...
+                        Upcoming: Loans Management, Dividends...
                     </p>
                 </div>
             `;
             break;
     }
 
-    // Update title
     if (pageTitle) pageTitle.textContent = titleText;
     document.title = `${titleText} • ${saccoConfig.name}`;
 
-    // Update URL and history
     history.pushState({ section }, titleText, `#${section}`);
-
-    // Highlight active menu
     setActiveMenu(section);
 }
 
 /**
- * Highlight active menu item (including submenus)
+ * Highlight active menu item
  */
 function setActiveMenu(section) {
-    // Reset all
     document.querySelectorAll('.menu-item, .submenu li').forEach(el => el.classList.remove('active'));
 
-    // Find and activate the matching item
     const target = document.querySelector(`[data-section="${section}"]`);
     if (target) {
         target.classList.add('active');
-        // Activate parent menu if it's a submenu item
         const parentMenu = target.closest('.menu-item.has-submenu');
         if (parentMenu) parentMenu.classList.add('active');
     }
 
-    // Special case for dashboard
     if (section === 'dashboard') {
         document.querySelector('[data-section="dashboard"]')?.classList.add('active');
     }
@@ -172,7 +221,6 @@ function setActiveMenu(section) {
 // NAVIGATION LISTENERS
 // ===================================================================
 
-// Top-level menu items (non-submenu)
 document.querySelectorAll('.menu-item > .menu-link').forEach(link => {
     link.addEventListener('click', (e) => {
         const parentItem = link.parentElement;
@@ -192,7 +240,6 @@ document.querySelectorAll('.menu-item > .menu-link').forEach(link => {
     });
 });
 
-// Submenu items
 document.querySelectorAll('.submenu li').forEach(item => {
     item.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -206,7 +253,6 @@ document.querySelectorAll('.submenu li').forEach(item => {
     });
 });
 
-// Browser back/forward
 window.addEventListener('popstate', (e) => {
     const section = e.state?.section || window.location.hash.slice(1) || 'dashboard';
     loadSection(section);
@@ -219,13 +265,11 @@ window.addEventListener('popstate', (e) => {
 initMenu();
 initMembersModule();
 initDepositsModule();
-initSettingsModule();  // Always initialize settings module
-// initReportsModule(); // Uncomment when you add reports.js
+initSettingsModule();
+initReportsModule();  // NOW UNCOMMENTED - REPORTS WORK!
 
-// Load initial section from URL or default to dashboard
 const initialSection = window.location.hash.slice(1) || 'dashboard';
 loadSection(initialSection);
 setActiveMenu(initialSection);
 
-// Expose loadSection globally (for inline onclicks in HTML)
 window.loadSection = loadSection;
