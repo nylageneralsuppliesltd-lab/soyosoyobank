@@ -1,4 +1,4 @@
-// js/modules/menu.js - Fixed & Improved Menu Logic
+// js/modules/menu.js - Fixed Submenu & Mobile Menu Logic
 
 export function initMenu() {
     const sidebar = document.getElementById('sidebar');
@@ -6,11 +6,11 @@ export function initMenu() {
     const closeBtn = document.getElementById('close-sidebar');
 
     if (!sidebar || !toggleBtn || !closeBtn) {
-        console.warn('Menu elements not found. Check IDs: sidebar, toggle-sidebar, close-sidebar');
+        console.warn('Menu elements not found!');
         return;
     }
 
-    // === Mobile Sidebar Open/Close ===
+    // === Mobile Sidebar Toggle ===
     toggleBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         sidebar.classList.add('open');
@@ -30,30 +30,38 @@ export function initMenu() {
         }
     });
 
-    // === Submenu Toggle - Only on Caret Icon (Best UX) ===
+    // === Submenu Toggle - Click on Caret Only ===
     document.querySelectorAll('.submenu-toggle').forEach(toggle => {
         toggle.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent triggering parent link
+            e.stopPropagation(); // Prevent parent click
             const parentItem = toggle.closest('.menu-item.has-submenu');
             if (parentItem) {
+                // Toggle only this submenu
+                const isActive = parentItem.classList.contains('active');
+                // Optional: close all others when opening one (uncomment if desired)
+                // document.querySelectorAll('.menu-item.has-submenu').forEach(item => item.classList.remove('active'));
                 parentItem.classList.toggle('active');
             }
         });
     });
 
-    // === Optional: Allow clicking entire menu item to open submenu on mobile ===
-    // This improves mobile UX for large touch targets
-    if (window.innerWidth <= 992) {
-        document.querySelectorAll('.menu-item.has-submenu > .menu-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                // Only toggle submenu if clicking text/icon (not caret)
-                if (!e.target.closest('.submenu-toggle')) {
+    // === Prevent Menu Link from Triggering Submenu Toggle on Mobile ===
+    // This allows clicking the text to navigate on desktop, but not interfere on mobile
+    document.querySelectorAll('.menu-item.has-submenu > .menu-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            // Only prevent default if clicking the text/icon (not the caret)
+            if (!e.target.closest('.submenu-toggle')) {
+                if (window.innerWidth > 992) {
+                    // On desktop: do nothing (let main.js handle navigation if needed)
+                    e.preventDefault();
+                } else {
+                    // On mobile: toggle submenu instead of navigating
                     e.preventDefault();
                     e.stopPropagation();
                     const parentItem = link.parentElement;
                     parentItem.classList.toggle('active');
                 }
-            });
+            }
         });
-    }
+    });
 }
