@@ -854,3 +854,25 @@ input:focus, select:focus {
         width: 100%;
     }
 }
+.ledger-table th {
+    background: #343a40;
+    color: #fff;
+    text-align: center;
+}
+
+.ledger-table td {
+    text-align: left;
+    vertical-align: middle;
+}
+
+.ledger-table td:nth-child(4),
+.ledger-table td:nth-child(5),
+.ledger-table td:nth-child(6),
+.ledger-table tfoot td {
+    text-align: right !important;
+}
+
+.ledger-table tfoot td {
+    border-top: 3px double #dee2e6;
+    font-size: 1.1em;
+}
