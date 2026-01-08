@@ -40,62 +40,74 @@ export function saveSettings(settings) {
     setItem('settings', settings);
 }
 
-// Main Settings Dashboard
+// Main Settings Dashboard - FULL & FINAL VERSION (All Cards Clickable)
+
 export function renderSettings() {
     document.getElementById('main-content').innerHTML = `
         <div class="settings-page">
             <h1>Settings & Configuration</h1>
-            <p class="subtitle">Manage all SACCO categories, accounts, roles, and invoice templates.</p>
+            <p class="subtitle">Click any card below to add, edit, or manage items. All changes are saved automatically.</p>
 
             <div class="settings-grid">
+                <!-- Contribution Types -->
                 <div class="section-card nav-card" onclick="loadSection('settings-contributions')">
                     <h3>Contribution Types</h3>
-                    <p class="help-text">Monthly Shares, Registration Fee, Building Fund, etc. with arrears rules and statement options.</p>
+                    <p class="help-text">Monthly Shares, Registration Fee, Building Fund, Education Fund, etc.<br>
+                    Configure amount, arrears rules, statement display, and refundability.</p>
                 </div>
 
+                <!-- Invoice Templates -->
                 <div class="section-card nav-card" onclick="loadSection('settings-invoices')">
                     <h3>Invoice Templates</h3>
-                    <p class="help-text">Create invoice types with amounts, due dates, and sending options.</p>
+                    <p class="help-text">Create invoice types with amount payable, due date, sending options, and description.</p>
                 </div>
 
+                <!-- Expense Categories -->
                 <div class="section-card nav-card" onclick="loadSection('settings-expenses')">
                     <h3>Expense Categories</h3>
-                    <p class="help-text">Rent, Salaries, Utilities — mark as administrative if needed.</p>
+                    <p class="help-text">Office Rent, Staff Salaries, Utilities, Transport, Stationery.<br>
+                    Add description and mark as administrative expense if needed.</p>
                 </div>
 
+                <!-- Fine Categories -->
                 <div class="section-card nav-card" onclick="loadSection('settings-fines')">
                     <h3>Fine Categories</h3>
-                    <p class="help-text">Late Payment, Absenteeism, Loan Default Interest.</p>
+                    <p class="help-text">Late Payment Fine, Meeting Absence, Loan Default Interest, etc.</p>
                 </div>
 
+                <!-- Group Roles -->
                 <div class="section-card nav-card" onclick="loadSection('settings-roles')">
                     <h3>Group Roles</h3>
-                    <p class="help-text">Chairman, Secretary, Treasurer — assign permissions.</p>
+                    <p class="help-text">Chairman, Vice Chairman, Secretary, Treasurer, Committee Member.<br>
+                    Assign role description and permissions (view, edit, approve, etc.).</p>
                 </div>
 
+                <!-- Asset Categories -->
                 <div class="section-card nav-card" onclick="loadSection('settings-assets')">
                     <h3>Asset Categories</h3>
-                    <p class="help-text">Land, Buildings, Vehicles, Equipment.</p>
+                    <p class="help-text">Land, Buildings, Vehicles, Furniture, Office Equipment, Investments.</p>
                 </div>
 
+                <!-- Income Categories -->
                 <div class="section-card nav-card" onclick="loadSection('settings-income')">
                     <h3>Income Categories</h3>
-                    <p class="help-text">Interest Received, Donations, Asset Sales.</p>
+                    <p class="help-text">Interest Received, Donations, Fines Collected, Asset Sales, Other Income.</p>
                 </div>
 
+                <!-- Accounts -->
                 <div class="section-card nav-card" onclick="loadSection('settings-accounts')">
                     <h3>Accounts</h3>
-                    <p class="help-text">Petty Cash, Mobile Money, Bank Accounts.</p>
+                    <p class="help-text">Petty Cash, M-Pesa Till, Airtel Money, Equity Bank, Co-op Bank, etc.<br>
+                    Track balances and account details.</p>
                 </div>
             </div>
 
             <div class="save-note">
-                <strong>✓ All changes are saved automatically</strong>
+                <strong>✓ All changes are saved automatically • Start with Contribution Types and Bank Accounts</strong>
             </div>
         </div>
     `;
 }
-
 // Generic List View (for all categories)
 function renderListView(key, title, fields = ['name']) {
     const settings = loadSettings();
