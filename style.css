@@ -567,3 +567,55 @@ input:focus, select:focus, textarea:focus {
     border-radius: 12px;
     margin: 40px 0;
 }
+/* Compact Report Header */
+.report-header-compact {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 8px;
+}
+
+.report-logo {
+    height: 60px;
+}
+
+.header-title h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.report-desc {
+    font-size: 15px;
+    color: #555;
+    margin: 5px 0;
+}
+
+.report-date {
+    font-size: 13px;
+    color: #777;
+    margin: 8px 0 0;
+}
+
+.report-actions {
+    margin: 15px 0;
+    text-align: right;
+}
+
+.report-actions .submit-btn {
+    margin-left: 10px;
+}
+
+.report-divider {
+    margin: 20px 0;
+    border-color: #eee;
+}
+
+/* Amount colors */
+.amount-credit { color: #28a745; text-align: right; font-weight: 600; }
+.amount-debit { color: #dc3545; text-align: right; font-weight: 600; }
