@@ -30,6 +30,16 @@ import {
     initWithdrawalsModule 
 } from './modules/withdrawals.js';
 
+// Loans Module
+import { 
+    renderLoanApplications,
+    renderLoanTypes,
+    renderLoanCalculator,
+    renderMemberLoans,
+    renderBankLoans,
+    initLoansModule 
+} from './modules/loans.js';
+
 // Dashboard
 import { renderDashboard } from './modules/dashboard.js';
 
@@ -156,6 +166,31 @@ function loadSection(section = 'dashboard') {
         case 'withdrawals-list':
             renderWithdrawalsList();
             titleText = 'List of Withdrawals';
+            break;
+                   // === Loans ===
+        case 'loan-applications':
+            renderLoanApplications();
+            titleText = 'Loan Applications';
+            break;
+
+        case 'loan-types':
+            renderLoanTypes();
+            titleText = 'Loan Types';
+            break;
+
+        case 'loan-calculator':
+            renderLoanCalculator();
+            titleText = 'Loan Calculator';
+            break;
+
+        case 'member-loans':
+            renderMemberLoans();
+            titleText = 'Member Loans';
+            break;
+
+        case 'bank-loans':
+            renderBankLoans();
+            titleText = 'Bank Loans';
             break;
             
         // === REPORTS - NOW FULLY WORKING ===
@@ -298,6 +333,7 @@ initMembersModule();
 initDepositsModule();
 initSettingsModule();
 initReportsModule();  // NOW UNCOMMENTED - REPORTS WORK!
+initLoansModule();
 
 const initialSection = window.location.hash.slice(1) || 'dashboard';
 loadSection(initialSection);
