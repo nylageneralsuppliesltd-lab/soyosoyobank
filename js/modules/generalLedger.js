@@ -78,71 +78,70 @@ export function renderGeneralLedger() {
     const totalCredit = deposits.reduce((sum, d) => sum + (d.amount || 0), 0);
     const netBalance = totalCredit - totalDebit;
 
-    // Render HTML (same as before, just updated variables)
-    const mainContent = document.getElementById('main-content');
-    mainContent.innerHTML = `
-        <div class="general-ledger">
-            <h1>General Ledger / Transaction Statement</h1>
-            <p class="subtitle">SACCO-Wide Financial Journal – As of ${new Date().toLocaleDateString('en-GB')}</p>
+  // Render General Ledger - Clean, Mobile-Friendly Version
+const mainContent = document.getElementById('main-content');
+mainContent.innerHTML = `
+    <div class="general-ledger">
+        <h1>General Ledger / Transaction Statement</h1>
+        <p class="subtitle">SACCO-Wide Financial Journal – As of ${new Date().toLocaleDateString('en-GB')}</p>
 
-            <div class="metrics-grid" style="margin-bottom:30px;">
-                <div class="metric-card">
-                    <h3>Total Debits (Outflows)</h3>
-                    <h2 style="color:#dc3545;">${formatCurrency(totalDebit)}</h2>
-                </div>
-                <div class="metric-card">
-                    <h3>Total Credits (Income)</h3>
-                    <h2 style="color:#28a745;">${formatCurrency(totalCredit)}</h2>
-                </div>
-                <div class="metric-card">
-                    <h3>Net Balance</h3>
-                    <h2 style="${netBalance >= 0 ? 'color:#28a745' : 'color:#dc3545'};">${formatCurrency(netBalance)}</h2>
-                </div>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>Total Debits (Outflows)</h3>
+                <h2 class="amount-debit">${formatCurrency(totalDebit)}</h2>
             </div>
-
-            ${transactions.length === 0 ? 
-                `<p style="text-align:center; color:#666; padding:80px; font-size:1.1em;">
-                    No transactions recorded yet.
-                </p>` :
-                `
-                <div class="table-container">
-                    <table class="members-table ledger-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Reference</th>
-                                <th>Description</th>
-                                <th>Category</th>
-                                <th>Debit (${saccoConfig.currency})</th>
-                                <th>Credit (${saccoConfig.currency})</th>
-                                <th>Running Balance</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${transactions.map(tx => `
-                                <tr>
-                                    <td>${new Date(tx.date).toLocaleDateString('en-GB')}</td>
-                                    <td><small>${tx.reference}</small></td>
-                                    <td>${tx.description}</td>
-                                    <td>${tx.category}</td>
-                                    <td style="color:#dc3545; text-align:right;">${tx.debit > 0 ? formatCurrency(tx.debit) : '-'}</td>
-                                    <td style="color:#28a745; text-align:right;">${tx.credit > 0 ? formatCurrency(tx.credit) : '-'}</td>
-                                    <td style="font-weight:600; text-align:right;">${formatCurrency(tx.runningBalance)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                        <tfoot>
-                            <tr style="background:#f8f9fa; font-weight:600;">
-                                <td colspan="4">TOTALS</td>
-                                <td style="color:#dc3545; text-align:right;">${formatCurrency(totalDebit)}</td>
-                                <td style="color:#28a745; text-align:right;">${formatCurrency(totalCredit)}</td>
-                                <td style="text-align:right;">${formatCurrency(netBalance)}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                `
-            }
+            <div class="metric-card">
+                <h3>Total Credits (Income)</h3>
+                <h2 class="amount-credit">${formatCurrency(totalCredit)}</h2>
+            </div>
+            <div class="metric-card">
+                <h3>Net Balance</h3>
+                <h2 class="${netBalance >= 0 ? 'amount-credit' : 'amount-debit'}">${formatCurrency(netBalance)}</h2>
+            </div>
         </div>
-    `;
-}
+
+        ${transactions.length === 0 ? 
+            `<p class="empty-message">
+                No transactions recorded yet. Record contributions, income, or expenses to see the ledger.
+            </p>` :
+            `
+            <div class="table-container">
+                <table class="members-table ledger-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Reference</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Debit (${saccoConfig.currency})</th>
+                            <th>Credit (${saccoConfig.currency})</th>
+                            <th>Running Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${transactions.map(tx => `
+                            <tr>
+                                <td>${new Date(tx.date).toLocaleDateString('en-GB')}</td>
+                                <td><small>${tx.reference || 'N/A'}</small></td>
+                                <td>${tx.description || ''}</td>
+                                <td>${tx.category || ''}</td>
+                                <td class="amount-debit">${tx.debit > 0 ? formatCurrency(tx.debit) : '-'}</td>
+                                <td class="amount-credit">${tx.credit > 0 ? formatCurrency(tx.credit) : '-'}</td>
+                                <td class="running-balance">${formatCurrency(tx.runningBalance)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr class="total-row">
+                            <td colspan="4"><strong>TOTALS</strong></td>
+                            <td class="amount-debit"><strong>${formatCurrency(totalDebit)}</strong></td>
+                            <td class="amount-credit"><strong>${formatCurrency(totalCredit)}</strong></td>
+                            <td class="running-balance"><strong>${formatCurrency(netBalance)}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            `
+        }
+    </div>
+`;
