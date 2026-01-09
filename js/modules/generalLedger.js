@@ -6,13 +6,12 @@ import { saccoConfig } from '../config.js';
 
 export function renderGeneralLedger() {
     const deposits = getItem('deposits') || [];
-    const expenses = getItem('expenses') || [];
+    const withdrawals = getItem('withdrawals') || [];  // ← CHANGED FROM expenses
 
     let transactions = [];
 
     // === Income Transactions (Credits) ===
     deposits.forEach(d => {
-        // Safe type handling with fallback
         const typeStr = d.type || 'unknown';
         const capitalizedType = typeStr.charAt(0).toUpperCase() + typeStr.slice(1).replace('-', ' ');
 
@@ -23,17 +22,11 @@ export function renderGeneralLedger() {
             description = d.description || capitalizedType || 'Income Transaction';
         }
 
-        // Safe category fallback
         let category = 'Uncategorized Income';
-        if (d.type === 'contribution') {
-            category = d.description || 'Member Contribution';
-        } else if (d.type === 'income') {
-            category = d.description || 'Other Income';
-        } else if (d.type === 'fine') {
-            category = 'Fines & Penalties';
-        } else if (d.type === 'loan-repayment') {
-            category = 'Loan Repayment';
-        }
+        if (d.type === 'contribution') category = 'Member Contribution';
+        else if (d.type === 'income') category = d.description || 'Other Income';
+        else if (d.type === 'fine') category = 'Fines & Penalties';
+        else if (d.type === 'loan-repayment') category = 'Loan Repayment';
 
         transactions.push({
             date: d.date || 'Unknown Date',
@@ -45,25 +38,35 @@ export function renderGeneralLedger() {
         });
     });
 
-    // === Expense Transactions (Debits) ===
-    expenses.forEach(e => {
-        const description = e.description || e.category || 'Expense';
-        const category = e.category || 'Uncategorized Expense';
+    // === Withdrawal Transactions (Debits) ===
+    withdrawals.forEach(w => {
+        let description = w.description || '';
+        if (w.memberName) {
+            description = `${w.type.charAt(0).toUpperCase() + w.type.slice(1)} - ${w.memberName}: ${description}`;
+        } else {
+            description = description || `${w.type.charAt(0).toUpperCase() + w.type.slice(1)}`;
+        }
+
+        let category = 'Other Outflow';
+        if (w.type === 'expense') category = 'Operating Expense';
+        else if (w.type === 'dividend') category = 'Dividend Payout';
+        else if (w.type === 'refund') category = 'Contribution Refund';
+        else if (w.type === 'transfer') category = 'Account Transfer';
 
         transactions.push({
-            date: e.date || 'Unknown Date',
-            description: description,
-            reference: e.id ? `EXP${e.id}` : 'N/A',
-            debit: e.amount || 0,
+            date: w.date || 'Unknown Date',
+            description: description.trim() || 'Withdrawal',
+            reference: w.id ? `WD${w.id}` : 'N/A',
+            debit: w.amount || 0,
             credit: 0,
             category: category
         });
     });
 
-    // Sort chronologically (oldest first for correct running balance)
+    // Sort oldest first
     transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // Calculate running balance
+    // Running balance
     let runningBalance = 0;
     transactions = transactions.map(tx => {
         runningBalance += (tx.credit - tx.debit);
@@ -71,10 +74,11 @@ export function renderGeneralLedger() {
     });
 
     // Totals
-    const totalDebit = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const totalDebit = withdrawals.reduce((sum, w) => sum + (w.amount || 0), 0);
     const totalCredit = deposits.reduce((sum, d) => sum + (d.amount || 0), 0);
     const netBalance = totalCredit - totalDebit;
 
+    // Render HTML (same as before, just updated variables)
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = `
         <div class="general-ledger">
@@ -83,7 +87,7 @@ export function renderGeneralLedger() {
 
             <div class="metrics-grid" style="margin-bottom:30px;">
                 <div class="metric-card">
-                    <h3>Total Debits (Expenses)</h3>
+                    <h3>Total Debits (Outflows)</h3>
                     <h2 style="color:#dc3545;">${formatCurrency(totalDebit)}</h2>
                 </div>
                 <div class="metric-card">
@@ -98,7 +102,7 @@ export function renderGeneralLedger() {
 
             ${transactions.length === 0 ? 
                 `<p style="text-align:center; color:#666; padding:80px; font-size:1.1em;">
-                    No transactions recorded yet. Start recording contributions, income, or expenses to populate the ledger.
+                    No transactions recorded yet.
                 </p>` :
                 `
                 <div class="table-container">
