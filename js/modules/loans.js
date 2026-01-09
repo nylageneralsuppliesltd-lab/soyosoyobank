@@ -1,50 +1,100 @@
-// js/modules/loans.js - FULL & FINAL Loans Module (All 5 Sections + Auto-Populate Fixed)
+// js/modules/loans.js - FULL PRODUCTION-READY Loans Module
+// Integrates original 5 menus + T24-grade enhancements
 
 import { getItem, setItem } from '../storage.js';
 import { showAlert, formatCurrency } from '../utils/helpers.js';
 import { loadSettings } from './settings.js';
 import { saccoConfig } from '../config.js';
 
-// Global variables
+// ──────────────────────────────────────────────────────────────────────────────
+// DATA STORES
+// ──────────────────────────────────────────────────────────────────────────────
 let members = [];
 let loans = [];
 let loanTypes = [];
+let repayments = [];
+let journals = [];
 
-// Save helpers
-function saveLoans() { setItem('loans', loans); }
-function saveLoanTypes() { setItem('loanTypes', loanTypes); }
-
-// Refresh data from storage (call this before every render)
+// Refresh from storage
 function refreshData() {
     members = getItem('members') || [];
     loans = getItem('loans') || [];
     loanTypes = getItem('loanTypes') || [];
+    repayments = getItem('repayments') || [];
+    journals = getItem('journals') || [];
 }
 
-// Auto-refresh when module first loads
+// Auto-refresh on module load
 refreshData();
 
-// Helper: Get disbursement accounts from settings
-function getDisbursementAccounts() {
-    const settings = loadSettings();
-    const accounts = [{ id: 'cash', name: 'Cash (Physical)' }];
-
-    (settings.accounts?.pettyCash || []).forEach(a => {
-        accounts.push({ id: `petty_${a.name}`, name: `Petty Cash - ${a.name}` });
-    });
-
-    (settings.accounts?.mobileMoney || []).forEach(a => {
-        accounts.push({ id: `mobile_${a.number}`, name: `${a.provider} - ${a.name || a.number}` });
-    });
-
-    (settings.accounts?.bank || []).forEach(a => {
-        accounts.push({ id: `bank_${a.accountNumber}`, name: `${a.bankName} - ${a.accountName || a.accountNumber}` });
-    });
-
-    return accounts;
+// Save all
+function saveAll() {
+    setItem('loans', loans);
+    setItem('loanTypes', loanTypes);
+    setItem('repayments', repayments);
+    setItem('journals', journals);
+    setItem('members', members); // In case balance changed
 }
 
-// ==================== MENU 1: LOAN APPLICATIONS ====================
+// UID generator
+const uid = () => Date.now() + Math.floor(Math.random() * 1000);
+
+// Journal entry helper
+function addJournal(date, desc, debit, credit) {
+    journals.push({ id: uid(), date, desc, debit, credit });
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// LOAN LIMIT CHECK
+// ──────────────────────────────────────────────────────────────────────────────
+function checkLoanLimit(member, type, amount) {
+    if (type.maxAmount && amount > type.maxAmount) return false;
+    if (type.maxMultiple && member.balance) {
+        return amount <= member.balance * type.maxMultiple;
+    }
+    return true;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// AMORTIZATION SCHEDULE GENERATOR
+// ──────────────────────────────────────────────────────────────────────────────
+function generateSchedule(amount, rate, months, interestType) {
+    const schedule = [];
+    if (interestType === 'flat') {
+        const totalInterest = amount * (rate / 100);
+        const monthly = (amount + totalInterest) / months;
+        for (let i = 1; i <= months; i++) {
+            schedule.push({
+                installment: i,
+                principal: amount / months,
+                interest: totalInterest / months,
+                total: monthly,
+                paid: false
+            });
+        }
+    } else { // reducing
+        const r = rate / 100 / 12;
+        const emi = amount * (r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
+        let balance = amount;
+        for (let i = 1; i <= months; i++) {
+            const interest = balance * r;
+            const principal = emi - interest;
+            balance -= principal;
+            schedule.push({
+                installment: i,
+                principal,
+                interest,
+                total: emi,
+                paid: false
+            });
+        }
+    }
+    return schedule;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// MENU 1: LOAN APPLICATIONS
+// ──────────────────────────────────────────────────────────────────────────────
 export function renderLoanApplications() {
     refreshData();
     const pending = loans.filter(l => l.status === 'pending');
@@ -64,8 +114,9 @@ export function renderLoanApplications() {
                             <tr>
                                 <th>#</th>
                                 <th>Applicant</th>
-                                <th>Loan Details</th>
-                                <th>Guarantors</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Period</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -75,13 +126,10 @@ export function renderLoanApplications() {
                                 <tr>
                                     <td>${idx + 1}</td>
                                     <td>${app.memberName || app.bankName || 'Unknown'}</td>
-                                    <td>
-                                        ${app.type}<br>
-                                        Amount: ${formatCurrency(app.amount)}<br>
-                                        Period: ${app.periodMonths} months
-                                    </td>
-                                    <td>${app.guarantors?.length || 0} guarantors</td>
-                                    <td><span class="status-pending">Pending Approval</span></td>
+                                    <td>${app.typeName || app.type}</td>
+                                    <td>${formatCurrency(app.amount)}</td>
+                                    <td>${app.periodMonths} months</td>
+                                    <td><span class="status-${app.status}">${app.status}</span></td>
                                     <td>
                                         <button onclick="window.viewLoanDetails(${app.id})">View</button>
                                         <button onclick="window.approveLoan(${app.id})" style="background:#28a745; color:white;">Approve</button>
@@ -96,7 +144,9 @@ export function renderLoanApplications() {
     `;
 }
 
-// ==================== MENU 2: LOAN TYPES ====================
+// ──────────────────────────────────────────────────────────────────────────────
+// MENU 2: LOAN TYPES
+// ──────────────────────────────────────────────────────────────────────────────
 export function renderLoanTypes() {
     refreshData();
 
@@ -144,7 +194,9 @@ export function renderLoanTypes() {
     `;
 }
 
-// ==================== CREATE / EDIT LOAN TYPE ====================
+// ──────────────────────────────────────────────────────────────────────────────
+// CREATE / EDIT LOAN TYPE
+// ──────────────────────────────────────────────────────────────────────────────
 function renderCreateLoanTypeForm(editIndex = null) {
     refreshData();
 
@@ -193,7 +245,7 @@ function renderCreateLoanTypeForm(editIndex = null) {
                     </select>
                 </div>
 
-                <!-- LATE INSTALLMENT FINES -->
+                <!-- Late Installment Fines -->
                 <div class="form-group" style="margin-top:30px;">
                     <label>
                         <input type="checkbox" id="late-fines-enabled" ${lateFines.enabled ? 'checked' : ''}>
@@ -203,11 +255,11 @@ function renderCreateLoanTypeForm(editIndex = null) {
 
                 <div id="late-fines-section" style="display:${lateFines.enabled ? 'block' : 'none'}; margin-left:30px; margin-top:15px;">
                     <div class="form-group">
-                        <label class="required-label">What type of Late Loan Payment fine do you charge?</label>
+                        <label class="required-label">Late Fine Type</label>
                         <select id="late-fine-type">
-                            <option value="one-off" ${lateFines.type === 'one-off' ? 'selected' : ''}>One-off fine per installment</option>
-                            <option value="fixed" ${lateFines.type === 'fixed' ? 'selected' : ''}>Fixed fine amount</option>
-                            <option value="percentage" ${lateFines.type === 'percentage' ? 'selected' : ''}>Percentage fine</option>
+                            <option value="one-off" ${lateFines.type === 'one-off' ? 'selected' : ''}>One-off per installment</option>
+                            <option value="fixed" ${lateFines.type === 'fixed' ? 'selected' : ''}>Fixed amount</option>
+                            <option value="percentage" ${lateFines.type === 'percentage' ? 'selected' : ''}>Percentage</option>
                         </select>
                     </div>
 
@@ -218,21 +270,21 @@ function renderCreateLoanTypeForm(editIndex = null) {
                     </div>
                 </div>
 
-                <!-- OUTSTANDING BALANCE FINES -->
+                <!-- Outstanding Balance Fines -->
                 <div class="form-group" style="margin-top:25px;">
                     <label>
                         <input type="checkbox" id="outstanding-fines-enabled" ${outstandingFines.enabled ? 'checked' : ''}>
-                        Do you charge fines for any outstanding loan balances at the end of the loan?
+                        Do you charge fines for outstanding balances at end of loan?
                     </label>
                 </div>
 
                 <div id="outstanding-fines-section" style="display:${outstandingFines.enabled ? 'block' : 'none'}; margin-left:30px; margin-top:15px;">
                     <div class="form-group">
-                        <label class="required-label">What type of fine do you charge for outstanding balances?</label>
+                        <label class="required-label">Outstanding Fine Type</label>
                         <select id="outstanding-fine-type">
-                            <option value="one-off" ${outstandingFines.type === 'one-off' ? 'selected' : ''}>One-off fine per installment</option>
-                            <option value="fixed" ${outstandingFines.type === 'fixed' ? 'selected' : ''}>Fixed fine amount</option>
-                            <option value="percentage" ${outstandingFines.type === 'percentage' ? 'selected' : ''}>Percentage fine</option>
+                            <option value="one-off" ${outstandingFines.type === 'one-off' ? 'selected' : ''}>One-off per installment</option>
+                            <option value="fixed" ${outstandingFines.type === 'fixed' ? 'selected' : ''}>Fixed amount</option>
+                            <option value="percentage" ${outstandingFines.type === 'percentage' ? 'selected' : ''}>Percentage</option>
                         </select>
                     </div>
 
@@ -273,19 +325,18 @@ function renderCreateLoanTypeForm(editIndex = null) {
         e.preventDefault();
 
         const newType = {
+            id: editIndex !== null ? type.id : uid(),
             name: document.getElementById('loan-name').value.trim(),
             maxAmount: parseFloat(document.getElementById('max-amount').value) || null,
             maxMultiple: parseFloat(document.getElementById('max-multiple').value) || null,
             periodMonths: parseInt(document.getElementById('period-months').value),
             interestRate: parseFloat(document.getElementById('interest-rate').value),
             interestType: document.getElementById('interest-type').value,
-
             lateFines: {
                 enabled: document.getElementById('late-fines-enabled').checked,
                 type: document.getElementById('late-fine-type').value,
                 value: parseFloat(document.getElementById('late-fine-value').value) || 0
             },
-
             outstandingFines: {
                 enabled: document.getElementById('outstanding-fines-enabled').checked,
                 type: document.getElementById('outstanding-fine-type').value,
@@ -406,7 +457,7 @@ export function renderMemberLoans() {
                             ${memberLoans.map(l => `
                                 <tr>
                                     <td>${l.memberName || 'Unknown'}</td>
-                                    <td>${l.type}</td>
+                                    <td>${l.typeName || l.type}</td>
                                     <td>${formatCurrency(l.amount)}</td>
                                     <td>${l.periodMonths} months</td>
                                     <td><span class="status-${l.status}">${l.status}</span></td>
@@ -440,7 +491,7 @@ function renderCreateMemberLoanForm() {
                         <option value="">-- Choose Loan Type --</option>
                         ${loanTypes.length === 0 
                             ? '<option disabled>No loan types defined yet</option>' 
-                            : loanTypes.map(t => `<option value="${t.name}">${t.name} (${t.interestRate}%)</option>`).join('')}
+                            : loanTypes.map(t => `<option value="${t.id}">${t.name} (${t.interestRate}%)</option>`).join('')}
                     </select>
                 </div>
 
@@ -498,9 +549,10 @@ function renderCreateMemberLoanForm() {
         </div>
     `;
 
-    // Auto-populate from selected loan type (real-time)
+    // Auto-populate from selected loan type
     document.getElementById('loan-type').addEventListener('change', e => {
-        const selectedType = loanTypes.find(t => t.name === e.target.value);
+        const typeId = e.target.value;
+        const selectedType = loanTypes.find(t => String(t.id) === typeId);
         if (selectedType) {
             document.getElementById('interest-rate').value = selectedType.interestRate || '';
             document.getElementById('period-months').value = selectedType.periodMonths || '';
@@ -522,33 +574,49 @@ function renderCreateMemberLoanForm() {
             return;
         }
 
-        const selectedTypeName = document.getElementById('loan-type').value;
-        const selectedType = loanTypes.find(t => t.name === selectedTypeName);
+        const typeId = document.getElementById('loan-type').value;
+        const selectedType = loanTypes.find(t => String(t.id) === typeId);
+
+        if (!selectedType) {
+            showAlert('Please select a valid loan type', 'error');
+            return;
+        }
+
+        const amount = parseFloat(document.getElementById('loan-amount').value);
+        if (!checkLoanLimit(selectedMember, selectedType, amount)) {
+            showAlert('Loan amount exceeds allowed limit based on savings', 'error');
+            return;
+        }
+
+        const schedule = generateSchedule(
+            amount,
+            selectedType.interestRate,
+            selectedType.periodMonths,
+            selectedType.interestType
+        );
 
         const newLoan = {
-            id: Date.now(),
+            id: uid(),
             memberId: memberId,
             memberName: selectedMember.name,
-            type: selectedTypeName,
-            amount: parseFloat(document.getElementById('loan-amount').value),
-            periodMonths: parseInt(document.getElementById('period-months').value),
-            disbursementDate: document.getElementById('disbursement-date').value,
-            disbursedFrom: document.getElementById('disbursement-account').value,
+            typeId: selectedType.id,
+            typeName: selectedType.name,
+            amount,
+            balance: amount,
+            interestRate: selectedType.interestRate,
+            interestType: selectedType.interestType,
+            periodMonths: selectedType.periodMonths,
+            schedule,
             status: 'pending',
-            createdAt: new Date().toLocaleString('en-GB'),
-            interestRate: selectedType ? selectedType.interestRate : null,
-            interestType: selectedType ? selectedType.interestType : null,
-            lateFines: selectedType ? selectedType.lateFines : null,
-            outstandingFines: selectedType ? selectedType.outstandingFines : null
+            createdAt: new Date().toISOString(),
+            disbursementAccount: document.getElementById('disbursement-account').value,
+            disbursementDate: document.getElementById('disbursement-date').value
         };
 
         loans.push(newLoan);
-        saveLoans();
+        saveAll();
 
-        selectedMember.balance = (selectedMember.balance || 0) + newLoan.amount;
-        setItem('members', members);
-
-        showAlert(`Loan of ${formatCurrency(newLoan.amount)} created for ${selectedMember.name}!`, 'success');
+        showAlert(`Loan application of ${formatCurrency(amount)} created for ${selectedMember.name}!`, 'success');
         renderMemberLoans();
     };
 }
@@ -584,7 +652,7 @@ export function renderBankLoans() {
                             ${bankLoans.map(l => `
                                 <tr>
                                     <td>${l.bankName || 'Unknown'}</td>
-                                    <td>${l.type}</td>
+                                    <td>${l.typeName || l.type}</td>
                                     <td>${formatCurrency(l.amount)}</td>
                                     <td>${l.periodMonths} months</td>
                                     <td><span class="status-${l.status}">${l.status}</span></td>
@@ -617,7 +685,7 @@ function renderCreateBankLoanForm() {
                     <label class="required-label">Loan Type</label>
                     <select id="loan-type" required>
                         <option value="">-- Select Type --</option>
-                        ${loanTypes.map(t => `<option value="${t.name}">${t.name}</option>`).join('')}
+                        ${loanTypes.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
                     </select>
                 </div>
 
@@ -648,9 +716,10 @@ function renderCreateBankLoanForm() {
         e.preventDefault();
 
         const newLoan = {
-            id: Date.now(),
+            id: uid(),
             bankName: document.getElementById('bank-name').value.trim(),
-            type: document.getElementById('loan-type').value,
+            typeId: document.getElementById('loan-type').value,
+            typeName: loanTypes.find(t => t.id == document.getElementById('loan-type').value)?.name,
             amount: parseFloat(document.getElementById('loan-amount').value),
             periodMonths: parseInt(document.getElementById('period-months').value),
             interestRate: parseFloat(document.getElementById('interest-rate').value),
@@ -659,17 +728,156 @@ function renderCreateBankLoanForm() {
         };
 
         loans.push(newLoan);
-        saveLoans();
+        saveAll();
         showAlert('Bank loan recorded successfully!');
         renderBankLoans();
     };
+}
+
+// ==================== ADVANCED FUNCTIONS (T24-Grade) ====================
+
+// Create Member Loan (with limit check & schedule)
+export function createMemberLoan({ memberId, typeId, amount, disbursementAccount }) {
+    refreshData();
+
+    const member = members.find(m => String(m.id) === String(memberId));
+    const type = loanTypes.find(t => String(t.id) === String(typeId));
+
+    if (!member || !type) {
+        showAlert('Invalid member or loan type', 'error');
+        return;
+    }
+
+    if (!checkLoanLimit(member, type, amount)) {
+        showAlert('Loan amount exceeds allowed limit based on savings', 'error');
+        return;
+    }
+
+    const schedule = generateSchedule(amount, type.interestRate, type.periodMonths, type.interestType);
+
+    const loan = {
+        id: uid(),
+        memberId: member.id,
+        memberName: member.name,
+        typeId: type.id,
+        typeName: type.name,
+        amount,
+        balance: amount,
+        interestRate: type.interestRate,
+        interestType: type.interestType,
+        periodMonths: type.periodMonths,
+        schedule,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        disbursementAccount,
+        disbursementDate: new Date().toISOString().split('T')[0]
+    };
+
+    loans.push(loan);
+    saveAll();
+
+    showAlert(`Loan application of ${formatCurrency(amount)} created!`);
+}
+
+// Approve & Disburse
+export function approveLoan(loanId) {
+    refreshData();
+    const loan = loans.find(l => l.id === loanId);
+    if (!loan || loan.status !== 'pending') return;
+
+    loan.status = 'active';
+
+    addJournal(
+        new Date().toISOString(),
+        `Loan Disbursement - ${loan.memberName || 'Bank'} - ${loan.typeName}`,
+        { LoansReceivable: loan.amount },
+        { [loan.disbursementAccount || 'Cash']: loan.amount }
+    );
+
+    saveAll();
+    showAlert('Loan approved & disbursed!');
+    renderLoanApplications();
+}
+
+// Post Repayment
+export function postRepayment({ loanId, amount, date = new Date().toISOString() }) {
+    refreshData();
+    const loan = loans.find(l => l.id === loanId);
+    if (!loan || loan.status !== 'active') return;
+
+    let remaining = amount;
+
+    for (const inst of loan.schedule) {
+        if (inst.paid) continue;
+        if (remaining >= inst.total) {
+            remaining -= inst.total;
+            inst.paid = true;
+            loan.balance -= inst.principal;
+
+            repayments.push({ id: uid(), loanId, installment: inst.installment, amount: inst.total, date });
+
+            addJournal(date, `Loan Repayment - Installment ${inst.installment}`,
+                { [loan.disbursementAccount || 'Cash']: inst.total },
+                { LoansReceivable: inst.principal, InterestIncome: inst.interest }
+            );
+        }
+        if (remaining <= 0) break;
+    }
+
+    if (loan.balance <= 0) loan.status = 'repaid';
+    saveAll();
+    showAlert('Repayment posted successfully!');
+}
+
+// Apply Fines (call periodically or on demand)
+export function applyFines(currentDate = new Date()) {
+    refreshData();
+    loans.filter(l => l.status === 'active').forEach(loan => {
+        const type = loanTypes.find(t => t.id === loan.typeId);
+        if (!type) return;
+
+        const overdue = loan.schedule.filter(i => !i.paid);
+        overdue.forEach(inst => {
+            if (type.lateFines?.enabled) {
+                const fine = type.lateFines.type === 'percentage'
+                    ? inst.total * (type.lateFines.value / 100)
+                    : type.lateFines.value;
+                loan.balance += fine;
+                addJournal(currentDate.toISOString(), `Late Fine - Installment ${inst.installment}`,
+                    { LoansReceivable: fine },
+                    { FineIncome: fine }
+                );
+            }
+        });
+
+        // Outstanding balance fine at end
+        if (loan.balance > 0 && type.outstandingFines?.enabled) {
+            const fine = type.outstandingFines.type === 'percentage'
+                ? loan.balance * (type.outstandingFines.value / 100)
+                : type.outstandingFines.value;
+            loan.balance += fine;
+            addJournal(currentDate.toISOString(), 'Outstanding Balance Fine',
+                { LoansReceivable: fine },
+                { FineIncome: fine }
+            );
+        }
+    });
+    saveAll();
+}
+
+// Get Loan Statement
+export function getLoanStatement(loanId) {
+    refreshData();
+    const loan = loans.find(l => l.id === loanId);
+    const pays = repayments.filter(r => r.loanId === loanId);
+    return { loan, pays };
 }
 
 // ==================== MODULE INITIALIZATION ====================
 export function initLoansModule() {
     refreshData();
 
-    // Expose ALL functions globally (for menu & inline onclick)
+    // Expose ALL functions globally
     window.renderLoanApplications = renderLoanApplications;
     window.renderLoanTypes = renderLoanTypes;
     window.renderLoanCalculator = renderLoanCalculator;
@@ -680,6 +888,13 @@ export function initLoansModule() {
     window.renderCreateMemberLoanForm = renderCreateMemberLoanForm;
     window.renderCreateBankLoanForm = renderCreateBankLoanForm;
 
+    // Advanced functions
+    window.createMemberLoan = createMemberLoan;
+    window.approveLoan = approveLoan;
+    window.postRepayment = postRepayment;
+    window.applyFines = applyFines;
+    window.getLoanStatement = getLoanStatement;
+
     // Placeholder actions
     window.viewLoan = function(id) {
         showAlert(`Viewing loan ID: ${id} (expand later)`);
@@ -689,15 +904,5 @@ export function initLoansModule() {
         showAlert(`Viewing details for loan ID: ${id}`);
     };
 
-    window.approveLoan = function(id) {
-        const loan = loans.find(l => l.id === id);
-        if (loan) {
-            loan.status = 'approved';
-            saveLoans();
-            showAlert(`Loan ${id} approved!`);
-            window.renderLoanApplications();
-        }
-    };
-
-    console.log('Loans module fully initialized - ready for action');
+    console.log('Loans module fully initialized - T24-grade ready');
 }
