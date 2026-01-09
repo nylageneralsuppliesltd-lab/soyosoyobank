@@ -36,7 +36,7 @@ function saveAll() {
     setItem('members', members); // In case balance changed
 }
 
-// 4. UTILITY FUNCTIONS FIRST (so they're available to all render functions)
+// Helper: Get disbursement accounts from settings
 function getDisbursementAccounts() {
     const settings = loadSettings();
     const accounts = [{ id: 'cash', name: 'Cash (Physical)' }];
@@ -55,6 +55,7 @@ function getDisbursementAccounts() {
 
     return accounts;
 }
+
 // UID generator
 const uid = () => Date.now() + Math.floor(Math.random() * 1000);
 
