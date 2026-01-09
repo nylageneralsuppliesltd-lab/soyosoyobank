@@ -535,3 +535,35 @@ input:focus, select:focus, textarea:focus {
     color: #666;
     font-size: 1.2em;
 }
+/* General Ledger - Enhanced Colors & Mobile Support */
+.amount-debit {
+    color: #dc3545;
+    text-align: right;
+    font-weight: 600;
+}
+
+.amount-credit {
+    color: #28a745;
+    text-align: right;
+    font-weight: 600;
+}
+
+.running-balance {
+    text-align: right;
+    font-weight: 600;
+}
+
+.total-row {
+    background: #f8f9fa;
+    font-weight: 700;
+}
+
+.empty-message {
+    text-align: center;
+    color: #666;
+    padding: 80px 20px;
+    font-size: 1.1em;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin: 40px 0;
+}
