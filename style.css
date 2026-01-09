@@ -616,32 +616,50 @@ input:focus, select:focus, textarea:focus {
     border-color: #eee;
 }
 
-/* Amount colors */
-.amount-credit { color: #28a745; text-align: right; font-weight: 600; }
-.amount-debit { color: #dc3545; text-align: right; font-weight: 600; }
-/* Dashboard Chart - Fixed Height & Responsive (No More Elongating) */
+/* Amount colors - for ledger & reports */
+.amount-credit {
+    color: #28a745;
+    text-align: right;
+    font-weight: 600;
+}
+
+.amount-debit {
+    color: #dc3545;
+    text-align: right;
+    font-weight: 600;
+}
+
+/* Dashboard Chart - Fixed Height, No Stretching, Fully Responsive */
 .chart-container {
     position: relative;
-    height: 400px;
+    height: 400px;                /* Master fixed height */
     width: 100%;
+    max-height: 400px;            /* Hard cap - prevents any infinite growth */
     margin: 20px 0;
+    overflow: hidden;             /* Safety: cuts off any miscalculated overflow */
+    background: #fff;             /* Clean background */
+    border-radius: 12px;          /* Optional: nicer look */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* Subtle depth */
 }
 
 #financial-chart {
     width: 100% !important;
     height: 100% !important;
+    max-height: 100% !important;  /* Extra lock against stretching */
 }
 
-/* Mobile adjustments */
+/* Mobile adjustments - smaller height on smaller screens */
 @media (max-width: 992px) {
     .chart-container {
         height: 320px;
+        max-height: 320px;
     }
 }
 
 @media (max-width: 480px) {
     .chart-container {
-        height: 280px;
+        height: 260px;           /* Even smaller on phones */
+        max-height: 260px;
     }
 }
 .ledger-table tr.loan-disbursement {
