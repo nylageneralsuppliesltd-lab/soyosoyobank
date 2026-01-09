@@ -1,4 +1,4 @@
-// js/modules/dashboard.js - Dynamic Real-Data Dashboard (2026)
+// js/modules/dashboard.js - FIXED: Graph No Longer Elongates
 
 import { loadMembers } from '../storage.js';
 import { getItem } from '../storage.js';
@@ -33,17 +33,10 @@ export function renderDashboard() {
         .filter(w => w.type === 'expense')
         .reduce((sum, w) => sum + (w.amount || 0), 0);
 
-    // === Bank & eWallet Distribution (from Settings) ===
-    const bankAccounts = settings.bankAccounts || [];
-    const bankDistribution = bankAccounts.length > 0
-        ? bankAccounts
-        : [{ name: 'Main Account (Not Configured)', balance: totalBalance }];
-
     // === Monthly Trend Data (Real from Transactions) ===
     const now = new Date();
     const currentYear = now.getFullYear();
 
-    // Initialize 12 months
     const monthly = Array.from({ length: 12 }, (_, i) => {
         const date = new Date(currentYear, i, 1);
         return {
@@ -54,7 +47,6 @@ export function renderDashboard() {
         };
     });
 
-    // Populate contributions & income from deposits
     deposits.forEach(d => {
         const date = new Date(d.date);
         if (date.getFullYear() === currentYear) {
@@ -67,7 +59,6 @@ export function renderDashboard() {
         }
     });
 
-    // Populate expenses from withdrawals (only actual expenses)
     withdrawals.forEach(w => {
         if (w.type !== 'expense') return;
         const date = new Date(w.date);
@@ -82,7 +73,6 @@ export function renderDashboard() {
     const monthlyIncome = monthly.map(m => m.income);
     const monthlyExpenses = monthly.map(m => m.expenses);
 
-    // Check if any financial transaction exists
     const hasTransactions = deposits.length > 0 || withdrawals.length > 0;
 
     // === Render Dashboard ===
@@ -94,42 +84,28 @@ export function renderDashboard() {
 
             <!-- Key Metric Cards -->
             <div class="metrics-grid">
-                <!-- Total SACCO Balance -->
                 <div class="metric-card" onclick="loadSection('members-list')">
                     <h3>Total SACCO Balance</h3>
                     <h2>${formatCurrency(totalBalance)}</h2>
-                    <p class="metric-link">View member balances & distribution →</p>
-                    <div class="balance-dist">
-                        ${bankDistribution.map(acc => `
-                            <div><strong>${acc.name}:</strong> ${formatCurrency(acc.balance || 0)}</div>
-                        `).join('')}
-                        ${bankAccounts.length === 0 ? 
-                            `<small style="color:#856404; grid-column:1/-1; margin-top:8px;">
-                                Configure accounts in Settings → Banking
-                            </small>` : ''
-                        }
-                    </div>
+                    <p class="metric-link">View member balances →</p>
                 </div>
 
-                <!-- Total Contributions -->
                 <div class="metric-card" onclick="loadSection('deposits-contributions')">
                     <h3>Total Contributions</h3>
                     <h2>${formatCurrency(contributionsTotal)}</h2>
                     <p class="metric-link">Record or view contributions →</p>
                 </div>
 
-                <!-- Other Income -->
                 <div class="metric-card" onclick="loadSection('deposits-list')">
                     <h3>Other Income</h3>
                     <h2>${formatCurrency(incomeTotal)}</h2>
-                    <p class="metric-link">View all income transactions →</p>
+                    <p class="metric-link">View all income →</p>
                 </div>
 
-                <!-- Total Expenses -->
                 <div class="metric-card expenses-card" onclick="loadSection('withdrawals-list')">
                     <h3>Total Expenses</h3>
                     <h2>${formatCurrency(expensesTotal)}</h2>
-                    <p class="metric-link">${expensesTotal > 0 ? 'View all expenses & outflows →' : 'No expenses recorded yet'}</p>
+                    <p class="metric-link">View expenses & outflows →</p>
                 </div>
             </div>
 
@@ -152,7 +128,7 @@ export function renderDashboard() {
                 </div>
             </div>
 
-            <!-- Monthly Trend Chart -->
+            <!-- Monthly Trend Chart - FIXED HEIGHT -->
             <div class="section-card">
                 <h3>Financial Trends ${currentYear}</h3>
                 <p class="chart-note">
@@ -161,7 +137,9 @@ export function renderDashboard() {
                         : 'Start recording transactions to see trends here'
                     }
                 </p>
-                <canvas id="financial-chart" height="400"></canvas>
+                <div class="chart-container">
+                    <canvas id="financial-chart"></canvas>
+                </div>
             </div>
         </div>
     `;
@@ -169,7 +147,6 @@ export function renderDashboard() {
     // === Render Chart ===
     const ctx = document.getElementById('financial-chart');
     if (ctx) {
-        // Destroy previous chart if exists
         if (ctx.chart) ctx.chart.destroy();
 
         ctx.chart = new Chart(ctx, {
@@ -212,7 +189,7 @@ export function renderDashboard() {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: false,  // Critical for fixed height
                 plugins: {
                     tooltip: {
                         mode: 'index',
