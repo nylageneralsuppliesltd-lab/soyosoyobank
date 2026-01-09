@@ -588,8 +588,3 @@ window.renderCreateBankLoanForm = renderCreateBankLoanForm;
 // Optional: expose any other internal functions used in onclick
 // window.viewLoan = viewLoan;
 // window.approveLoan = approveLoan;
-
-// Keep the init function
-export function initLoansModule() {
-    console.log('Loans module initialized');
-}
