@@ -91,13 +91,20 @@ export function renderDashboard() {
         <div class="dashboard">
             <h1>${saccoConfig.name} Dashboard</h1>
             <p class="subtitle">Financial & Membership Overview – ${now.toLocaleDateString('en-GB')}</p>
+    // === Render Dashboard ===
+    const mainContent = document.getElementById('main-content');
+    mainContent.innerHTML = `
+        <div class="dashboard">
+            <h1>${saccoConfig.name} Dashboard</h1>
+            <p class="subtitle">Financial & Membership Overview – ${now.toLocaleDateString('en-GB')}</p>
 
             <!-- Key Metric Cards -->
             <div class="metrics-grid">
+                <!-- Total SACCO Balance -->
                 <div class="metric-card" onclick="loadSection('members-list')">
                     <h3>Total SACCO Balance</h3>
                     <h2>${formatCurrency(totalBalance)}</h2>
-                    <p class="metric-link">Bank & eWallet Distribution →</p>
+                    <p class="metric-link">View member balances & distribution →</p>
                     <div class="balance-dist">
                         ${bankDistribution.map(acc => `
                             <div><strong>${acc.name}:</strong> ${formatCurrency(acc.balance || 0)}</div>
@@ -110,22 +117,25 @@ export function renderDashboard() {
                     </div>
                 </div>
 
+                <!-- Total Contributions -->
                 <div class="metric-card" onclick="loadSection('deposits-contributions')">
                     <h3>Total Contributions</h3>
                     <h2>${formatCurrency(contributionsTotal)}</h2>
-                    <p class="metric-link">Record / View Contributions →</p>
+                    <p class="metric-link">Record or view contributions →</p>
                 </div>
 
-                <div class="metric-card" onclick="loadSection('deposits-income')">
+                <!-- Other Income (Fines, Interest, etc.) -->
+                <div class="metric-card" onclick="loadSection('deposits-list')">
                     <h3>Other Income</h3>
                     <h2>${formatCurrency(incomeTotal)}</h2>
-                    <p class="metric-link">Fines, Interest, etc. →</p>
+                    <p class="metric-link">View all income transactions →</p>
                 </div>
 
+                <!-- Total Expenses -->
                 <div class="metric-card expenses-card" onclick="loadSection('withdrawals-list')">
                     <h3>Total Expenses</h3>
                     <h2>${formatCurrency(expensesTotal)}</h2>
-                    <p class="metric-link">${expensesTotal > 0 ? 'View all outflows →' : 'No expenses recorded yet'}</p>
+                    <p class="metric-link">${expensesTotal > 0 ? 'View all expenses & outflows →' : 'No expenses recorded yet'}</p>
                 </div>
             </div>
 
