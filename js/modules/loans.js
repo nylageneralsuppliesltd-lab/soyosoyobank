@@ -123,26 +123,31 @@ export function renderLoanTypes() {
 function renderCreateLoanTypeForm(editIndex = null) {
     const type = editIndex !== null ? loanTypes[editIndex] : {};
 
+    // Prepare fine settings (default to disabled)
+    const lateFines = type.lateFines || { enabled: false, type: 'one-off', value: 0 };
+    const outstandingFines = type.outstandingFines || { enabled: false, type: 'one-off', value: 0 };
+
     document.getElementById('main-content').innerHTML = `
         <div class="form-card">
             <h1>${editIndex !== null ? 'Edit' : 'Create'} Loan Type</h1>
 
             <form id="loan-type-form">
+                <!-- Basic Loan Details -->
                 <div class="form-group">
                     <label class="required-label">Loan Type Name</label>
                     <input type="text" id="loan-name" value="${type.name || ''}" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="required-label">Max Loan Amount</label>
+                    <label class="required-label">Maximum Loan Amount (KES)</label>
                     <input type="number" id="max-amount" value="${type.maxAmount || ''}" min="0">
                     <small>Leave blank if using multiple of savings</small>
                 </div>
 
                 <div class="form-group">
-                    <label>Max Multiple of Savings</label>
+                    <label>Maximum Multiple of Savings</label>
                     <input type="number" id="max-multiple" value="${type.maxMultiple || ''}" min="1" step="0.5">
-                    <small>e.g. 3 = up to 3× savings</small>
+                    <small>e.g. 3 = up to 3× member's savings</small>
                 </div>
 
                 <div class="form-group">
@@ -158,22 +163,63 @@ function renderCreateLoanTypeForm(editIndex = null) {
                 <div class="form-group">
                     <label>Interest Type</label>
                     <select id="interest-type">
-                        <option value="flat" ${type.interestType === 'flat' ? 'selected' : ''}>Flat on Full Amount</option>
+                        <option value="flat" ${type.interestType === 'flat' ? 'selected' : ''}>Flat (on full amount)</option>
                         <option value="reducing" ${type.interestType === 'reducing' ? 'selected' : ''}>Reducing Balance</option>
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label>Guarantors Required?</label>
-                    <input type="checkbox" id="guarantors-required" ${type.guarantorsRequired ? 'checked' : ''}>
+                <!-- LATE INSTALLMENT FINES -->
+                <div class="form-group" style="margin-top:30px;">
+                    <label>
+                        <input type="checkbox" id="late-fines-enabled" ${lateFines.enabled ? 'checked' : ''}>
+                        Do you charge fines for late loan installment payments?
+                    </label>
                 </div>
 
-                <div class="form-group">
-                    <label>Late Payment Fines?</label>
-                    <input type="checkbox" id="late-fines" ${type.lateFines ? 'checked' : ''}>
+                <div id="late-fines-section" style="display:${lateFines.enabled ? 'block' : 'none'}; margin-left:30px; margin-top:15px;">
+                    <div class="form-group">
+                        <label class="required-label">What type of Late Loan Payment fine do you charge?</label>
+                        <select id="late-fine-type">
+                            <option value="one-off" ${lateFines.type === 'one-off' ? 'selected' : ''}>One-off fine per installment</option>
+                            <option value="fixed" ${lateFines.type === 'fixed' ? 'selected' : ''}>Fixed fine amount</option>
+                            <option value="percentage" ${lateFines.type === 'percentage' ? 'selected' : ''}>Percentage fine</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required-label">Fine Value</label>
+                        <input type="number" id="late-fine-value" value="${lateFines.value || 0}" min="0" step="0.01" required>
+                        <small id="late-fine-unit">KES (fixed) or % (percentage)</small>
+                    </div>
                 </div>
 
-                <div style="margin-top:30px;">
+                <!-- OUTSTANDING BALANCE FINES -->
+                <div class="form-group" style="margin-top:25px;">
+                    <label>
+                        <input type="checkbox" id="outstanding-fines-enabled" ${outstandingFines.enabled ? 'checked' : ''}>
+                        Do you charge fines for any outstanding loan balances at the end of the loan?
+                    </label>
+                </div>
+
+                <div id="outstanding-fines-section" style="display:${outstandingFines.enabled ? 'block' : 'none'}; margin-left:30px; margin-top:15px;">
+                    <div class="form-group">
+                        <label class="required-label">What type of fine do you charge for outstanding balances?</label>
+                        <select id="outstanding-fine-type">
+                            <option value="one-off" ${outstandingFines.type === 'one-off' ? 'selected' : ''}>One-off fine per installment</option>
+                            <option value="fixed" ${outstandingFines.type === 'fixed' ? 'selected' : ''}>Fixed fine amount</option>
+                            <option value="percentage" ${outstandingFines.type === 'percentage' ? 'selected' : ''}>Percentage fine</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required-label">Fine Value</label>
+                        <input type="number" id="outstanding-fine-value" value="${outstandingFines.value || 0}" min="0" step="0.01" required>
+                        <small id="outstanding-fine-unit">KES (fixed) or % (percentage)</small>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div style="margin-top:40px;">
                     <button type="submit" class="submit-btn">Save Loan Type</button>
                     <button type="button" class="submit-btn" style="background:#6c757d;" onclick="renderLoanTypes()">Cancel</button>
                 </div>
@@ -181,6 +227,24 @@ function renderCreateLoanTypeForm(editIndex = null) {
         </div>
     `;
 
+    // Toggle visibility of fine sections
+    document.getElementById('late-fines-enabled').addEventListener('change', e => {
+        document.getElementById('late-fines-section').style.display = e.target.checked ? 'block' : 'none';
+    });
+
+    document.getElementById('outstanding-fines-enabled').addEventListener('change', e => {
+        document.getElementById('outstanding-fines-section').style.display = e.target.checked ? 'block' : 'none';
+    });
+
+    // Update unit label when fine type changes
+    ['late-fine-type', 'outstanding-fine-type'].forEach(id => {
+        document.getElementById(id).addEventListener('change', e => {
+            const unitEl = document.getElementById(id.replace('type', 'unit'));
+            unitEl.textContent = e.target.value === 'percentage' ? '%' : 'KES (fixed)';
+        });
+    });
+
+    // Form submission
     document.getElementById('loan-type-form').onsubmit = e => {
         e.preventDefault();
 
@@ -191,8 +255,20 @@ function renderCreateLoanTypeForm(editIndex = null) {
             periodMonths: parseInt(document.getElementById('period-months').value),
             interestRate: parseFloat(document.getElementById('interest-rate').value),
             interestType: document.getElementById('interest-type').value,
-            guarantorsRequired: document.getElementById('guarantors-required').checked,
-            lateFines: document.getElementById('late-fines').checked
+            
+            // Late installment fines
+            lateFines: {
+                enabled: document.getElementById('late-fines-enabled').checked,
+                type: document.getElementById('late-fine-type').value,
+                value: parseFloat(document.getElementById('late-fine-value').value) || 0
+            },
+            
+            // Outstanding balance fines
+            outstandingFines: {
+                enabled: document.getElementById('outstanding-fines-enabled').checked,
+                type: document.getElementById('outstanding-fine-type').value,
+                value: parseFloat(document.getElementById('outstanding-fine-value').value) || 0
+            }
         };
 
         if (editIndex !== null) {
@@ -202,7 +278,7 @@ function renderCreateLoanTypeForm(editIndex = null) {
         }
 
         saveLoanTypes();
-        showAlert('Loan type saved!');
+        showAlert('Loan type saved successfully!');
         renderLoanTypes();
     };
 }
