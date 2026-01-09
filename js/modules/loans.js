@@ -1,4 +1,4 @@
-// js/modules/loans.js - FULL & COMPLETE Loans Module (All 5 Menu Sections)
+// js/modules/loans.js - FULL & FINAL Loans Module (All 5 Sections + Auto-Populate Fixed)
 
 import { getItem, setItem } from '../storage.js';
 import { showAlert, formatCurrency } from '../utils/helpers.js';
@@ -14,14 +14,14 @@ let loanTypes = [];
 function saveLoans() { setItem('loans', loans); }
 function saveLoanTypes() { setItem('loanTypes', loanTypes); }
 
-// Refresh data from storage (call before every render)
+// Refresh data from storage (call this before every render)
 function refreshData() {
     members = getItem('members') || [];
     loans = getItem('loans') || [];
     loanTypes = getItem('loanTypes') || [];
 }
 
-// Auto-refresh when module loads
+// Auto-refresh when module first loads
 refreshData();
 
 // Helper: Get disbursement accounts from settings
@@ -279,11 +279,13 @@ function renderCreateLoanTypeForm(editIndex = null) {
             periodMonths: parseInt(document.getElementById('period-months').value),
             interestRate: parseFloat(document.getElementById('interest-rate').value),
             interestType: document.getElementById('interest-type').value,
+
             lateFines: {
                 enabled: document.getElementById('late-fines-enabled').checked,
                 type: document.getElementById('late-fine-type').value,
                 value: parseFloat(document.getElementById('late-fine-value').value) || 0
             },
+
             outstandingFines: {
                 enabled: document.getElementById('outstanding-fines-enabled').checked,
                 type: document.getElementById('outstanding-fine-type').value,
@@ -303,7 +305,7 @@ function renderCreateLoanTypeForm(editIndex = null) {
     };
 }
 
-// ==================== 3. LOAN CALCULATOR ====================
+// ==================== MENU 3: LOAN CALCULATOR ====================
 export function renderLoanCalculator() {
     refreshData();
 
@@ -373,7 +375,7 @@ export function renderLoanCalculator() {
     };
 }
 
-// ==================== 4. MEMBER LOANS ====================
+// ==================== MENU 4: MEMBER LOANS ====================
 export function renderMemberLoans() {
     refreshData();
 
@@ -449,7 +451,7 @@ function renderCreateMemberLoanForm() {
                         ${members.length === 0 
                             ? '<option disabled>No members found - create members first</option>' 
                             : members.map(m => `
-                                <option value="${m.id}">
+                                <option value="${String(m.id)}">
                                     ${m.name} ${m.phone ? `(${m.phone})` : ''} 
                                     - Balance: ${formatCurrency(m.balance || 0)}
                                 </option>
@@ -468,6 +470,11 @@ function renderCreateMemberLoanForm() {
                 <div class="form-group">
                     <label class="required-label">Repayment Period (Months)</label>
                     <input type="number" id="period-months" min="1" required placeholder="e.g. 12">
+                </div>
+
+                <div class="form-group">
+                    <label class="required-label">Interest Rate (%)</label>
+                    <input type="number" id="interest-rate" readonly placeholder="Auto-filled from loan type">
                 </div>
 
                 <div class="form-group">
@@ -491,24 +498,38 @@ function renderCreateMemberLoanForm() {
         </div>
     `;
 
+    // Auto-populate from selected loan type (real-time)
+    document.getElementById('loan-type').addEventListener('change', e => {
+        const selectedType = loanTypes.find(t => t.name === e.target.value);
+        if (selectedType) {
+            document.getElementById('interest-rate').value = selectedType.interestRate || '';
+            document.getElementById('period-months').value = selectedType.periodMonths || '';
+        } else {
+            document.getElementById('interest-rate').value = '';
+            document.getElementById('period-months').value = '';
+        }
+    });
+
+    // Form submission
     document.getElementById('member-loan-form').onsubmit = e => {
         e.preventDefault();
 
-        const memberId = parseInt(document.getElementById('member-id').value);
-        const selectedMember = members.find(m => m.id === memberId);
+        const memberId = document.getElementById('member-id').value;
+        const selectedMember = members.find(m => String(m.id) === memberId);
 
         if (!selectedMember) {
             showAlert('Please select a valid member', 'error');
             return;
         }
 
-        const selectedType = loanTypes.find(t => t.name === document.getElementById('loan-type').value);
+        const selectedTypeName = document.getElementById('loan-type').value;
+        const selectedType = loanTypes.find(t => t.name === selectedTypeName);
 
         const newLoan = {
             id: Date.now(),
             memberId: memberId,
             memberName: selectedMember.name,
-            type: document.getElementById('loan-type').value,
+            type: selectedTypeName,
             amount: parseFloat(document.getElementById('loan-amount').value),
             periodMonths: parseInt(document.getElementById('period-months').value),
             disbursementDate: document.getElementById('disbursement-date').value,
@@ -516,7 +537,9 @@ function renderCreateMemberLoanForm() {
             status: 'pending',
             createdAt: new Date().toLocaleString('en-GB'),
             interestRate: selectedType ? selectedType.interestRate : null,
-            interestType: selectedType ? selectedType.interestType : null
+            interestType: selectedType ? selectedType.interestType : null,
+            lateFines: selectedType ? selectedType.lateFines : null,
+            outstandingFines: selectedType ? selectedType.outstandingFines : null
         };
 
         loans.push(newLoan);
@@ -530,7 +553,7 @@ function renderCreateMemberLoanForm() {
     };
 }
 
-// ==================== 5. BANK LOANS ====================
+// ==================== MENU 5: BANK LOANS ====================
 export function renderBankLoans() {
     refreshData();
 
@@ -646,7 +669,7 @@ function renderCreateBankLoanForm() {
 export function initLoansModule() {
     refreshData();
 
-    // Expose all render functions globally (for menu & inline onclick)
+    // Expose ALL functions globally (for menu & inline onclick)
     window.renderLoanApplications = renderLoanApplications;
     window.renderLoanTypes = renderLoanTypes;
     window.renderLoanCalculator = renderLoanCalculator;
@@ -676,5 +699,5 @@ export function initLoansModule() {
         }
     };
 
-    console.log('Loans module fully initialized - all functions exposed');
+    console.log('Loans module fully initialized - ready for action');
 }
