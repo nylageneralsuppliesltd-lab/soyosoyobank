@@ -120,166 +120,116 @@ export function renderLoanTypes() {
     `;
 }
 
-function renderCreateLoanTypeForm(editIndex = null) {
-    const type = editIndex !== null ? loanTypes[editIndex] : {};
+function renderCreateMemberLoanForm() {
+    refreshData(); // Ensures latest members are loaded
 
-    // Prepare fine settings (default to disabled)
-    const lateFines = type.lateFines || { enabled: false, type: 'one-off', value: 0 };
-    const outstandingFines = type.outstandingFines || { enabled: false, type: 'one-off', value: 0 };
+    const accounts = getDisbursementAccounts();
+
+    // Debug: Log to confirm members are loaded
+    console.log('Available members for dropdown:', members);
 
     document.getElementById('main-content').innerHTML = `
         <div class="form-card">
-            <h1>${editIndex !== null ? 'Edit' : 'Create'} Loan Type</h1>
+            <h1>Create Member Loan</h1>
+            <p class="subtitle">Disburse a new loan to an existing member</p>
 
-            <form id="loan-type-form">
-                <!-- Basic Loan Details -->
+            <form id="member-loan-form">
                 <div class="form-group">
-                    <label class="required-label">Loan Type Name</label>
-                    <input type="text" id="loan-name" value="${type.name || ''}" required>
+                    <label class="required-label">Select Loan Type</label>
+                    <select id="loan-type" required>
+                        <option value="">-- Choose Loan Type --</option>
+                        ${loanTypes.length === 0 
+                            ? '<option disabled>No loan types defined yet</option>' 
+                            : loanTypes.map(t => `<option value="${t.name}">${t.name} (${t.interestRate}%)</option>`).join('')}
+                    </select>
                 </div>
 
                 <div class="form-group">
-                    <label class="required-label">Maximum Loan Amount (KES)</label>
-                    <input type="number" id="max-amount" value="${type.maxAmount || ''}" min="0">
-                    <small>Leave blank if using multiple of savings</small>
+                    <label class="required-label">Select Member</label>
+                    <select id="member-id" required>
+                        <option value="">-- Choose Member --</option>
+                        ${members.length === 0 
+                            ? '<option disabled>No members found</option>' 
+                            : members.map(m => `
+                                <option value="${m.id}">
+                                    ${m.name} ${m.phone ? `(${m.phone})` : ''} 
+                                    - Balance: ${formatCurrency(m.balance || 0)}
+                                </option>
+                            `).join('')}
+                    </select>
+                    <small style="color:#666; display:block; margin-top:6px;">
+                        Only active members with sufficient savings may be eligible (check loan type rules).
+                    </small>
                 </div>
 
                 <div class="form-group">
-                    <label>Maximum Multiple of Savings</label>
-                    <input type="number" id="max-multiple" value="${type.maxMultiple || ''}" min="1" step="0.5">
-                    <small>e.g. 3 = up to 3× member's savings</small>
+                    <label class="required-label">Loan Amount (KES)</label>
+                    <input type="number" id="loan-amount" min="1000" step="100" required placeholder="e.g. 50000">
                 </div>
 
                 <div class="form-group">
                     <label class="required-label">Repayment Period (Months)</label>
-                    <input type="number" id="period-months" value="${type.periodMonths || 12}" min="1" required>
+                    <input type="number" id="period-months" min="1" required placeholder="e.g. 12">
                 </div>
 
                 <div class="form-group">
-                    <label class="required-label">Interest Rate (%)</label>
-                    <input type="number" id="interest-rate" value="${type.interestRate || 10}" min="0" step="0.1" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Interest Type</label>
-                    <select id="interest-type">
-                        <option value="flat" ${type.interestType === 'flat' ? 'selected' : ''}>Flat (on full amount)</option>
-                        <option value="reducing" ${type.interestType === 'reducing' ? 'selected' : ''}>Reducing Balance</option>
+                    <label class="required-label">Disbursement Account</label>
+                    <select id="disbursement-account" required>
+                        <option value="">-- Select Account --</option>
+                        ${accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
                     </select>
                 </div>
 
-                <!-- LATE INSTALLMENT FINES -->
-                <div class="form-group" style="margin-top:30px;">
-                    <label>
-                        <input type="checkbox" id="late-fines-enabled" ${lateFines.enabled ? 'checked' : ''}>
-                        Do you charge fines for late loan installment payments?
-                    </label>
+                <div class="form-group">
+                    <label>Disbursement Date</label>
+                    <input type="date" id="disbursement-date" value="${new Date().toISOString().split('T')[0]}">
                 </div>
 
-                <div id="late-fines-section" style="display:${lateFines.enabled ? 'block' : 'none'}; margin-left:30px; margin-top:15px;">
-                    <div class="form-group">
-                        <label class="required-label">What type of Late Loan Payment fine do you charge?</label>
-                        <select id="late-fine-type">
-                            <option value="one-off" ${lateFines.type === 'one-off' ? 'selected' : ''}>One-off fine per installment</option>
-                            <option value="fixed" ${lateFines.type === 'fixed' ? 'selected' : ''}>Fixed fine amount</option>
-                            <option value="percentage" ${lateFines.type === 'percentage' ? 'selected' : ''}>Percentage fine</option>
-                        </select>
-                    </div>
+                <!-- Optional: Add guarantors toggle, fines, etc. later -->
 
-                    <div class="form-group">
-                        <label class="required-label">Fine Value</label>
-                        <input type="number" id="late-fine-value" value="${lateFines.value || 0}" min="0" step="0.01" required>
-                        <small id="late-fine-unit">KES (fixed) or % (percentage)</small>
-                    </div>
-                </div>
-
-                <!-- OUTSTANDING BALANCE FINES -->
-                <div class="form-group" style="margin-top:25px;">
-                    <label>
-                        <input type="checkbox" id="outstanding-fines-enabled" ${outstandingFines.enabled ? 'checked' : ''}>
-                        Do you charge fines for any outstanding loan balances at the end of the loan?
-                    </label>
-                </div>
-
-                <div id="outstanding-fines-section" style="display:${outstandingFines.enabled ? 'block' : 'none'}; margin-left:30px; margin-top:15px;">
-                    <div class="form-group">
-                        <label class="required-label">What type of fine do you charge for outstanding balances?</label>
-                        <select id="outstanding-fine-type">
-                            <option value="one-off" ${outstandingFines.type === 'one-off' ? 'selected' : ''}>One-off fine per installment</option>
-                            <option value="fixed" ${outstandingFines.type === 'fixed' ? 'selected' : ''}>Fixed fine amount</option>
-                            <option value="percentage" ${outstandingFines.type === 'percentage' ? 'selected' : ''}>Percentage fine</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="required-label">Fine Value</label>
-                        <input type="number" id="outstanding-fine-value" value="${outstandingFines.value || 0}" min="0" step="0.01" required>
-                        <small id="outstanding-fine-unit">KES (fixed) or % (percentage)</small>
-                    </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div style="margin-top:40px;">
-                    <button type="submit" class="submit-btn">Save Loan Type</button>
-                    <button type="button" class="submit-btn" style="background:#6c757d;" onclick="renderLoanTypes()">Cancel</button>
+                <div style="margin-top:30px;">
+                    <button type="submit" class="submit-btn">Create & Disburse Loan</button>
+                    <button type="button" class="submit-btn" style="background:#6c757d;" onclick="renderMemberLoans()">Cancel</button>
                 </div>
             </form>
         </div>
     `;
 
-    // Toggle visibility of fine sections
-    document.getElementById('late-fines-enabled').addEventListener('change', e => {
-        document.getElementById('late-fines-section').style.display = e.target.checked ? 'block' : 'none';
-    });
-
-    document.getElementById('outstanding-fines-enabled').addEventListener('change', e => {
-        document.getElementById('outstanding-fines-section').style.display = e.target.checked ? 'block' : 'none';
-    });
-
-    // Update unit label when fine type changes
-    ['late-fine-type', 'outstanding-fine-type'].forEach(id => {
-        document.getElementById(id).addEventListener('change', e => {
-            const unitEl = document.getElementById(id.replace('type', 'unit'));
-            unitEl.textContent = e.target.value === 'percentage' ? '%' : 'KES (fixed)';
-        });
-    });
-
-    // Form submission
-    document.getElementById('loan-type-form').onsubmit = e => {
+    // Form submission - Save the loan
+    document.getElementById('member-loan-form').onsubmit = e => {
         e.preventDefault();
 
-        const newType = {
-            name: document.getElementById('loan-name').value.trim(),
-            maxAmount: parseFloat(document.getElementById('max-amount').value) || null,
-            maxMultiple: parseFloat(document.getElementById('max-multiple').value) || null,
-            periodMonths: parseInt(document.getElementById('period-months').value),
-            interestRate: parseFloat(document.getElementById('interest-rate').value),
-            interestType: document.getElementById('interest-type').value,
-            
-            // Late installment fines
-            lateFines: {
-                enabled: document.getElementById('late-fines-enabled').checked,
-                type: document.getElementById('late-fine-type').value,
-                value: parseFloat(document.getElementById('late-fine-value').value) || 0
-            },
-            
-            // Outstanding balance fines
-            outstandingFines: {
-                enabled: document.getElementById('outstanding-fines-enabled').checked,
-                type: document.getElementById('outstanding-fine-type').value,
-                value: parseFloat(document.getElementById('outstanding-fine-value').value) || 0
-            }
-        };
+        const memberId = parseInt(document.getElementById('member-id').value);
+        const selectedMember = members.find(m => m.id === memberId);
 
-        if (editIndex !== null) {
-            loanTypes[editIndex] = newType;
-        } else {
-            loanTypes.push(newType);
+        if (!selectedMember) {
+            showAlert('Please select a valid member', 'error');
+            return;
         }
 
-        saveLoanTypes();
-        showAlert('Loan type saved successfully!');
-        renderLoanTypes();
+        const newLoan = {
+            id: Date.now(),
+            memberId: memberId,
+            memberName: selectedMember.name,
+            type: document.getElementById('loan-type').value,
+            amount: parseFloat(document.getElementById('loan-amount').value),
+            periodMonths: parseInt(document.getElementById('period-months').value),
+            disbursementDate: document.getElementById('disbursement-date').value,
+            disbursedFrom: document.getElementById('disbursement-account').value,
+            status: 'pending', // or 'approved' if you want auto-approve for now
+            createdAt: new Date().toLocaleString('en-GB'),
+            // Add more fields later: interest, guarantors, fines, schedule, etc.
+        };
+
+        loans.push(newLoan);
+        saveLoans();
+
+        // Optional: Update member balance (disburse loan increases liability)
+        selectedMember.balance = (selectedMember.balance || 0) + newLoan.amount;
+        setItem('members', members);
+
+        showAlert(`Loan of ${formatCurrency(newLoan.amount)} created for ${selectedMember.name}!`, 'success');
+        renderMemberLoans(); // Go back to list
     };
 }
 
