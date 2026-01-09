@@ -9,7 +9,7 @@ import { saccoConfig } from '../config.js';
 export function renderDashboard() {
     const members = loadMembers();
     const deposits = getItem('deposits') || [];
-   const withdrawals = getItem('withdrawals') || [];
+    const withdrawals = getItem('withdrawals') || [];
     const settings = loadSettings();
 
     // === Membership Metrics ===
@@ -23,15 +23,15 @@ export function renderDashboard() {
     // === Financial Metrics from Real Transactions ===
     const contributionsTotal = deposits
         .filter(d => d.type === 'contribution')
-        .reduce((sum, d) => sum + d.amount, 0);
+        .reduce((sum, d) => sum + (d.amount || 0), 0);
 
     const incomeTotal = deposits
         .filter(d => d.type === 'income' || d.type === 'fine')
-        .reduce((sum, d) => sum + d.amount, 0);
+        .reduce((sum, d) => sum + (d.amount || 0), 0);
 
     const expensesTotal = withdrawals
-    .filter(w => w.type === 'expense')  // Only count actual expenses
-    .reduce((sum, w) => sum + (w.amount || 0), 0);
+        .filter(w => w.type === 'expense')
+        .reduce((sum, w) => sum + (w.amount || 0), 0);
 
     // === Bank & eWallet Distribution (from Settings) ===
     const bankAccounts = settings.bankAccounts || [];
@@ -60,27 +60,30 @@ export function renderDashboard() {
         if (date.getFullYear() === currentYear) {
             const monthIndex = date.getMonth();
             if (d.type === 'contribution') {
-                monthly[monthIndex].contributions += d.amount;
+                monthly[monthIndex].contributions += (d.amount || 0);
             } else if (d.type === 'income' || d.type === 'fine') {
-                monthly[monthIndex].income += d.amount;
+                monthly[monthIndex].income += (d.amount || 0);
             }
         }
     });
 
-    // Populate withdrawals
+    // Populate expenses from withdrawals (only actual expenses)
     withdrawals.forEach(w => {
-    if (w.type !== 'expense') return;  // Only count expenses in chart
-    const date = new Date(w.date);
-    if (date.getFullYear() === currentYear) {
-        const monthIndex = date.getMonth();
-        monthly[monthIndex].expenses += w.amount;
-    }
-});
+        if (w.type !== 'expense') return;
+        const date = new Date(w.date);
+        if (date.getFullYear() === currentYear) {
+            const monthIndex = date.getMonth();
+            monthly[monthIndex].expenses += (w.amount || 0);
+        }
+    });
 
     const monthlyLabels = monthly.map(m => m.label);
     const monthlyContributions = monthly.map(m => m.contributions);
     const monthlyIncome = monthly.map(m => m.income);
     const monthlyExpenses = monthly.map(m => m.expenses);
+
+    // Check if any financial transaction exists
+    const hasTransactions = deposits.length > 0 || withdrawals.length > 0;
 
     // === Render Dashboard ===
     const mainContent = document.getElementById('main-content');
@@ -120,10 +123,10 @@ export function renderDashboard() {
                 </div>
 
                 <div class="metric-card expenses-card" onclick="loadSection('withdrawals-list')">
-    <h3>Total Expenses</h3>
-    <h2>${formatCurrency(expensesTotal)}</h2>
-    <p class="metric-link">View all withdrawals →</p>
-</div>
+                    <h3>Total Expenses</h3>
+                    <h2>${formatCurrency(expensesTotal)}</h2>
+                    <p class="metric-link">${expensesTotal > 0 ? 'View all outflows →' : 'No expenses recorded yet'}</p>
+                </div>
             </div>
 
             <!-- Membership Summary -->
@@ -149,9 +152,9 @@ export function renderDashboard() {
             <div class="section-card">
                 <h3>Financial Trends ${currentYear}</h3>
                 <p class="chart-note">
-                    ${deposits.length + expenses.length === 0 
-                        ? 'Start recording transactions to see trends here' 
-                        : 'Contributions (bars) • Income & Expenses (lines)'
+                    ${hasTransactions
+                        ? 'Contributions (bars) • Income & Expenses (lines)'
+                        : 'Start recording transactions to see trends here'
                     }
                 </p>
                 <canvas id="financial-chart" height="400"></canvas>
