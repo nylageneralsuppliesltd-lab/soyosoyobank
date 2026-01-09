@@ -829,22 +829,50 @@ export function createMemberLoan({ memberId, typeId, amount, disbursementAccount
 }
 
 // Approve & Disburse
+// ──────────────────────────────────────────────────────────────────────────────
+// APPROVE & DISBURSE LOAN (Full Double-Entry Integration)
+// ──────────────────────────────────────────────────────────────────────────────
 export function approveLoan(loanId) {
     refreshData();
+
     const loan = loans.find(l => l.id === loanId);
-    if (!loan || loan.status !== 'pending') return;
+    if (!loan || loan.status !== 'pending') {
+        showAlert('Cannot approve: Loan not found or not pending', 'error');
+        return;
+    }
 
+    const member = members.find(m => String(m.id) === String(loan.memberId));
+    if (!member) {
+        showAlert('Member not found for this loan', 'error');
+        return;
+    }
+
+    const disbursementAccount = loan.disbursementAccount || 'cash';
+
+    // 1. Update loan status to active
     loan.status = 'active';
+    loan.disbursedDate = new Date().toISOString().split('T')[0];
 
+    // 2. Optional: Track loan liability on member (recommended for SACCOs)
+    member.loanBalance = (member.loanBalance || 0) + loan.amount;
+    // If you want to reduce member's savings immediately (common practice):
+    // member.balance = (member.balance || 0) - loan.amount;
+
+    // 3. Post proper double-entry journal entry
     addJournal(
-        new Date().toISOString(),
-        `Loan Disbursement - ${loan.memberName || 'Bank'} - ${loan.typeName}`,
-        { LoansReceivable: loan.amount },
-        { [loan.disbursementAccount || 'Cash']: loan.amount }
+        loan.disbursedDate,
+        `Loan Disbursement to ${member.name || 'Member'} - ${loan.typeName || 'Loan'}`,
+        loan.amount,                          // Debit: Loans Receivable (asset ↑)
+        loan.amount                           // Credit: Disbursement Account (cash/bank ↓)
     );
 
+    // 4. Save everything
     saveAll();
-    showAlert('Loan approved & disbursed!');
+    setItem('members', members);  // Important: save updated member data
+
+    showAlert(`Loan of ${formatCurrency(loan.amount)} approved & disbursed to ${member.name}!`, 'success');
+
+    // Refresh the UI
     renderLoanApplications();
 }
 
