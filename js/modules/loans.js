@@ -498,6 +498,7 @@ function renderCreateMemberLoanForm() {
     const disbursementAccounts = getDisbursementAccounts();
 
     console.log('Fresh members count for loan form:', members.length);
+    console.log('Available members:', members.map(m => ({ id: String(m.id), name: m.name })));
 
     document.getElementById('main-content').innerHTML = `
         <div class="form-card">
@@ -511,7 +512,11 @@ function renderCreateMemberLoanForm() {
                         <option value="">-- Choose Loan Type --</option>
                         ${loanTypes.length === 0 
                             ? '<option disabled>No loan types defined yet</option>' 
-                            : loanTypes.map(t => `<option value="${t.id}">${t.name} (${t.interestRate}%)</option>`).join('')}
+                            : loanTypes.map(t => `
+                                <option value="${String(t.id)}">
+                                    ${t.name} (${t.interestRate}% - ${t.interestType})
+                                </option>
+                            `).join('')}
                     </select>
                 </div>
 
@@ -552,7 +557,9 @@ function renderCreateMemberLoanForm() {
                     <label class="required-label">Disbursement Account</label>
                     <select id="disbursement-account" required>
                         <option value="">-- Select Account --</option>
-                        ${disbursementAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
+                        ${disbursementAccounts.map(a => `
+                            <option value="${a.id}">${a.name}</option>
+                        `).join('')}
                     </select>
                 </div>
 
@@ -569,33 +576,40 @@ function renderCreateMemberLoanForm() {
         </div>
     `;
 
-    // Auto-populate from selected loan type
+    // Auto-populate interest rate & period when loan type changes
     document.getElementById('loan-type').addEventListener('change', e => {
         const typeId = e.target.value;
-        const selectedType = loanTypes.find(t => String(t.id) === typeId);
+        const selectedType = loanTypes.find(t => String(t.id) === String(typeId));
         if (selectedType) {
             document.getElementById('interest-rate').value = selectedType.interestRate || '';
             document.getElementById('period-months').value = selectedType.periodMonths || '';
+            console.log('Auto-filled from loan type:', selectedType.name);
         } else {
             document.getElementById('interest-rate').value = '';
             document.getElementById('period-months').value = '';
         }
     });
 
-    // Form submission
+    // Form submission - with full validation & debug
     document.getElementById('member-loan-form').onsubmit = e => {
         e.preventDefault();
 
-        const memberId = document.getElementById('member-id').value;
-        const selectedMember = members.find(m => String(m.id) === memberId);
+        const memberIdStr = document.getElementById('member-id').value;
+        console.log('Selected member ID (string):', memberIdStr);
+
+        // Force string comparison - this is the key fix
+        const selectedMember = members.find(m => String(m.id) === memberIdStr);
 
         if (!selectedMember) {
+            console.log('Member not found! Available IDs:', members.map(m => String(m.id)));
             showAlert('Please select a valid member', 'error');
             return;
         }
 
-        const typeId = document.getElementById('loan-type').value;
-        const selectedType = loanTypes.find(t => String(t.id) === typeId);
+        console.log('Member selected successfully:', selectedMember.name);
+
+        const typeIdStr = document.getElementById('loan-type').value;
+        const selectedType = loanTypes.find(t => String(t.id) === typeIdStr);
 
         if (!selectedType) {
             showAlert('Please select a valid loan type', 'error');
@@ -603,21 +617,33 @@ function renderCreateMemberLoanForm() {
         }
 
         const amount = parseFloat(document.getElementById('loan-amount').value);
+        if (isNaN(amount) || amount <= 0) {
+            showAlert('Please enter a valid loan amount', 'error');
+            return;
+        }
+
         if (!checkLoanLimit(selectedMember, selectedType, amount)) {
             showAlert('Loan amount exceeds allowed limit based on savings', 'error');
             return;
         }
 
+        const periodMonths = parseInt(document.getElementById('period-months').value);
+        if (isNaN(periodMonths) || periodMonths < 1) {
+            showAlert('Please enter a valid repayment period', 'error');
+            return;
+        }
+
+        // Generate repayment schedule
         const schedule = generateSchedule(
             amount,
             selectedType.interestRate,
-            selectedType.periodMonths,
+            periodMonths,  // use the form value (may differ from type default)
             selectedType.interestType
         );
 
         const newLoan = {
             id: uid(),
-            memberId: memberId,
+            memberId: memberIdStr,
             memberName: selectedMember.name,
             typeId: selectedType.id,
             typeName: selectedType.name,
@@ -625,7 +651,7 @@ function renderCreateMemberLoanForm() {
             balance: amount,
             interestRate: selectedType.interestRate,
             interestType: selectedType.interestType,
-            periodMonths: selectedType.periodMonths,
+            periodMonths,
             schedule,
             status: 'pending',
             createdAt: new Date().toISOString(),
@@ -636,11 +662,14 @@ function renderCreateMemberLoanForm() {
         loans.push(newLoan);
         saveAll();
 
+        // Optional: increase member liability (loan taken)
+        selectedMember.balance = (selectedMember.balance || 0) + amount;
+        setItem('members', members);
+
         showAlert(`Loan application of ${formatCurrency(amount)} created for ${selectedMember.name}!`, 'success');
         renderMemberLoans();
     };
 }
-
 // ==================== MENU 5: BANK LOANS ====================
 export function renderBankLoans() {
     refreshData();
