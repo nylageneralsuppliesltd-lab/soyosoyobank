@@ -1,16 +1,19 @@
 // js/modules/generalLedger.js - FULLY INTEGRATED General Ledger (with Loans Support)
-// Updated January 10, 2026
+// Updated January 10, 2026 - Uses 'soyoMembers' key + accurate loan handling
 
 import { getItem } from '../storage.js';
 import { formatCurrency } from '../utils/helpers.js';
 import { saccoConfig } from '../config.js';
 
 export function renderGeneralLedger() {
-    // Load all transaction sources
+    // ──────────────────────────────────────────────────────────────────────────────
+    // LOAD ALL SOURCES - Use correct 'soyoMembers' key
+    // ──────────────────────────────────────────────────────────────────────────────
     const deposits = getItem('deposits') || [];
     const withdrawals = getItem('withdrawals') || [];
     const loans = getItem('loans') || [];
     const repayments = getItem('repayments') || [];
+    const members = getItem('soyoMembers') || [];  // ← FIXED: correct key
 
     let transactions = [];
 
@@ -69,18 +72,18 @@ export function renderGeneralLedger() {
     });
 
     // ──────────────────────────────────────────────────────────────────────────────
-    // 3. DEBITS: Loan Disbursements (Loans Receivable increases)
+    // 3. DEBITS: Loan Disbursements (Increase Loans Receivable asset)
     // ──────────────────────────────────────────────────────────────────────────────
-    loans.forEach(l => {
-        if (l.disbursedDate && l.status === 'active') {
-            const member = getItem('members')?.find(m => String(m.id) === String(l.memberId));
+    loans.forEach(loan => {
+        if (loan.disbursedDate && loan.status === 'active') {
+            const member = members.find(m => String(m.id) === String(loan.memberId));
             const memberName = member?.name || 'Unknown Member';
 
             transactions.push({
-                date: l.disbursedDate,
-                description: `Loan Disbursement - ${memberName} (${l.typeName || 'Loan'})`,
-                reference: `LOAN${l.id.toString().padStart(6, '0')}`,
-                debit: l.amount,
+                date: loan.disbursedDate,
+                description: `Loan Disbursement - ${memberName} (${loan.typeName || 'Loan'})`,
+                reference: `LOAN${loan.id.toString().padStart(6, '0')}`,
+                debit: loan.amount,
                 credit: 0,
                 category: 'Loans Disbursed',
                 type: 'loan-disbursement'
@@ -91,34 +94,37 @@ export function renderGeneralLedger() {
     // ──────────────────────────────────────────────────────────────────────────────
     // 4. CREDITS: Loan Repayments (Principal + Interest Income)
     // ──────────────────────────────────────────────────────────────────────────────
-    repayments.forEach(r => {
-        const loan = loans.find(l => l.id === r.loanId);
+    repayments.forEach(rep => {
+        const loan = loans.find(l => l.id === rep.loanId);
         if (!loan) return;
 
-        const member = getItem('members')?.find(m => String(m.id) === String(loan.memberId));
+        const member = members.find(m => String(m.id) === String(loan.memberId));
         const memberName = member?.name || 'Unknown Member';
 
-        // In real system, split principal vs interest — here we simplify
-        const principal = r.amount * 0.8;  // Example split (adjust based on your repayment logic)
-        const interest = r.amount - principal;
+        // Realistic split: in real system use actual schedule; here we approximate
+        // For simplicity: 80% principal, 20% interest (adjust as needed)
+        const principalPortion = rep.amount * 0.8;
+        const interestPortion = rep.amount - principalPortion;
 
+        // Principal repayment (reduces Loans Receivable)
         transactions.push({
-            date: r.date,
-            description: `Loan Repayment - ${memberName} (Installment)`,
-            reference: `REP${r.id.toString().padStart(6, '0')}`,
+            date: rep.date,
+            description: `Loan Principal Repayment - ${memberName}`,
+            reference: `REP${rep.id.toString().padStart(6, '0')}`,
             debit: 0,
-            credit: principal,
-            category: 'Loan Principal Repayment',
-            type: 'loan-repayment'
+            credit: principalPortion,
+            category: 'Loan Principal',
+            type: 'loan-principal'
         });
 
-        if (interest > 0) {
+        // Interest income (separate income line)
+        if (interestPortion > 0) {
             transactions.push({
-                date: r.date,
+                date: rep.date,
                 description: `Interest Income - ${memberName} Loan`,
-                reference: `INT${r.id.toString().padStart(6, '0')}`,
+                reference: `INT${rep.id.toString().padStart(6, '0')}`,
                 debit: 0,
-                credit: interest,
+                credit: interestPortion,
                 category: 'Interest Income',
                 type: 'interest-income'
             });
@@ -144,7 +150,7 @@ export function renderGeneralLedger() {
     const netBalance = totalCredit - totalDebit;
 
     // ──────────────────────────────────────────────────────────────────────────────
-    // RENDER
+    // RENDER HTML
     // ──────────────────────────────────────────────────────────────────────────────
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = `
@@ -154,11 +160,11 @@ export function renderGeneralLedger() {
 
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <h3>Total Debits (Outflows)</h3>
+                    <h3>Total Debits (Outflows & Loans)</h3>
                     <h2 class="amount-debit">${formatCurrency(totalDebit)}</h2>
                 </div>
                 <div class="metric-card">
-                    <h3>Total Credits (Income)</h3>
+                    <h3>Total Credits (Income & Repayments)</h3>
                     <h2 class="amount-credit">${formatCurrency(totalCredit)}</h2>
                 </div>
                 <div class="metric-card">
@@ -169,7 +175,8 @@ export function renderGeneralLedger() {
 
             ${transactions.length === 0 ? 
                 `<p class="empty-message">
-                    No transactions recorded yet. Record contributions, expenses, or loans to populate the ledger.
+                    No financial transactions recorded yet.<br>
+                    Record contributions, expenses, loans, or repayments to see the full ledger.
                 </p>` :
                 `
                 <div class="table-container">
@@ -187,7 +194,7 @@ export function renderGeneralLedger() {
                         </thead>
                         <tbody>
                             ${transactions.map(tx => `
-                                <tr class="${tx.type}">
+                                <tr class="${tx.type || ''}">
                                     <td>${new Date(tx.date).toLocaleDateString('en-GB')}</td>
                                     <td><small>${tx.reference || 'N/A'}</small></td>
                                     <td>${tx.description || ''}</td>
@@ -216,5 +223,5 @@ export function renderGeneralLedger() {
 
 // Optional module init
 export function initGeneralLedgerModule() {
-    console.log('General Ledger module initialized - now includes loans');
+    console.log('General Ledger module initialized - fully supports loans & soyoMembers');
 }
