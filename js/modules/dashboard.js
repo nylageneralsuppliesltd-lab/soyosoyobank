@@ -119,11 +119,11 @@ export function renderDashboard() {
                     <p class="metric-link">Fines, Interest, etc. →</p>
                 </div>
 
-                <div class="metric-card expenses-card" onclick="loadSection('expenses')">
-                    <h3>Total Expenses</h3>
-                    <h2>${formatCurrency(expensesTotal)}</h2>
-                    <p class="metric-link">${expensesTotal > 0 ? 'Click for breakdown →' : 'No expenses recorded yet'}</p>
-                </div>
+                <div class="metric-card expenses-card" onclick="loadSection('withdrawals-list')">
+    <h3>Total Expenses</h3>
+    <h2>${formatCurrency(expensesTotal)}</h2>
+    <p class="metric-link">View all withdrawals →</p>
+</div>
             </div>
 
             <!-- Membership Summary -->
