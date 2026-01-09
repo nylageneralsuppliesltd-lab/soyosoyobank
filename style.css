@@ -1,4 +1,4 @@
-/* style.css - Clean, compact, fully mobile-optimized design */
+/* style.css - Fully Responsive, Mobile-Fixed SACCO Design (January 2026) */
 
 :root {
     --primary-green: #28a745;
@@ -12,6 +12,10 @@
     --font-small: 14px;
     --header-large: 26px;
     --header-small: 22px;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 body {
@@ -44,6 +48,7 @@ body {
     right: 0;
     height: 70px;
     z-index: 2000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .mobile-header h2 {
@@ -60,7 +65,6 @@ body {
     font-size: 26px;
     cursor: pointer;
     color: var(--primary-green);
-    padding: 8px;
 }
 
 /* SIDEBAR */
@@ -168,7 +172,7 @@ body {
 }
 
 .menu-item.active .submenu {
-    max-height: 400px;
+    max-height: 500px;
     padding: 6px 0;
 }
 
@@ -189,10 +193,9 @@ body {
     flex: 1;
     padding: 25px;
     margin-left: 260px;
-    transition: margin-left 0.3s ease;
+    transition: margin-left 0.3s ease, padding-top 0.3s ease;
     min-height: 100vh;
-    width: 100%;
-    box-sizing: border-box;
+    background: var(--light-bg);
 }
 
 h1 {
@@ -207,7 +210,7 @@ h1 {
     margin-bottom: 20px;
 }
 
-/* FORM CARD */
+/* FORM & INPUTS */
 .form-card {
     background: var(--card-bg);
     padding: 20px;
@@ -235,7 +238,6 @@ input, select {
     border-radius: 8px;
     border: 1px solid var(--border);
     font-size: var(--font-base);
-    box-sizing: border-box;
 }
 
 input:focus, select:focus {
@@ -244,7 +246,6 @@ input:focus, select:focus {
     box-shadow: 0 0 0 3px rgba(40,167,69,0.15);
 }
 
-/* BUTTONS */
 .submit-btn {
     display: inline-block;
     padding: 12px 24px;
@@ -273,10 +274,10 @@ input:focus, select:focus {
 
 .members-table {
     width: 100%;
-    min-width: 600px; /* Only scroll if truly needed */
+    min-width: 600px;
     border-collapse: collapse;
-    font-size: 14px;
     background: #fff;
+    font-size: 14px;
 }
 
 .members-table th, .members-table td {
@@ -311,6 +312,7 @@ input:focus, select:focus {
     border-radius: 14px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.1);
     text-align: center;
+    cursor: pointer;
     transition: transform 0.2s;
 }
 
@@ -325,8 +327,8 @@ input:focus, select:focus {
 }
 
 .metric-card h2 {
-    margin: 0;
     font-size: 2em;
+    margin: 0;
     font-weight: 700;
 }
 
@@ -349,11 +351,6 @@ input:focus, select:focus {
     margin-bottom: 24px;
 }
 
-.section-card h3 {
-    margin: 0 0 15px;
-    font-size: 1.3em;
-}
-
 #financial-chart {
     width: 100% !important;
     height: 380px !important;
@@ -367,7 +364,7 @@ input:focus, select:focus {
     font-style: italic;
 }
 
-/* LEDGER TABLE */
+/* LEDGER */
 .ledger-table th {
     background: #343a40;
     color: #fff;
@@ -381,83 +378,7 @@ input:focus, select:focus {
     text-align: right !important;
 }
 
-/* RESPONSIVE BREAKPOINTS */
-@media (min-width: 768px) {
-    .metrics-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 992px) {
-    .sidebar {
-        transform: translateX(0);
-    }
-    .content {
-        margin-left: 260px;
-        padding-top: 25px;
-    }
-    .mobile-header {
-        display: none;
-    }
-    .metrics-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-@media (max-width: 992px) {
-    .sidebar {
-        transform: translateX(-100%);
-    }
-    .sidebar.open {
-        transform: translateX(0);
-    }
-    .content {
-        margin-left: 0;
-        padding: 15px;
-        padding-top: 90px;
-    }
-    .mobile-header {
-        display: flex;
-    }
-    .close-btn {
-        display: block;
-    }
-    h1 {
-        font-size: var(--header-small);
-    }
-    .form-card {
-        padding: 18px;
-    }
-}
-
-@media (max-width: 576px) {
-    .content {
-        padding: 12px;
-        padding-top: 85px;
-    }
-    .form-card {
-        padding: 16px;
-    }
-    .submit-btn {
-        width: 100%;
-        margin: 20px 0 0;
-    }
-    .metric-card {
-        padding: 18px;
-    }
-    .metric-card h2 {
-        font-size: 1.8em;
-    }
-    .members-table {
-        font-size: 13px;
-    }
-    .members-table th,
-    .members-table td {
-        padding: 8px 6px;
-    }
-}
-
-/* SETTINGS PAGE */
+/* SETTINGS */
 .settings-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -470,6 +391,7 @@ input:focus, select:focus {
     text-align: center;
     border-radius: 14px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    cursor: pointer;
     transition: all 0.3s;
 }
 
@@ -477,10 +399,72 @@ input:focus, select:focus {
     transform: translateY(-6px);
 }
 
+/* RESPONSIVE */
+@media (min-width: 768px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 992px) {
+    .metrics-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .mobile-header {
+        display: flex;
+    }
+
+    .close-btn {
+        display: block;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .content {
+        margin-left: 0;
+        padding: 20px;
+        padding-top: 90px; /* Space for fixed mobile header */
+    }
+
+    h1 {
+        font-size: var(--header-small);
+    }
+
+    body {
+        font-size: var(--font-small);
+    }
+}
+
+@media (max-width: 576px) {
+    .content {
+        padding: 16px;
+        padding-top: 85px;
+    }
+
+    .submit-btn {
+        width: 100%;
+        margin: 20px 0 0;
+    }
+
+    .metric-card h2 {
+        font-size: 1.8em;
+    }
+}
+
 /* FINAL TOUCHES */
 .required-label::after {
     content: " *";
     color: #dc3545;
+    font-weight: bold;
 }
 
 #main-content:empty::before {
