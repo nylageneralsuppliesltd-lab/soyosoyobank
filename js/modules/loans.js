@@ -432,8 +432,13 @@ export function renderMemberLoans() {
 }
 
 function renderCreateMemberLoanForm() {
+    // CRITICAL: Always refresh members right before rendering the form
     refreshData();
+
     const accounts = getDisbursementAccounts();
+
+    // Debug log (open DevTools Console to verify)
+    console.log('Members loaded for loan form:', members.length, members);
 
     document.getElementById('main-content').innerHTML = `
         <div class="form-card">
@@ -445,7 +450,9 @@ function renderCreateMemberLoanForm() {
                     <label class="required-label">Loan Type</label>
                     <select id="loan-type" required>
                         <option value="">-- Choose Loan Type --</option>
-                        ${loanTypes.map(t => `<option value="${t.name}">${t.name} (${t.interestRate}%)</option>`).join('')}
+                        ${loanTypes.length === 0 
+                            ? '<option disabled>No loan types defined yet</option>' 
+                            : loanTypes.map(t => `<option value="${t.name}">${t.name} (${t.interestRate}%)</option>`).join('')}
                     </select>
                 </div>
 
@@ -453,23 +460,28 @@ function renderCreateMemberLoanForm() {
                     <label class="required-label">Select Member</label>
                     <select id="member-id" required>
                         <option value="">-- Choose Member --</option>
-                        ${members.map(m => `
-                            <option value="${m.id}">
-                                ${m.name} ${m.phone ? `(${m.phone})` : ''} 
-                                - Balance: ${formatCurrency(m.balance || 0)}
-                            </option>
-                        `).join('')}
+                        ${members.length === 0 
+                            ? '<option disabled>No members found - create members first</option>' 
+                            : members.map(m => `
+                                <option value="${m.id}">
+                                    ${m.name} ${m.phone ? `(${m.phone})` : ''} 
+                                    - Balance: ${formatCurrency(m.balance || 0)}
+                                </option>
+                            `).join('')}
                     </select>
+                    <small style="color:#666; display:block; margin-top:6px;">
+                        Only active members shown. Create members in Members module if none appear.
+                    </small>
                 </div>
 
                 <div class="form-group">
                     <label class="required-label">Loan Amount (KES)</label>
-                    <input type="number" id="loan-amount" min="1000" required>
+                    <input type="number" id="loan-amount" min="1000" step="100" required placeholder="e.g. 50000">
                 </div>
 
                 <div class="form-group">
                     <label class="required-label">Repayment Period (Months)</label>
-                    <input type="number" id="period-months" min="1" required>
+                    <input type="number" id="period-months" min="1" required placeholder="e.g. 12">
                 </div>
 
                 <div class="form-group">
@@ -486,13 +498,14 @@ function renderCreateMemberLoanForm() {
                 </div>
 
                 <div style="margin-top:30px;">
-                    <button type="submit" class="submit-btn">Create Loan</button>
+                    <button type="submit" class="submit-btn">Create & Disburse Loan</button>
                     <button type="button" class="submit-btn" style="background:#6c757d;" onclick="renderMemberLoans()">Cancel</button>
                 </div>
             </form>
         </div>
     `;
 
+    // Form submission
     document.getElementById('member-loan-form').onsubmit = e => {
         e.preventDefault();
 
@@ -520,15 +533,14 @@ function renderCreateMemberLoanForm() {
         loans.push(newLoan);
         saveLoans();
 
-        // Optional: Increase member liability (loan taken)
+        // Increase member liability (loan taken)
         selectedMember.balance = (selectedMember.balance || 0) + newLoan.amount;
         setItem('members', members);
 
-        showAlert(`Loan application of ${formatCurrency(newLoan.amount)} created for ${selectedMember.name}!`);
-        renderMemberLoans();
+        showAlert(`Loan of ${formatCurrency(newLoan.amount)} created for ${selectedMember.name}!`, 'success');
+        renderMemberLoans(); // Back to list
     };
 }
-
 // ==================== 5. BANK LOANS ====================
 export function renderBankLoans() {
     refreshData();
