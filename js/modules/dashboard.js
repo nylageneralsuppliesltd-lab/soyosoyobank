@@ -9,7 +9,7 @@ import { saccoConfig } from '../config.js';
 export function renderDashboard() {
     const members = loadMembers();
     const deposits = getItem('deposits') || [];
-    const expenses = getItem('expenses') || [];
+   const withdrawals = getItem('withdrawals') || [];
     const settings = loadSettings();
 
     // === Membership Metrics ===
@@ -29,7 +29,9 @@ export function renderDashboard() {
         .filter(d => d.type === 'income' || d.type === 'fine')
         .reduce((sum, d) => sum + d.amount, 0);
 
-    const expensesTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const expensesTotal = withdrawals
+    .filter(w => w.type === 'expense')  // Only count actual expenses
+    .reduce((sum, w) => sum + (w.amount || 0), 0);
 
     // === Bank & eWallet Distribution (from Settings) ===
     const bankAccounts = settings.bankAccounts || [];
