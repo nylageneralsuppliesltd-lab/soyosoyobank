@@ -67,14 +67,15 @@ export function renderDashboard() {
         }
     });
 
-    // Populate expenses
-    expenses.forEach(e => {
-        const date = new Date(e.date);
-        if (date.getFullYear() === currentYear) {
-            const monthIndex = date.getMonth();
-            monthly[monthIndex].expenses += e.amount;
-        }
-    });
+    // Populate withdrawals
+    withdrawals.forEach(w => {
+    if (w.type !== 'expense') return;  // Only count expenses in chart
+    const date = new Date(w.date);
+    if (date.getFullYear() === currentYear) {
+        const monthIndex = date.getMonth();
+        monthly[monthIndex].expenses += w.amount;
+    }
+});
 
     const monthlyLabels = monthly.map(m => m.label);
     const monthlyContributions = monthly.map(m => m.contributions);
