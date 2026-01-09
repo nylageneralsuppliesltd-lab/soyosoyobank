@@ -17,7 +17,7 @@ let journals = [];
 
 // Refresh from storage
 function refreshData() {
-    members = getItem('members') || [];
+    members = getItem('soyoMembers') || [];   
     loans = getItem('loans') || [];
     loanTypes = getItem('loanTypes') || [];
     repayments = getItem('repayments') || [];
