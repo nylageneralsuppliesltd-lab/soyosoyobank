@@ -74,23 +74,37 @@ export function renderGeneralLedger() {
     // ──────────────────────────────────────────────────────────────────────────────
     // 3. DEBITS: Loan Disbursements (Increase Loans Receivable asset)
     // ──────────────────────────────────────────────────────────────────────────────
-    loans.forEach(loan => {
-        if (loan.disbursedDate && loan.status === 'active') {
-            const member = members.find(m => String(m.id) === String(loan.memberId));
-            const memberName = member?.name || 'Unknown Member';
+ // Inside loans.forEach(...)
+loans.forEach(loan => {
+    if (loan.disbursedDate && loan.status === 'active') {
+        const memberName = members.find(m => String(m.id) === String(loan.memberId))?.name || 'Unknown';
+        const bankName = loan.bankName || 'Bank';
 
+        if (loan.loanDirection === 'outward') {
+            // Outward loan (to member)
             transactions.push({
                 date: loan.disbursedDate,
                 description: `Loan Disbursement - ${memberName} (${loan.typeName || 'Loan'})`,
                 reference: `LOAN${loan.id.toString().padStart(6, '0')}`,
                 debit: loan.amount,
                 credit: 0,
-                category: 'Loans Disbursed',
-                type: 'loan-disbursement'
+                category: 'Loans Receivable (Outward)',
+                type: 'loan-disbursement-outward'
+            });
+        } else if (loan.loanDirection === 'inward') {
+            // Inward loan (from bank)
+            transactions.push({
+                date: loan.disbursedDate,
+                description: `Bank Loan Received - ${bankName}`,
+                reference: `BANKLOAN${loan.id.toString().padStart(6, '0')}`,
+                debit: 0,
+                credit: loan.amount,
+                category: 'Bank Loans Payable (Inward)',
+                type: 'loan-received-inward'
             });
         }
-    });
-
+    }
+});
     // ──────────────────────────────────────────────────────────────────────────────
     // 4. CREDITS: Loan Repayments (Principal + Interest Income)
     // ──────────────────────────────────────────────────────────────────────────────
