@@ -144,10 +144,20 @@ export function balanceSheet() {
     const totalWithdrawals = withdrawals.reduce((s, w) => s + (w.amount || 0), 0);
     const netCash = totalDeposits - totalWithdrawals;
 
-    // Loans Receivable = sum of all active loan balances
-    const loansReceivable = loans
-        .filter(l => l.status === 'active')
-        .reduce((sum, l) => sum + (l.balance || l.amount || 0), 0);
+  // In balanceSheet()
+const loansReceivable = loans
+    .filter(l => l.loanDirection === 'outward' && l.status === 'active')
+    .reduce((sum, l) => sum + (l.balance || l.amount || 0), 0);
+
+const bankLoansPayable = loans
+    .filter(l => l.loanDirection === 'inward' && l.status === 'active')
+    .reduce((sum, l) => sum + (l.balance || l.amount || 0), 0);
+
+// Then in Assets:
+<tr><td>Loans Receivable (to Members)</td><td class="amount-credit">${formatCurrency(loansReceivable)}</td></tr>
+
+// In Liabilities:
+<tr><td>Bank Loans Payable</td><td class="amount-debit">${formatCurrency(bankLoansPayable)}</td></tr>
 
     const cashInHand = Math.round(netCash * 0.3);
     const bankBalance = netCash - cashInHand;
