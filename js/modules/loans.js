@@ -1,10 +1,11 @@
-// js/modules/loans.js - COMPLETE & PROFESSIONAL Loans Module (Ferrari Style)
+// js/modules/loans.js - FULL & COMPLETE Loans Module (All 5 Menu Sections)
 
 import { getItem, setItem } from '../storage.js';
 import { showAlert, formatCurrency } from '../utils/helpers.js';
 import { loadSettings } from './settings.js';
 import { saccoConfig } from '../config.js';
 
+// Global variables
 let members = [];
 let loans = [];
 let loanTypes = [];
@@ -13,12 +14,15 @@ let loanTypes = [];
 function saveLoans() { setItem('loans', loans); }
 function saveLoanTypes() { setItem('loanTypes', loanTypes); }
 
-// Refresh all data from storage
+// Refresh data from storage (call before every render)
 function refreshData() {
     members = getItem('members') || [];
     loans = getItem('loans') || [];
     loanTypes = getItem('loanTypes') || [];
 }
+
+// Auto-refresh when module loads
+refreshData();
 
 // Helper: Get disbursement accounts from settings
 function getDisbursementAccounts() {
@@ -40,7 +44,7 @@ function getDisbursementAccounts() {
     return accounts;
 }
 
-// ==================== 1. LOAN APPLICATIONS ====================
+// ==================== MENU 1: LOAN APPLICATIONS ====================
 export function renderLoanApplications() {
     refreshData();
     const pending = loans.filter(l => l.status === 'pending');
@@ -50,7 +54,7 @@ export function renderLoanApplications() {
             <h1>Loan Applications</h1>
             <p class="subtitle">Pending loan requests awaiting approval</p>
 
-            <button class="submit-btn" onclick="loadSection('member-loans')">+ New Member Loan Application</button>
+            <button class="submit-btn" onclick="window.loadSection('member-loans')">+ New Member Loan Application</button>
 
             ${pending.length === 0 ? 
                 '<p style="text-align:center; padding:60px; color:#666;">No pending applications at the moment.</p>' :
@@ -79,8 +83,8 @@ export function renderLoanApplications() {
                                     <td>${app.guarantors?.length || 0} guarantors</td>
                                     <td><span class="status-pending">Pending Approval</span></td>
                                     <td>
-                                        <button onclick="viewLoanDetails(${app.id})">View</button>
-                                        <button onclick="approveLoan(${app.id})" style="background:#28a745; color:white;">Approve</button>
+                                        <button onclick="window.viewLoanDetails(${app.id})">View</button>
+                                        <button onclick="window.approveLoan(${app.id})" style="background:#28a745; color:white;">Approve</button>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -92,7 +96,7 @@ export function renderLoanApplications() {
     `;
 }
 
-// ==================== 2. LOAN TYPES ====================
+// ==================== MENU 2: LOAN TYPES ====================
 export function renderLoanTypes() {
     refreshData();
 
@@ -101,7 +105,7 @@ export function renderLoanTypes() {
             <h1>Loan Types</h1>
             <p class="subtitle">Configure available loan products & fine rules</p>
 
-            <button class="submit-btn" onclick="renderCreateLoanTypeForm()">+ Create New Loan Type</button>
+            <button class="submit-btn" onclick="window.renderCreateLoanTypeForm()">+ Create New Loan Type</button>
 
             ${loanTypes.length === 0 ? 
                 '<p style="text-align:center; padding:60px; color:#666;">No loan types defined yet.</p>' :
@@ -128,7 +132,7 @@ export function renderLoanTypes() {
                                     <td>${t.lateFines?.enabled ? 'Yes' : 'No'}</td>
                                     <td>${t.outstandingFines?.enabled ? 'Yes' : 'No'}</td>
                                     <td>
-                                        <button onclick="renderCreateLoanTypeForm(${idx})">Edit</button>
+                                        <button onclick="window.renderCreateLoanTypeForm(${idx})">Edit</button>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -146,7 +150,6 @@ function renderCreateLoanTypeForm(editIndex = null) {
 
     const type = editIndex !== null ? loanTypes[editIndex] : {};
 
-    // Fine defaults
     const lateFines = type.lateFines || { enabled: false, type: 'one-off', value: 0 };
     const outstandingFines = type.outstandingFines || { enabled: false, type: 'one-off', value: 0 };
 
@@ -155,7 +158,6 @@ function renderCreateLoanTypeForm(editIndex = null) {
             <h1>${editIndex !== null ? 'Edit' : 'Create'} Loan Type</h1>
 
             <form id="loan-type-form">
-                <!-- Basic Details -->
                 <div class="form-group">
                     <label class="required-label">Loan Type Name</label>
                     <input type="text" id="loan-name" value="${type.name || ''}" required>
@@ -241,10 +243,9 @@ function renderCreateLoanTypeForm(editIndex = null) {
                     </div>
                 </div>
 
-                <!-- Actions -->
                 <div style="margin-top:40px;">
                     <button type="submit" class="submit-btn">Save Loan Type</button>
-                    <button type="button" class="submit-btn" style="background:#6c757d;" onclick="renderLoanTypes()">Cancel</button>
+                    <button type="button" class="submit-btn" style="background:#6c757d;" onclick="window.renderLoanTypes()">Cancel</button>
                 </div>
             </form>
         </div>
@@ -256,7 +257,7 @@ function renderCreateLoanTypeForm(editIndex = null) {
     });
 
     document.getElementById('outstanding-fines-enabled').addEventListener('change', e => {
-        document.getElementById('outstanding-fines-section').style.display = e.target.checked ? 'checked' : 'none';
+        document.getElementById('outstanding-fines-section').style.display = e.target.checked ? 'block' : 'none';
     });
 
     // Dynamic unit label
@@ -278,13 +279,11 @@ function renderCreateLoanTypeForm(editIndex = null) {
             periodMonths: parseInt(document.getElementById('period-months').value),
             interestRate: parseFloat(document.getElementById('interest-rate').value),
             interestType: document.getElementById('interest-type').value,
-
             lateFines: {
                 enabled: document.getElementById('late-fines-enabled').checked,
                 type: document.getElementById('late-fine-type').value,
                 value: parseFloat(document.getElementById('late-fine-value').value) || 0
             },
-
             outstandingFines: {
                 enabled: document.getElementById('outstanding-fines-enabled').checked,
                 type: document.getElementById('outstanding-fine-type').value,
@@ -385,7 +384,7 @@ export function renderMemberLoans() {
             <h1>Member Loans</h1>
             <p class="subtitle">All active, pending & repaid loans to members</p>
 
-            <button class="submit-btn" onclick="renderCreateMemberLoanForm()">+ Create New Member Loan</button>
+            <button class="submit-btn" onclick="window.renderCreateMemberLoanForm()">+ Create New Member Loan</button>
 
             ${memberLoans.length === 0 ? 
                 '<p style="text-align:center; padding:60px; color:#666;">No member loans recorded yet.</p>' :
@@ -409,7 +408,7 @@ export function renderMemberLoans() {
                                     <td>${formatCurrency(l.amount)}</td>
                                     <td>${l.periodMonths} months</td>
                                     <td><span class="status-${l.status}">${l.status}</span></td>
-                                    <td><button onclick="viewLoan(${l.id})">View</button></td>
+                                    <td><button onclick="window.viewLoan(${l.id})">View</button></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -463,7 +462,7 @@ function renderCreateMemberLoanForm() {
 
                 <div class="form-group">
                     <label class="required-label">Loan Amount (KES)</label>
-                    <input type="number" id="loan-amount" min="1000" required placeholder="e.g. 50000">
+                    <input type="number" id="loan-amount" min="1000" step="100" required placeholder="e.g. 50000">
                 </div>
 
                 <div class="form-group">
@@ -486,13 +485,12 @@ function renderCreateMemberLoanForm() {
 
                 <div style="margin-top:30px;">
                     <button type="submit" class="submit-btn">Create Loan</button>
-                    <button type="button" class="submit-btn" style="background:#6c757d;" onclick="renderMemberLoans()">Cancel</button>
+                    <button type="button" class="submit-btn" style="background:#6c757d;" onclick="window.renderMemberLoans()">Cancel</button>
                 </div>
             </form>
         </div>
     `;
 
-    // Form submission
     document.getElementById('member-loan-form').onsubmit = e => {
         e.preventDefault();
 
@@ -504,6 +502,8 @@ function renderCreateMemberLoanForm() {
             return;
         }
 
+        const selectedType = loanTypes.find(t => t.name === document.getElementById('loan-type').value);
+
         const newLoan = {
             id: Date.now(),
             memberId: memberId,
@@ -514,7 +514,9 @@ function renderCreateMemberLoanForm() {
             disbursementDate: document.getElementById('disbursement-date').value,
             disbursedFrom: document.getElementById('disbursement-account').value,
             status: 'pending',
-            createdAt: new Date().toLocaleString('en-GB')
+            createdAt: new Date().toLocaleString('en-GB'),
+            interestRate: selectedType ? selectedType.interestRate : null,
+            interestType: selectedType ? selectedType.interestType : null
         };
 
         loans.push(newLoan);
@@ -539,13 +541,22 @@ export function renderBankLoans() {
             <h1>Bank Loans</h1>
             <p class="subtitle">Loans received from financial institutions</p>
 
-            <button class="submit-btn" onclick="renderCreateBankLoanForm()">+ Create New Bank Loan</button>
+            <button class="submit-btn" onclick="window.renderCreateBankLoanForm()">+ Create New Bank Loan</button>
 
             ${bankLoans.length === 0 ? 
                 '<p style="text-align:center; padding:60px; color:#666;">No bank loans recorded.</p>' :
                 `<div class="table-container">
                     <table class="members-table">
-                        <thead><tr><th>Bank</th><th>Type</th><th>Amount</th><th>Period</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Bank</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Period</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             ${bankLoans.map(l => `
                                 <tr>
@@ -554,7 +565,7 @@ export function renderBankLoans() {
                                     <td>${formatCurrency(l.amount)}</td>
                                     <td>${l.periodMonths} months</td>
                                     <td><span class="status-${l.status}">${l.status}</span></td>
-                                    <td><button onclick="viewLoan(${l.id})">View</button></td>
+                                    <td><button onclick="window.viewLoan(${l.id})">View</button></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -565,9 +576,77 @@ export function renderBankLoans() {
     `;
 }
 
+function renderCreateBankLoanForm() {
+    refreshData();
+
+    document.getElementById('main-content').innerHTML = `
+        <div class="form-card">
+            <h1>Create Bank Loan</h1>
+            <p class="subtitle">Record a loan received from a bank or financial institution</p>
+
+            <form id="bank-loan-form">
+                <div class="form-group">
+                    <label class="required-label">Bank / Institution Name</label>
+                    <input type="text" id="bank-name" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="required-label">Loan Type</label>
+                    <select id="loan-type" required>
+                        <option value="">-- Select Type --</option>
+                        ${loanTypes.map(t => `<option value="${t.name}">${t.name}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="required-label">Loan Amount (KES)</label>
+                    <input type="number" id="loan-amount" min="1000" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="required-label">Repayment Period (Months)</label>
+                    <input type="number" id="period-months" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Interest Rate (%)</label>
+                    <input type="number" id="interest-rate" step="0.1" value="12">
+                </div>
+
+                <div style="margin-top:30px;">
+                    <button type="submit" class="submit-btn">Create Bank Loan</button>
+                    <button type="button" class="submit-btn" style="background:#6c757d;" onclick="window.renderBankLoans()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    document.getElementById('bank-loan-form').onsubmit = e => {
+        e.preventDefault();
+
+        const newLoan = {
+            id: Date.now(),
+            bankName: document.getElementById('bank-name').value.trim(),
+            type: document.getElementById('loan-type').value,
+            amount: parseFloat(document.getElementById('loan-amount').value),
+            periodMonths: parseInt(document.getElementById('period-months').value),
+            interestRate: parseFloat(document.getElementById('interest-rate').value),
+            status: 'active',
+            createdAt: new Date().toLocaleString('en-GB')
+        };
+
+        loans.push(newLoan);
+        saveLoans();
+        showAlert('Bank loan recorded successfully!');
+        renderBankLoans();
+    };
+}
+
 // ==================== MODULE INITIALIZATION ====================
 export function initLoansModule() {
-    // Expose all render functions globally (for inline onclick & menu)
+    refreshData();
+
+    // Expose all render functions globally (for menu & inline onclick)
     window.renderLoanApplications = renderLoanApplications;
     window.renderLoanTypes = renderLoanTypes;
     window.renderLoanCalculator = renderLoanCalculator;
@@ -583,5 +662,19 @@ export function initLoansModule() {
         showAlert(`Viewing loan ID: ${id} (expand later)`);
     };
 
-    console.log('Loans module fully initialized - ready for action');
+    window.viewLoanDetails = function(id) {
+        showAlert(`Viewing details for loan ID: ${id}`);
+    };
+
+    window.approveLoan = function(id) {
+        const loan = loans.find(l => l.id === id);
+        if (loan) {
+            loan.status = 'approved';
+            saveLoans();
+            showAlert(`Loan ${id} approved!`);
+            window.renderLoanApplications();
+        }
+    };
+
+    console.log('Loans module fully initialized - all functions exposed');
 }
