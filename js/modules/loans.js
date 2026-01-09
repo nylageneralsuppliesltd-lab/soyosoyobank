@@ -36,6 +36,25 @@ function saveAll() {
     setItem('members', members); // In case balance changed
 }
 
+// 4. UTILITY FUNCTIONS FIRST (so they're available to all render functions)
+function getDisbursementAccounts() {
+    const settings = loadSettings();
+    const accounts = [{ id: 'cash', name: 'Cash (Physical)' }];
+
+    (settings.accounts?.pettyCash || []).forEach(a => {
+        accounts.push({ id: `petty_${a.name}`, name: `Petty Cash - ${a.name}` });
+    });
+
+    (settings.accounts?.mobileMoney || []).forEach(a => {
+        accounts.push({ id: `mobile_${a.number}`, name: `${a.provider} - ${a.name || a.number}` });
+    });
+
+    (settings.accounts?.bank || []).forEach(a => {
+        accounts.push({ id: `bank_${a.accountNumber}`, name: `${a.bankName} - ${a.accountName || a.accountNumber}` });
+    });
+
+    return accounts;
+}
 // UID generator
 const uid = () => Date.now() + Math.floor(Math.random() * 1000);
 
