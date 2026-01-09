@@ -1,28 +1,29 @@
-// js/modules/generalLedger.js - FULLY FIXED & COMPLETE General Ledger Module
+// js/modules/generalLedger.js - FULLY INTEGRATED General Ledger (with Loans Support)
+// Updated January 10, 2026
 
 import { getItem } from '../storage.js';
 import { formatCurrency } from '../utils/helpers.js';
 import { saccoConfig } from '../config.js';
 
 export function renderGeneralLedger() {
+    // Load all transaction sources
     const deposits = getItem('deposits') || [];
     const withdrawals = getItem('withdrawals') || [];
+    const loans = getItem('loans') || [];
+    const repayments = getItem('repayments') || [];
 
     let transactions = [];
 
-    // === Credits (Income from Deposits) ===
+    // ──────────────────────────────────────────────────────────────────────────────
+    // 1. CREDITS: Deposits (Contributions, Fines, Income, Loan Repayments)
+    // ──────────────────────────────────────────────────────────────────────────────
     deposits.forEach(d => {
         const typeStr = d.type || 'unknown';
         const capitalizedType = typeStr.charAt(0).toUpperCase() + typeStr.slice(1).replace('-', ' ');
 
-        let description = '';
-        if (d.memberName) {
-            description = `${capitalizedType} - ${d.memberName}`;
-        } else {
-            description = d.description || capitalizedType || 'Income Transaction';
-        }
-
+        let description = d.memberName ? `${capitalizedType} - ${d.memberName}` : (d.description || capitalizedType);
         let category = 'Uncategorized Income';
+
         if (d.type === 'contribution') category = 'Member Contribution';
         else if (d.type === 'income') category = d.description || 'Other Income';
         else if (d.type === 'fine') category = 'Fines & Penalties';
@@ -30,15 +31,18 @@ export function renderGeneralLedger() {
 
         transactions.push({
             date: d.date || new Date().toISOString().split('T')[0],
-            description: description,
+            description,
             reference: d.id ? `DEP${d.id.toString().padStart(6, '0')}` : 'N/A',
             debit: 0,
             credit: d.amount || 0,
-            category: category
+            category,
+            type: 'deposit'
         });
     });
 
-    // === Debits (Outflows from Withdrawals) ===
+    // ──────────────────────────────────────────────────────────────────────────────
+    // 2. DEBITS: Withdrawals (Expenses, Dividends, Refunds, Transfers)
+    // ──────────────────────────────────────────────────────────────────────────────
     withdrawals.forEach(w => {
         let description = w.description || '';
         if (w.memberName) {
@@ -59,26 +63,89 @@ export function renderGeneralLedger() {
             reference: w.id ? `WD${w.id.toString().padStart(6, '0')}` : 'N/A',
             debit: w.amount || 0,
             credit: 0,
-            category: category
+            category,
+            type: 'withdrawal'
         });
     });
 
-    // Sort by date (oldest first)
+    // ──────────────────────────────────────────────────────────────────────────────
+    // 3. DEBITS: Loan Disbursements (Loans Receivable increases)
+    // ──────────────────────────────────────────────────────────────────────────────
+    loans.forEach(l => {
+        if (l.disbursedDate && l.status === 'active') {
+            const member = getItem('members')?.find(m => String(m.id) === String(l.memberId));
+            const memberName = member?.name || 'Unknown Member';
+
+            transactions.push({
+                date: l.disbursedDate,
+                description: `Loan Disbursement - ${memberName} (${l.typeName || 'Loan'})`,
+                reference: `LOAN${l.id.toString().padStart(6, '0')}`,
+                debit: l.amount,
+                credit: 0,
+                category: 'Loans Disbursed',
+                type: 'loan-disbursement'
+            });
+        }
+    });
+
+    // ──────────────────────────────────────────────────────────────────────────────
+    // 4. CREDITS: Loan Repayments (Principal + Interest Income)
+    // ──────────────────────────────────────────────────────────────────────────────
+    repayments.forEach(r => {
+        const loan = loans.find(l => l.id === r.loanId);
+        if (!loan) return;
+
+        const member = getItem('members')?.find(m => String(m.id) === String(loan.memberId));
+        const memberName = member?.name || 'Unknown Member';
+
+        // In real system, split principal vs interest — here we simplify
+        const principal = r.amount * 0.8;  // Example split (adjust based on your repayment logic)
+        const interest = r.amount - principal;
+
+        transactions.push({
+            date: r.date,
+            description: `Loan Repayment - ${memberName} (Installment)`,
+            reference: `REP${r.id.toString().padStart(6, '0')}`,
+            debit: 0,
+            credit: principal,
+            category: 'Loan Principal Repayment',
+            type: 'loan-repayment'
+        });
+
+        if (interest > 0) {
+            transactions.push({
+                date: r.date,
+                description: `Interest Income - ${memberName} Loan`,
+                reference: `INT${r.id.toString().padStart(6, '0')}`,
+                debit: 0,
+                credit: interest,
+                category: 'Interest Income',
+                type: 'interest-income'
+            });
+        }
+    });
+
+    // ──────────────────────────────────────────────────────────────────────────────
+    // SORT & CALCULATE RUNNING BALANCE
+    // ──────────────────────────────────────────────────────────────────────────────
     transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // Calculate running balance
     let runningBalance = 0;
     transactions = transactions.map(tx => {
         runningBalance += (tx.credit - tx.debit);
         return { ...tx, runningBalance };
     });
 
-    // Totals
-    const totalDebit = withdrawals.reduce((sum, w) => sum + (w.amount || 0), 0);
-    const totalCredit = deposits.reduce((sum, d) => sum + (d.amount || 0), 0);
+    // ──────────────────────────────────────────────────────────────────────────────
+    // TOTALS
+    // ──────────────────────────────────────────────────────────────────────────────
+    const totalDebit = transactions.reduce((sum, t) => sum + (t.debit || 0), 0);
+    const totalCredit = transactions.reduce((sum, t) => sum + (t.credit || 0), 0);
     const netBalance = totalCredit - totalDebit;
 
-    // Render HTML
+    // ──────────────────────────────────────────────────────────────────────────────
+    // RENDER
+    // ──────────────────────────────────────────────────────────────────────────────
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = `
         <div class="general-ledger">
@@ -102,7 +169,7 @@ export function renderGeneralLedger() {
 
             ${transactions.length === 0 ? 
                 `<p class="empty-message">
-                    No transactions recorded yet. Record contributions, income, or expenses to see the ledger.
+                    No transactions recorded yet. Record contributions, expenses, or loans to populate the ledger.
                 </p>` :
                 `
                 <div class="table-container">
@@ -120,7 +187,7 @@ export function renderGeneralLedger() {
                         </thead>
                         <tbody>
                             ${transactions.map(tx => `
-                                <tr>
+                                <tr class="${tx.type}">
                                     <td>${new Date(tx.date).toLocaleDateString('en-GB')}</td>
                                     <td><small>${tx.reference || 'N/A'}</small></td>
                                     <td>${tx.description || ''}</td>
@@ -147,7 +214,7 @@ export function renderGeneralLedger() {
     `;
 }
 
-// Optional: Initialization (if needed in main.js)
+// Optional module init
 export function initGeneralLedgerModule() {
-    console.log('General Ledger module initialized');
+    console.log('General Ledger module initialized - now includes loans');
 }
