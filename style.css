@@ -644,3 +644,6 @@ input:focus, select:focus, textarea:focus {
         height: 280px;
     }
 }
+.ledger-table tr.loan-disbursement { background-color: #fff3cd; }
+.ledger-table tr.loan-repayment { background-color: #d4edda; }
+.ledger-table tr.interest-income { font-style: italic; color: #28a745; }
