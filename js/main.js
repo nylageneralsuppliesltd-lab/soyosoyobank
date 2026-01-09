@@ -287,43 +287,56 @@ function setActiveMenu(section) {
 // NAVIGATION LISTENERS
 // ===================================================================
 
+// Top-level menu items (non-submenu)
 document.querySelectorAll('.menu-item > .menu-link').forEach(link => {
     link.addEventListener('click', (e) => {
         const parentItem = link.parentElement;
 
+        // If it's a submenu parent → don't navigate, just toggle
         if (parentItem.classList.contains('has-submenu')) {
             e.preventDefault();
             e.stopPropagation();
             return;
         }
 
+        // Normal menu item → load section
         const section = parentItem.dataset.section || 'dashboard';
         loadSection(section);
 
+        // Close sidebar on mobile
         if (window.innerWidth <= 992) {
-            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar')?.classList.remove('open');
         }
     });
 });
 
-document.querySelectorAll('.submenu li').forEach(item => {
-    item.addEventListener('click', (e) => {
+// Improved submenu handler - works even if click is on <a>, <span>, etc.
+document.querySelectorAll('.submenu').forEach(submenu => {
+    submenu.addEventListener('click', (e) => {
+        e.preventDefault();          // Prevent any <a> default navigation
         e.stopPropagation();
-        const section = item.dataset.section;
+
+        // Find the nearest <li> with data-section
+        const li = e.target.closest('li[data-section]');
+        if (!li) return;
+
+        const section = li.dataset.section;
         if (section) {
             loadSection(section);
+
+            // Close sidebar on mobile
             if (window.innerWidth <= 992) {
-                document.getElementById('sidebar').classList.remove('open');
+                document.getElementById('sidebar')?.classList.remove('open');
             }
         }
     });
 });
 
+// Browser back/forward support (unchanged - already good)
 window.addEventListener('popstate', (e) => {
     const section = e.state?.section || window.location.hash.slice(1) || 'dashboard';
     loadSection(section);
 });
-
 // ===================================================================
 // INITIALIZATION
 // ===================================================================
