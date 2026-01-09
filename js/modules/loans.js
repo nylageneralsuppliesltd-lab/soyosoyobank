@@ -5,7 +5,6 @@ import { showAlert, formatCurrency } from '../utils/helpers.js';
 import { loadSettings } from './settings.js';
 import { saccoConfig } from '../config.js';
 
-// Global variables - initialized once
 let members = [];
 let loans = [];
 let loanTypes = [];
@@ -257,7 +256,7 @@ function renderCreateLoanTypeForm(editIndex = null) {
     });
 
     document.getElementById('outstanding-fines-enabled').addEventListener('change', e => {
-        document.getElementById('outstanding-fines-section').style.display = e.target.checked ? 'block' : 'none';
+        document.getElementById('outstanding-fines-section').style.display = e.target.checked ? 'checked' : 'none';
     });
 
     // Dynamic unit label
@@ -424,7 +423,7 @@ export function renderMemberLoans() {
 function renderCreateMemberLoanForm() {
     refreshData();
 
-    const disbursementAccounts = getDisbursementAccounts();  // Renamed to avoid conflict
+    const disbursementAccounts = getDisbursementAccounts();
 
     console.log('Fresh members count for loan form:', members.length);
 
@@ -457,6 +456,9 @@ function renderCreateMemberLoanForm() {
                                 </option>
                             `).join('')}
                     </select>
+                    <small style="color:#666; display:block; margin-top:6px;">
+                        Only active members shown. Create members in Members module if none appear.
+                    </small>
                 </div>
 
                 <div class="form-group">
@@ -490,6 +492,7 @@ function renderCreateMemberLoanForm() {
         </div>
     `;
 
+    // Form submission
     document.getElementById('member-loan-form').onsubmit = e => {
         e.preventDefault();
 
@@ -562,75 +565,9 @@ export function renderBankLoans() {
     `;
 }
 
-function renderCreateBankLoanForm() {
-    refreshData();
-
-    document.getElementById('main-content').innerHTML = `
-        <div class="form-card">
-            <h1>Create Bank Loan</h1>
-            <p class="subtitle">Record a loan received from a bank or financial institution</p>
-
-            <form id="bank-loan-form">
-                <div class="form-group">
-                    <label class="required-label">Bank / Institution Name</label>
-                    <input type="text" id="bank-name" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="required-label">Loan Type</label>
-                    <select id="loan-type" required>
-                        <option value="">-- Select Type --</option>
-                        ${loanTypes.map(t => `<option value="${t.name}">${t.name}</option>`).join('')}
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="required-label">Loan Amount (KES)</label>
-                    <input type="number" id="loan-amount" min="1000" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="required-label">Repayment Period (Months)</label>
-                    <input type="number" id="period-months" min="1" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Interest Rate (%)</label>
-                    <input type="number" id="interest-rate" step="0.1" value="12">
-                </div>
-
-                <div style="margin-top:30px;">
-                    <button type="submit" class="submit-btn">Create Bank Loan</button>
-                    <button type="button" class="submit-btn" style="background:#6c757d;" onclick="renderBankLoans()">Cancel</button>
-                </div>
-            </form>
-        </div>
-    `;
-
-    document.getElementById('bank-loan-form').onsubmit = e => {
-        e.preventDefault();
-
-        const newLoan = {
-            id: Date.now(),
-            bankName: document.getElementById('bank-name').value.trim(),
-            type: document.getElementById('loan-type').value,
-            amount: parseFloat(document.getElementById('loan-amount').value),
-            periodMonths: parseInt(document.getElementById('period-months').value),
-            interestRate: parseFloat(document.getElementById('interest-rate').value),
-            status: 'active',
-            createdAt: new Date().toLocaleString('en-GB')
-        };
-
-        loans.push(newLoan);
-        saveLoans();
-        showAlert('Bank loan recorded successfully!');
-        renderBankLoans();
-    };
-}
-
-// ==================== GLOBAL EXPOSURE & INIT ====================
+// ==================== MODULE INITIALIZATION ====================
 export function initLoansModule() {
-    // Expose render functions globally for menu & buttons
+    // Expose all render functions globally (for inline onclick & menu)
     window.renderLoanApplications = renderLoanApplications;
     window.renderLoanTypes = renderLoanTypes;
     window.renderLoanCalculator = renderLoanCalculator;
