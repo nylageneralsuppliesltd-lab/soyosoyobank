@@ -91,12 +91,6 @@ export function renderDashboard() {
         <div class="dashboard">
             <h1>${saccoConfig.name} Dashboard</h1>
             <p class="subtitle">Financial & Membership Overview – ${now.toLocaleDateString('en-GB')}</p>
-    // === Render Dashboard ===
-    const mainContent = document.getElementById('main-content');
-    mainContent.innerHTML = `
-        <div class="dashboard">
-            <h1>${saccoConfig.name} Dashboard</h1>
-            <p class="subtitle">Financial & Membership Overview – ${now.toLocaleDateString('en-GB')}</p>
 
             <!-- Key Metric Cards -->
             <div class="metrics-grid">
@@ -124,7 +118,7 @@ export function renderDashboard() {
                     <p class="metric-link">Record or view contributions →</p>
                 </div>
 
-                <!-- Other Income (Fines, Interest, etc.) -->
+                <!-- Other Income -->
                 <div class="metric-card" onclick="loadSection('deposits-list')">
                     <h3>Other Income</h3>
                     <h2>${formatCurrency(incomeTotal)}</h2>
