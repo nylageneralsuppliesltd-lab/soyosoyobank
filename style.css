@@ -619,3 +619,28 @@ input:focus, select:focus, textarea:focus {
 /* Amount colors */
 .amount-credit { color: #28a745; text-align: right; font-weight: 600; }
 .amount-debit { color: #dc3545; text-align: right; font-weight: 600; }
+/* Dashboard Chart - Fixed Height & Responsive (No More Elongating) */
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+    margin: 20px 0;
+}
+
+#financial-chart {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 992px) {
+    .chart-container {
+        height: 320px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chart-container {
+        height: 280px;
+    }
+}
