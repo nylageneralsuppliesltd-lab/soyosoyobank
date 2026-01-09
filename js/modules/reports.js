@@ -144,35 +144,48 @@ export function balanceSheet() {
     const totalWithdrawals = withdrawals.reduce((s, w) => s + (w.amount || 0), 0);
     const netCash = totalDeposits - totalWithdrawals;
 
-  // In balanceSheet()
-const loansReceivable = loans
-    .filter(l => l.loanDirection === 'outward' && l.status === 'active')
-    .reduce((sum, l) => sum + (l.balance || l.amount || 0), 0);
+    // Loans Receivable: sum of active outward loans (SACCO lent to members)
+    const loansReceivable = loans
+        .filter(l => l.loanDirection === 'outward' && l.status === 'active')
+        .reduce((sum, l) => sum + (l.balance || l.amount || 0), 0);
 
-const bankLoansPayable = loans
-    .filter(l => l.loanDirection === 'inward' && l.status === 'active')
-    .reduce((sum, l) => sum + (l.balance || l.amount || 0), 0);
-
-// Then in Assets:
-<tr><td>Loans Receivable (to Members)</td><td class="amount-credit">${formatCurrency(loansReceivable)}</td></tr>
-
-// In Liabilities:
-<tr><td>Bank Loans Payable</td><td class="amount-debit">${formatCurrency(bankLoansPayable)}</td></tr>
+    // Bank Loans Payable: sum of active inward loans (SACCO borrowed from banks)
+    const bankLoansPayable = loans
+        .filter(l => l.loanDirection === 'inward' && l.status === 'active')
+        .reduce((sum, l) => sum + (l.balance || l.amount || 0), 0);
 
     const cashInHand = Math.round(netCash * 0.3);
     const bankBalance = netCash - cashInHand;
 
+    // Now properly inside template literal
     document.getElementById('main-content').innerHTML = reportHeader('Balance Sheet', 'Financial Position as at Today') + `
         <div class="report-section">
             <h2>Assets</h2>
             <div class="table-container">
                 <table class="members-table">
-                    <thead><tr><th>Item</th><th>Amount (KES)</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Amount (KES)</th>
+                        </tr>
+                    </thead>
                     <tbody>
-                        <tr><td>Cash in Hand</td><td class="amount-credit">${formatCurrency(cashInHand)}</td></tr>
-                        <tr><td>Bank Balances</td><td class="amount-credit">${formatCurrency(bankBalance)}</td></tr>
-                        <tr><td>Loans Receivable (Outstanding)</td><td class="amount-credit">${formatCurrency(loansReceivable)}</td></tr>
-                        <tr class="total-row"><td><strong>Total Assets</strong></td><td><strong>${formatCurrency(totalShares + netCash + loansReceivable)}</strong></td></tr>
+                        <tr>
+                            <td>Cash in Hand</td>
+                            <td class="amount-credit">${formatCurrency(cashInHand)}</td>
+                        </tr>
+                        <tr>
+                            <td>Bank Balances</td>
+                            <td class="amount-credit">${formatCurrency(bankBalance)}</td>
+                        </tr>
+                        <tr>
+                            <td>Loans Receivable (to Members - Outward)</td>
+                            <td class="amount-credit">${formatCurrency(loansReceivable)}</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td><strong>Total Assets</strong></td>
+                            <td><strong>${formatCurrency(totalShares + netCash + loansReceivable)}</strong></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -182,11 +195,29 @@ const bankLoansPayable = loans
             <h2>Liabilities & Equity</h2>
             <div class="table-container">
                 <table class="members-table">
-                    <thead><tr><th>Item</th><th>Amount (KES)</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Amount (KES)</th>
+                        </tr>
+                    </thead>
                     <tbody>
-                        <tr><td>Member Shares & Savings</td><td class="amount-debit">${formatCurrency(totalShares)}</td></tr>
-                        <tr><td>Retained Earnings (Net Surplus)</td><td class="amount-debit">${formatCurrency(0)}</td></tr> <!-- To be calculated later -->
-                        <tr class="total-row"><td><strong>Total Liabilities & Equity</strong></td><td><strong>${formatCurrency(totalShares)}</strong></td></tr>
+                        <tr>
+                            <td>Member Shares & Savings</td>
+                            <td class="amount-debit">${formatCurrency(totalShares)}</td>
+                        </tr>
+                        <tr>
+                            <td>Bank Loans Payable (Borrowed - Inward)</td>
+                            <td class="amount-debit">${formatCurrency(bankLoansPayable)}</td>
+                        </tr>
+                        <tr>
+                            <td>Retained Earnings (Net Surplus)</td>
+                            <td class="amount-debit">${formatCurrency(0)}</td> <!-- Update later with real surplus -->
+                        </tr>
+                        <tr class="total-row">
+                            <td><strong>Total Liabilities & Equity</strong></td>
+                            <td><strong>${formatCurrency(totalShares + bankLoansPayable)}</strong></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
