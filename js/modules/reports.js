@@ -9,7 +9,7 @@ function getFreshData() {
     return {
         members: loadMembers(),
         deposits: getItem('deposits') || [],
-        expenses: getItem('expenses') || [],
+        withdrawals: getItem('withdrawals') || [],
         settings: loadSettings()
     };
 }
@@ -181,11 +181,13 @@ export function balanceSheet() {
 }
 
 export function incomeStatement() {
-    const { deposits, expenses } = getFreshData();
+    const { deposits, withdrawals } = getFreshData();
 
     const interestIncome = 0;
     const otherIncome = deposits.filter(d => d.type === 'income' || d.type === 'fine').reduce((sum, d) => sum + (d.amount || 0), 0);
-    const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const totalExpenses = withdrawals
+    .filter(w => w.type === 'expense')
+    .reduce((sum, w) => sum + (w.amount || 0), 0);
     const netSurplus = interestIncome + otherIncome - totalExpenses;
 
     document.getElementById('main-content').innerHTML = reportHeader('Income Statement', 'Profit & Loss Summary for the Period') + `
