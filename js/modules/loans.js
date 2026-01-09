@@ -41,6 +41,10 @@ function getDisbursementAccounts() {
 // ==================== 1. LOAN APPLICATIONS ====================
 export function renderLoanApplications() {
     refreshData();
+    const accounts = getDisbursementAccounts();
+
+    // Now members is guaranteed fresh
+    console.log('Fresh members count:', members.length);
     const pending = loans.filter(l => l.status === 'pending');
 
     document.getElementById('main-content').innerHTML = `
@@ -108,6 +112,10 @@ window.approveLoan = function(id) {
 // ==================== 2. LOAN TYPES ====================
 export function renderLoanTypes() {
     refreshData();
+    const accounts = getDisbursementAccounts();
+
+    // Now members is guaranteed fresh
+    console.log('Fresh members count:', members.length);
 
     document.getElementById('main-content').innerHTML = `
         <div class="loans-page">
@@ -155,6 +163,12 @@ export function renderLoanTypes() {
 
 // ==================== CREATE / EDIT LOAN TYPE ====================
 function renderCreateLoanTypeForm(editIndex = null) {
+    refreshData();  // ← ALWAYS FIRST LINE
+
+    const accounts = getDisbursementAccounts();
+
+    // Now members is guaranteed fresh
+    console.log('Fresh members count:', members.length);
     const type = editIndex !== null ? loanTypes[editIndex] : {};
 
     // Fine defaults
@@ -388,7 +402,13 @@ export function renderLoanCalculator() {
 
 // ==================== 4. MEMBER LOANS ====================
 export function renderMemberLoans() {
-    refreshData();
+    
+     refreshData();  // ← ALWAYS FIRST LINE
+
+    const accounts = getDisbursementAccounts();
+
+    // Now members is guaranteed fresh
+    console.log('Fresh members count:', members.length);
     const memberLoans = loans.filter(l => l.memberId);
 
     document.getElementById('main-content').innerHTML = `
@@ -433,7 +453,12 @@ export function renderMemberLoans() {
 
 function renderCreateMemberLoanForm() {
     // CRITICAL: Always refresh members right before rendering the form
-    refreshData();
+     refreshData();  // ← ALWAYS FIRST LINE
+
+    const accounts = getDisbursementAccounts();
+
+    // Now members is guaranteed fresh
+    console.log('Fresh members count:', members.length);
 
     const accounts = getDisbursementAccounts();
 
