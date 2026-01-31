@@ -1,0 +1,75 @@
+// Symlink target: ../../react-ui/backend/prisma/schema.prisma
+// This is a copy of your updated schema for Prisma migration compatibility.
+// Keep this in sync with your main schema.
+
+// ...existing code...
+generator client {
+	provider = "prisma-client-js"
+}
+
+datasource db {
+	provider = "postgresql"
+}
+
+// ============== ENUMS ==============
+enum PaymentMethod {
+	cash
+	bank
+	mpesa
+	check_off
+	bank_deposit
+	other
+}
+
+enum LoanStatus {
+	pending
+	active
+	closed
+	defaulted
+}
+
+enum LoanDirection {
+	outward
+	inward
+}
+
+enum TransactionType {
+	contribution
+	income
+	fine
+	loan_repayment
+	expense
+	dividend
+	refund
+	transfer
+	loan_disbursement
+}
+
+enum AccountType {
+	cash
+	pettyCash
+	mobileMoney
+	bank
+	gl
+}
+
+enum FineType {
+	late_payment
+	absenteeism
+	rule_violation
+	other
+}
+
+enum PermissionType {
+	view_members
+	edit_members
+	record_deposits
+	record_withdrawals
+	approve_loans
+	view_reports
+	manage_settings
+	manage_roles
+	view_ledger
+}
+
+// ...rest of schema copied from react-ui/backend/prisma/schema.prisma...

@@ -7,12 +7,31 @@ import { formatCurrency } from '../utils/helpers.js';
 import { saccoConfig } from '../config.js';
 
 export function renderDashboard() {
-    const members = loadMembers();
-    const deposits = getItem('deposits') || [];
-    const withdrawals = getItem('withdrawals') || [];
-    const loans = getItem('loans') || [];
-    const repayments = getItem('repayments') || [];
-    const settings = loadSettings();
+    const members = getItem('soyoMembers') || [];
+    const deposits = getItem('soyoDeposits') || [];
+    const withdrawals = getItem('soyoExpenses') || [];
+    const repayments = getItem('soyoRepayments') || [];
+    const settings = getItem('soyoSettings') || {};
+
+    // Fetch loans from backend API for production-grade accuracy
+    let loans = [];
+    try {
+        // Synchronous XHR for legacy dashboard, replace with async/await if possible
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/loans', false); // false = synchronous
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.send(null);
+        if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            loans = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+        } else {
+            console.warn('Failed to fetch loans from backend, falling back to localStorage.');
+            loans = getItem('soyoLoans') || [];
+        }
+    } catch (err) {
+        console.error('Error fetching loans from backend:', err);
+        loans = getItem('soyoLoans') || [];
+    }
 
     // === Membership Metrics ===
     const totalMembers = members.length;
@@ -46,6 +65,11 @@ export function renderDashboard() {
     const totalLoansDisbursed = loans
         .filter(l => l.status === 'active' && l.disbursedDate)
         .reduce((sum, l) => sum + (l.amount || 0), 0);
+
+    // NEW: Outstanding Loans (principal not yet repaid)
+    const outstandingLoans = loans
+        .filter(l => l.status === 'active' && l.disbursedDate)
+        .reduce((sum, l) => sum + ((l.amount || 0) - (l.principalPaid || 0)), 0);
 
     // === Bank & eWallet Distribution (from Settings) ===
     const bankAccounts = settings.bankAccounts || [];
@@ -166,11 +190,18 @@ export function renderDashboard() {
                     <p class="metric-link">View in ledger →</p>
                 </div>
 
+                <!-- NEW: Outstanding Loans -->
+                <div class="metric-card" onclick="loadSection('active-loans')">
+                    <h3>Outstanding Loans</h3>
+                    <h2 style="color:#007bff;">${formatCurrency(outstandingLoans)}</h2>
+                    <p class="metric-link">View active loans →</p>
+                </div>
+
                 <!-- NEW: Total Loans Disbursed -->
                 <div class="metric-card" onclick="loadSection('active-loans')">
                     <h3>Total Loans Disbursed</h3>
-                    <h2 style="color:#007bff;">${formatCurrency(totalLoansDisbursed)}</h2>
-                    <p class="metric-link">View active loans →</p>
+                    <h2 style="color:#6c757d;">${formatCurrency(totalLoansDisbursed)}</h2>
+                    <p class="metric-link">View all loans →</p>
                 </div>
             </div>
 

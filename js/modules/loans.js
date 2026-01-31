@@ -242,9 +242,15 @@ function renderCreateLoanTypeForm(editIndex = null) {
             <h1>${editIndex !== null ? 'Edit' : 'Create'} Loan Type</h1>
 
             <form id="loan-type-form">
+
                 <div class="form-group">
                     <label class="required-label">Loan Type Name</label>
                     <input type="text" id="loan-name" value="${type.name || ''}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Member Qualification Criteria</label>
+                    <input type="text" id="qualification-criteria" value="${type.qualificationCriteria || ''}" placeholder="e.g. Minimum savings, membership duration">
                 </div>
 
                 <div class="form-group">
@@ -260,8 +266,12 @@ function renderCreateLoanTypeForm(editIndex = null) {
                 </div>
 
                 <div class="form-group">
-                    <label class="required-label">Repayment Period (Months)</label>
-                    <input type="number" id="period-months" value="${type.periodMonths || 12}" min="1" required>
+                    <label>Interest Charge Type</label>
+                    <select id="interest-type">
+                        <option value="flat" ${type.interestType === 'flat' ? 'selected' : ''}>Flat Interest (on full amount)</option>
+                        <option value="reducing" ${type.interestType === 'reducing' ? 'selected' : ''}>Reducing Balance</option>
+                        <option value="fixed" ${type.interestType === 'fixed' ? 'selected' : ''}>Fixed Interest</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -270,10 +280,97 @@ function renderCreateLoanTypeForm(editIndex = null) {
                 </div>
 
                 <div class="form-group">
-                    <label>Interest Type</label>
-                    <select id="interest-type">
-                        <option value="flat" ${type.interestType === 'flat' ? 'selected' : ''}>Flat Interest (on full amount)</option>
-                        <option value="reducing" ${type.interestType === 'reducing' ? 'selected' : ''}>Reducing Balance</option>
+                    <label>Interest Frequency</label>
+                    <select id="interest-frequency">
+                        <option value="monthly" ${type.interestFrequency === 'monthly' ? 'selected' : ''}>Monthly</option>
+                        <option value="weekly" ${type.interestFrequency === 'weekly' ? 'selected' : ''}>Weekly</option>
+                        <option value="daily" ${type.interestFrequency === 'daily' ? 'selected' : ''}>Daily</option>
+                        <option value="yearly" ${type.interestFrequency === 'yearly' ? 'selected' : ''}>Yearly</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Is Repayment Period Flexible?</label>
+                    <select id="period-flexible">
+                        <option value="fixed" ${type.periodFlexible === 'fixed' ? 'selected' : ''}>Fixed</option>
+                        <option value="flexible" ${type.periodFlexible === 'flexible' ? 'selected' : ''}>Flexible</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="required-label">Loan Period (Months)</label>
+                    <input type="number" id="period-months" value="${type.periodMonths || 12}" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Grace Period (Months)</label>
+                    <input type="number" id="grace-period" value="${type.gracePeriod || 0}" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label>Loan Application Approvers</label>
+                    <input type="text" id="approvers" value="${type.approvers || ''}" placeholder="e.g. Group officials, selected members">
+                </div>
+
+                <div class="form-group">
+                    <label>Fine Frequency</label>
+                    <select id="fine-frequency">
+                        <option value="monthly" ${type.fineFrequency === 'monthly' ? 'selected' : ''}>Monthly</option>
+                        <option value="weekly" ${type.fineFrequency === 'weekly' ? 'selected' : ''}>Weekly</option>
+                        <option value="daily" ${type.fineFrequency === 'daily' ? 'selected' : ''}>Daily</option>
+                        <option value="yearly" ${type.fineFrequency === 'yearly' ? 'selected' : ''}>Yearly</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Fine Base</label>
+                    <select id="fine-base">
+                        <option value="total-unpaid" ${type.fineBase === 'total-unpaid' ? 'selected' : ''}>Total Unpaid Loan</option>
+                        <option value="loan-amount" ${type.fineBase === 'loan-amount' ? 'selected' : ''}>Loan Amount</option>
+                        <option value="installment-balance" ${type.fineBase === 'installment-balance' ? 'selected' : ''}>Installment Balance</option>
+                        <option value="installment-interest" ${type.fineBase === 'installment-interest' ? 'selected' : ''}>Installment Interest</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Disbursement Account</label>
+                    <input type="text" id="disbursement-account" value="${type.disbursementAccount || ''}" placeholder="Account to disburse from">
+                </div>
+
+                <div class="form-group">
+                    <label>Automatic Disbursement After Approval?</label>
+                    <select id="auto-disbursement">
+                        <option value="no" ${type.autoDisbursement === 'no' ? 'selected' : ''}>No</option>
+                        <option value="yes" ${type.autoDisbursement === 'yes' ? 'selected' : ''}>Yes</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Loan Processing Fees</label>
+                    <input type="number" id="processing-fee" value="${type.processingFee || 0}" min="0" step="0.01" placeholder="Amount or percentage">
+                    <select id="processing-fee-type">
+                        <option value="fixed" ${type.processingFeeType === 'fixed' ? 'selected' : ''}>Fixed Amount</option>
+                        <option value="percentage" ${type.processingFeeType === 'percentage' ? 'selected' : ''}>Percentage</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Guarantors Required?</label>
+                    <select id="guarantors-required">
+                        <option value="no" ${type.guarantorsRequired === 'no' ? 'selected' : ''}>No</option>
+                        <option value="yes" ${type.guarantorsRequired === 'yes' ? 'selected' : ''}>Yes</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="guarantors-section" style="display:${type.guarantorsRequired === 'yes' ? 'block' : 'none'};">
+                    <label>Guarantor Name</label>
+                    <input type="text" id="guarantor-name" value="${type.guarantorName || ''}">
+                    <label>Amount Guaranteed</label>
+                    <input type="number" id="guarantor-amount" value="${type.guarantorAmount || ''}" min="0">
+                    <label>Guarantor Notified?</label>
+                    <select id="guarantor-notified">
+                        <option value="no" ${type.guarantorNotified === 'no' ? 'selected' : ''}>No</option>
+                        <option value="yes" ${type.guarantorNotified === 'yes' ? 'selected' : ''}>Yes</option>
                     </select>
                 </div>
 
@@ -356,24 +453,64 @@ function renderCreateLoanTypeForm(editIndex = null) {
     document.getElementById('loan-type-form').onsubmit = e => {
         e.preventDefault();
 
+        // Collect all field values
+        const name = document.getElementById('loan-name').value.trim();
+        const qualificationCriteria = document.getElementById('qualification-criteria').value.trim();
+        const maxAmount = parseFloat(document.getElementById('max-amount').value);
+        const maxMultiple = parseFloat(document.getElementById('max-multiple').value);
+        const interestType = document.getElementById('interest-type').value;
+        const interestRate = parseFloat(document.getElementById('interest-rate').value);
+        const interestFrequency = document.getElementById('interest-frequency').value;
+        const periodFlexible = document.getElementById('period-flexible').value;
+        const periodMonths = parseInt(document.getElementById('period-months').value);
+        const gracePeriod = parseInt(document.getElementById('grace-period').value);
+        const approvers = document.getElementById('approvers').value.trim();
+        const fineFrequency = document.getElementById('fine-frequency').value;
+        const fineBase = document.getElementById('fine-base').value;
+        const disbursementAccount = document.getElementById('disbursement-account').value;
+        const autoDisbursement = document.getElementById('auto-disbursement').value;
+        const processingFee = parseFloat(document.getElementById('processing-fee').value);
+        const processingFeeType = document.getElementById('processing-fee-type').value;
+        const guarantorsRequired = document.getElementById('guarantors-required').value;
+        let guarantorName = '', guarantorAmount = 0, guarantorNotified = 'no';
+        if (guarantorsRequired === 'yes') {
+            guarantorName = document.getElementById('guarantor-name').value.trim();
+            guarantorAmount = parseFloat(document.getElementById('guarantor-amount').value);
+            guarantorNotified = document.getElementById('guarantor-notified').value;
+        }
+        const disbursementDate = document.getElementById('disbursement-date').value;
+
+        // Validate required fields
+        if (!name) return showAlert('Loan type name is required', 'error');
+        if (isNaN(interestRate) || interestRate < 0) return showAlert('Interest rate is required', 'error');
+        if (isNaN(periodMonths) || periodMonths < 1) return showAlert('Loan period is required', 'error');
+        if (!disbursementAccount) return showAlert('Disbursement account is required', 'error');
+
+        // Save logic (update loanTypes or send to backend)
         const newType = {
-            id: editIndex !== null ? type.id : uid(),
-            name: document.getElementById('loan-name').value.trim(),
-            maxAmount: parseFloat(document.getElementById('max-amount').value) || null,
-            maxMultiple: parseFloat(document.getElementById('max-multiple').value) || null,
-            periodMonths: parseInt(document.getElementById('period-months').value),
-            interestRate: parseFloat(document.getElementById('interest-rate').value),
-            interestType: document.getElementById('interest-type').value,
-            lateFines: {
-                enabled: document.getElementById('late-fines-enabled').checked,
-                type: document.getElementById('late-fine-type').value,
-                value: parseFloat(document.getElementById('late-fine-value').value) || 0
-            },
-            outstandingFines: {
-                enabled: document.getElementById('outstanding-fines-enabled').checked,
-                type: document.getElementById('outstanding-fine-type').value,
-                value: parseFloat(document.getElementById('outstanding-fine-value').value) || 0
-            }
+            name,
+            qualificationCriteria,
+            maxAmount,
+            maxMultiple,
+            interestType,
+            interestRate,
+            interestFrequency,
+            periodFlexible,
+            periodMonths,
+            gracePeriod,
+            approvers,
+            fineFrequency,
+            fineBase,
+            disbursementAccount,
+            autoDisbursement,
+            processingFee,
+            processingFeeType,
+            guarantorsRequired,
+            guarantorName,
+            guarantorAmount,
+            guarantorNotified,
+            disbursementDate,
+            // ...existing fields...
         };
 
         if (editIndex !== null) {
@@ -532,6 +669,11 @@ function renderCreateMemberLoanForm() {
                 </div>
 
                 <div class="form-group">
+                    <label>Member Qualification Criteria</label>
+                    <input type="text" id="qualification-criteria" placeholder="e.g. Minimum savings, membership duration">
+                </div>
+
+                <div class="form-group">
                     <label class="required-label">Select Member</label>
                     <select id="member-id" required>
                         <option value="">-- Choose Member --</option>
@@ -550,13 +692,70 @@ function renderCreateMemberLoanForm() {
                 </div>
 
                 <div class="form-group">
-                    <label class="required-label">Repayment Period (Months)</label>
-                    <input type="number" id="period-months" min="1" required placeholder="e.g. 12">
+                    <label>Interest Charge Type</label>
+                    <select id="interest-type">
+                        <option value="flat">Flat Interest (on full amount)</option>
+                        <option value="reducing">Reducing Balance</option>
+                        <option value="fixed">Fixed Interest</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
                     <label class="required-label">Interest Rate (%)</label>
-                    <input type="number" id="interest-rate" readonly placeholder="Auto-filled from loan type">
+                    <input type="number" id="interest-rate" placeholder="Auto-filled from loan type">
+                </div>
+
+                <div class="form-group">
+                    <label>Interest Frequency</label>
+                    <select id="interest-frequency">
+                        <option value="monthly">Monthly</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="daily">Daily</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Is Repayment Period Flexible?</label>
+                    <select id="period-flexible">
+                        <option value="fixed">Fixed</option>
+                        <option value="flexible">Flexible</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="required-label">Loan Period (Months)</label>
+                    <input type="number" id="period-months" min="1" required placeholder="e.g. 12">
+                </div>
+
+                <div class="form-group">
+                    <label>Grace Period (Months)</label>
+                    <input type="number" id="grace-period" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label>Loan Application Approvers</label>
+                    <input type="text" id="approvers" placeholder="e.g. Group officials, selected members">
+                </div>
+
+                <div class="form-group">
+                    <label>Fine Frequency</label>
+                    <select id="fine-frequency">
+                        <option value="monthly">Monthly</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="daily">Daily</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Fine Base</label>
+                    <select id="fine-base">
+                        <option value="total-unpaid">Total Unpaid Loan</option>
+                        <option value="loan-amount">Loan Amount</option>
+                        <option value="installment-balance">Installment Balance</option>
+                        <option value="installment-interest">Installment Interest</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -566,6 +765,43 @@ function renderCreateMemberLoanForm() {
                         ${disbursementAccounts.map(a => `
                             <option value="${a.id}">${a.name}</option>
                         `).join('')}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Automatic Disbursement After Approval?</label>
+                    <select id="auto-disbursement">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Loan Processing Fees</label>
+                    <input type="number" id="processing-fee" min="0" step="0.01" placeholder="Amount or percentage">
+                    <select id="processing-fee-type">
+                        <option value="fixed">Fixed Amount</option>
+                        <option value="percentage">Percentage</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Guarantors Required?</label>
+                    <select id="guarantors-required">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="guarantors-section" style="display:none;">
+                    <label>Guarantor Name</label>
+                    <input type="text" id="guarantor-name">
+                    <label>Amount Guaranteed</label>
+                    <input type="number" id="guarantor-amount" min="0">
+                    <label>Guarantor Notified?</label>
+                    <select id="guarantor-notified">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
                     </select>
                 </div>
 
@@ -597,63 +833,72 @@ function renderCreateMemberLoanForm() {
     document.getElementById('member-loan-form').onsubmit = e => {
         e.preventDefault();
 
+        // Collect all field values
         const memberIdStr = document.getElementById('member-id').value;
         const selectedMember = members.find(m => String(m.id) === memberIdStr);
-
-        if (!selectedMember) {
-            showAlert('Please select a valid member', 'error');
-            return;
-        }
+        if (!selectedMember) return showAlert('Please select a valid member', 'error');
 
         const typeIdStr = document.getElementById('loan-type').value;
         const selectedType = loanTypes.find(t => String(t.id) === typeIdStr);
+        if (!selectedType) return showAlert('Please select a valid loan type', 'error');
 
-        if (!selectedType) {
-            showAlert('Please select a valid loan type', 'error');
-            return;
-        }
-
+        const qualificationCriteria = document.getElementById('qualification-criteria').value.trim();
         const amount = parseFloat(document.getElementById('loan-amount').value);
-        if (isNaN(amount) || amount <= 0) {
-            showAlert('Please enter a valid loan amount', 'error');
-            return;
-        }
+        if (isNaN(amount) || amount <= 0) return showAlert('Please enter a valid loan amount', 'error');
+        if (!checkLoanLimit(selectedMember, selectedType, amount)) return showAlert('Loan amount exceeds allowed limit based on savings', 'error');
 
-        if (!checkLoanLimit(selectedMember, selectedType, amount)) {
-            showAlert('Loan amount exceeds allowed limit based on savings', 'error');
-            return;
-        }
-
+        const interestType = document.getElementById('interest-type').value;
+        const interestRate = parseFloat(document.getElementById('interest-rate').value);
+        const interestFrequency = document.getElementById('interest-frequency').value;
+        const periodFlexible = document.getElementById('period-flexible').value;
         const periodMonths = parseInt(document.getElementById('period-months').value);
-        if (isNaN(periodMonths) || periodMonths < 1) {
-            showAlert('Please enter a valid repayment period', 'error');
-            return;
+        const gracePeriod = parseInt(document.getElementById('grace-period').value);
+        const approvers = document.getElementById('approvers').value.trim();
+        const fineFrequency = document.getElementById('fine-frequency').value;
+        const fineBase = document.getElementById('fine-base').value;
+        const disbursementAccount = document.getElementById('disbursement-account').value;
+        const autoDisbursement = document.getElementById('auto-disbursement').value;
+        const processingFee = parseFloat(document.getElementById('processing-fee').value);
+        const processingFeeType = document.getElementById('processing-fee-type').value;
+        const guarantorsRequired = document.getElementById('guarantors-required').value;
+        let guarantorName = '', guarantorAmount = 0, guarantorNotified = 'no';
+        if (guarantorsRequired === 'yes') {
+            guarantorName = document.getElementById('guarantor-name').value.trim();
+            guarantorAmount = parseFloat(document.getElementById('guarantor-amount').value);
+            guarantorNotified = document.getElementById('guarantor-notified').value;
         }
+        const disbursementDate = document.getElementById('disbursement-date').value;
 
-        const schedule = generateSchedule(
-            amount,
-            selectedType.interestRate,
-            periodMonths,
-            selectedType.interestType
-        );
+        // Validate required fields
+        if (isNaN(interestRate) || interestRate < 0) return showAlert('Interest rate is required', 'error');
+        if (isNaN(periodMonths) || periodMonths < 1) return showAlert('Loan period is required', 'error');
+        if (!disbursementAccount) return showAlert('Disbursement account is required', 'error');
 
+        // Save logic (send to backend or update memberLoans)
         const newLoan = {
-            id: uid(),
-            memberId: memberIdStr,
-            memberName: selectedMember.name,
+            memberId: selectedMember.id,
             typeId: selectedType.id,
-            typeName: selectedType.name,
+            qualificationCriteria,
             amount,
-            balance: amount,
-            interestRate: selectedType.interestRate,
-            interestType: selectedType.interestType,
+            interestType,
+            interestRate,
+            interestFrequency,
+            periodFlexible,
             periodMonths,
-            schedule,
-            status: 'pending',
-            createdAt: new Date().toISOString(),
-            disbursementAccount: document.getElementById('disbursement-account').value,
-            disbursementDate: document.getElementById('disbursement-date').value,
-            loanDirection: 'outward'  // IMPORTANT: Outward = SACCO lends (asset)
+            gracePeriod,
+            approvers,
+            fineFrequency,
+            fineBase,
+            disbursementAccount,
+            autoDisbursement,
+            processingFee,
+            processingFeeType,
+            guarantorsRequired,
+            guarantorName,
+            guarantorAmount,
+            guarantorNotified,
+            disbursementDate,
+            // ...existing fields...
         };
 
         loans.push(newLoan);
