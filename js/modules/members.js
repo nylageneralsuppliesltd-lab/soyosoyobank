@@ -391,9 +391,27 @@ function handleMemberSubmit(editMemberId = null) {
 export function renderMembersList() {
     members = loadMembers();
 
+    // Calculate loan balance for each member
+    const membersWithLoan = members.map(m => {
+        let loanBalance = 0;
+        if (m.loans) {
+            // If backend loans are synced to member
+            loanBalance = m.loans.filter(l => l.status === 'active').reduce((sum, l) => sum + ((l.amount || 0) - (l.principalPaid || 0)), 0);
+        } else if (m.ledger) {
+            // Fallback: estimate from ledger
+            let loansOut = 0, repayments = 0;
+            m.ledger.forEach(tx => {
+                if (tx.type === 'Loan Disbursement') loansOut += tx.amount;
+                if (tx.type === 'Loan Repayment') repayments += tx.amount;
+            });
+            loanBalance = loansOut - repayments;
+        }
+        return { ...m, loanBalance };
+    });
+
     document.getElementById('main-content').innerHTML = `
         <h1>Members List</h1>
-        <p class="subtitle">Total Members: ${members.length} | Active: ${members.filter(m => m.active).length} | Suspended: ${members.filter(m => !m.active).length}</p>
+        <p class="subtitle">Total Members: ${membersWithLoan.length} | Active: ${membersWithLoan.filter(m => m.active).length} | Suspended: ${membersWithLoan.filter(m => !m.active).length}</p>
 
         <!-- Export / Import Buttons -->
         <div class="table-actions" style="margin-bottom: 25px;">
@@ -407,7 +425,7 @@ export function renderMembersList() {
             </label>
         </div>
 
-        ${members.length === 0 ? 
+        ${membersWithLoan.length === 0 ? 
             '<p>No members registered yet. Use the buttons above to import or register a new member.</p>' :
             `
             <div class="table-container">
@@ -418,17 +436,19 @@ export function renderMembersList() {
                             <th>Phone</th>
                             <th>Role</th>
                             <th>Balance</th>
+                            <th>Loan Balance</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${members.map(m => `
+                        ${membersWithLoan.map(m => `
                             <tr class="${!m.active ? 'inactive-row' : ''}">
                                 <td><strong>${m.name}</strong></td>
                                 <td>${m.phone}</td>
                                 <td>${m.role}</td>
                                 <td>${formatCurrency(m.balance || 0)}</td>
+                                <td style="color:#007bff;">${formatCurrency(m.loanBalance || 0)}</td>
                                 <td>${m.active ? '<span style="color:#28a745;">Active</span>' : '<span style="color:#dc3545;">Suspended</span>'}</td>
                                 <td>
                                     <button onclick="window.renderMemberLedger(${m.id})">Ledger</button>
@@ -461,19 +481,23 @@ export function renderMemberLedger(memberId) {
 
     let contributions = 0;
     let loansOut = 0;
+    let repayments = 0;
     if (member.ledger) {
         member.ledger.forEach(tx => {
-            if (['Contribution', 'Deposit', 'Share Contribution', 'Loan Repayment'].includes(tx.type)) contributions += tx.amount;
+            if (["Contribution", "Deposit", "Share Contribution", "Loan Repayment"].includes(tx.type)) contributions += tx.amount;
             if (tx.type === 'Loan Disbursement') loansOut += tx.amount;
+            if (tx.type === 'Loan Repayment') repayments += tx.amount;
         });
     }
+    const loanBalance = loansOut - repayments;
 
     document.getElementById('main-content').innerHTML = `
         <h1>Ledger - ${member.name}</h1>
         <p class="subtitle">
             Status: ${member.active ? '<span style="color:#28a745">Active</span>' : '<span style="color:#dc3545">Suspended</span>'} | 
             Contributions: ${formatCurrency(contributions)} | 
-            Loans: ${formatCurrency(loansOut)} | 
+            Loans Disbursed: ${formatCurrency(loansOut)} | 
+            <span style="color:#007bff;">Loan Balance: ${formatCurrency(loanBalance)}</span> | 
             Balance: ${formatCurrency(member.balance || 0)}
         </p>
         <div class="table-container">

@@ -67,9 +67,10 @@ export function renderDashboard() {
         .reduce((sum, l) => sum + (l.amount || 0), 0);
 
     // NEW: Outstanding Loans (principal not yet repaid)
+    // Use backend-calculated balance if available, else fallback
     const outstandingLoans = loans
         .filter(l => l.status === 'active' && l.disbursedDate)
-        .reduce((sum, l) => sum + ((l.amount || 0) - (l.principalPaid || 0)), 0);
+        .reduce((sum, l) => sum + (typeof l.balance === 'number' ? l.balance : ((l.amount || 0) - (l.principalPaid || 0))), 0);
 
     // === Bank & eWallet Distribution (from Settings) ===
     const bankAccounts = settings.bankAccounts || [];
