@@ -1,0 +1,30 @@
+﻿
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : [{"id":18,"name":"Developm","description":nul
+                    l,"nature":"normal","qualificationBasis":"sav
+                    ings","maxAmount":null,"maxMultiple":"3","min
+                    QualificationAmount":null,"maxQualificationAm
+                    ount":null,"periodMo...
+RawContent        : HTTP/1.1 200 OK
+                    Vary: Origin
+                    Access-Control-Allow-Credentials: true
+                    Connection: keep-alive
+                    Keep-Alive: timeout=5
+                    Content-Length: 3348
+                    Content-Type: application/json; charset=utf-8
+                    Date: Sat, 14...
+Forms             : {}
+Headers           : {[Vary, Origin], 
+                    [Access-Control-Allow-Credentials, true], 
+                    [Connection, keep-alive], [Keep-Alive, 
+                    timeout=5]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 3348
+
+
+

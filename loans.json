@@ -1,0 +1,27 @@
+﻿
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : [{"id":6,"memberId":6,"memberName":"James Charo","externalN
+                    ame":null,"bankName":null,"contactPerson":null,"amount":"20
+                    000","balance":"15410","interestRate":"12","interestType":"
+                    flat","interestFrequenc...
+RawContent        : HTTP/1.1 200 OK
+                    Vary: Origin
+                    Access-Control-Allow-Credentials: true
+                    Connection: keep-alive
+                    Keep-Alive: timeout=5
+                    Content-Length: 11322
+                    Content-Type: application/json; charset=utf-8
+                    Date: Sat, 1...
+Forms             : {}
+Headers           : {[Vary, Origin], [Access-Control-Allow-Credentials, true], 
+                    [Connection, keep-alive], [Keep-Alive, timeout=5]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 11322
+
+
+
