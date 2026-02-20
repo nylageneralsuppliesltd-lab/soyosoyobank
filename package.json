@@ -1,4 +1,10 @@
 {
+  "scripts": {
+    "backend:dev": "npm --prefix react-ui/backend run start:dev",
+    "frontend:dev": "npm --prefix react-ui/frontend run dev",
+    "backend:build": "npm --prefix react-ui/backend run build",
+    "frontend:build": "npm --prefix react-ui/frontend run build"
+  },
   "dependencies": {
     "node-fetch": "^2.7.0"
   }
