@@ -1,0 +1,63 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build-frontend",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"react-ui/frontend",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build-backend",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"react-ui/backend",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "start-backend",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"react-ui/backend",
+				"run",
+				"start:dev"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "start-frontend",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"react-ui/frontend",
+				"run",
+				"dev",
+				"--",
+				"--host"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}
